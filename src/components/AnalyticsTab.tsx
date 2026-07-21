@@ -1,30 +1,57 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ERPLivestockData } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, DollarSign, Calendar, Activity, Scale, ShoppingBag } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Activity, Scale, ShoppingBag, PieChart as PieChartIcon, Heart, ShieldAlert, Award } from 'lucide-react';
 
 interface AnalyticsTabProps {
   data: ERPLivestockData;
 }
 
-const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4'];
+const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6'];
 
 export default function AnalyticsTab({ data }: AnalyticsTabProps) {
-  const [subTab, setSubTab] = useState<'performance' | 'batches' | 'financial' | 'sales'>('performance');
+  const [subTab, setSubTab] = useState<'overview' | 'demographics' | 'batches' | 'health' | 'financial'>('overview');
 
-  // Compute weight statistics by breed
-  const breedPerformance = React.useMemo(() => {
-    const map: Record<string, { totalWeight: number; count: number; maxWeight: number }> = {};
-    data.stock.forEach(cow => {
-      if (cow.status.toLowerCase() !== 'active') return;
+  // Active cattle list
+  const activeCows = useMemo(() => {
+    return data.stock.filter(c => c.status.toLowerCase() === 'active');
+  }, [data.stock]);
+
+  // Executive BI KPI Summary Metrics
+  const biKpis = useMemo(() => {
+    const totalActiveHead = activeCows.length;
+    const totalAssetValuation = activeCows.reduce((sum, c) => sum + (c.totalPrice || (c.weight * c.unitPrice) || 0), 0);
+    const totalSalesRevenue = data.salesTracking.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
+    const totalOperatingExpenses = data.expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const netProfit = totalSalesRevenue - totalOperatingExpenses;
+
+    const deadCount = data.stock.filter(c => c.healthStatus.toLowerCase() === 'dead' || c.status.toLowerCase() === 'dead').length;
+    const mortalityRate = data.stock.length > 0 ? ((deadCount / data.stock.length) * 100).toFixed(1) : '0';
+
+    return {
+      totalActiveHead,
+      totalAssetValuation,
+      totalSalesRevenue,
+      totalOperatingExpenses,
+      netProfit,
+      deadCount,
+      mortalityRate
+    };
+  }, [activeCows, data.stock, data.salesTracking, data.expenses]);
+
+  // Breed Weight & Valuation Performance
+  const breedPerformance = useMemo(() => {
+    const map: Record<string, { totalWeight: number; count: number; maxWeight: number; totalValuation: number }> = {};
+    activeCows.forEach(cow => {
       if (!map[cow.breed]) {
-        map[cow.breed] = { totalWeight: 0, count: 0, maxWeight: 0 };
+        map[cow.breed] = { totalWeight: 0, count: 0, maxWeight: 0, totalValuation: 0 };
       }
       map[cow.breed].totalWeight += cow.weight;
       map[cow.breed].count += 1;
+      map[cow.breed].totalValuation += (cow.totalPrice || (cow.weight * cow.unitPrice) || 0);
       if (cow.weight > map[cow.breed].maxWeight) {
         map[cow.breed].maxWeight = cow.weight;
       }
@@ -34,55 +61,101 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
       name: breed,
       'Avg Weight (kg)': Math.round(stats.totalWeight / stats.count),
       'Max Weight (kg)': stats.maxWeight,
-      count: stats.count
+      count: stats.count,
+      totalValuation: stats.totalValuation
     }));
-  }, [data.stock]);
+  }, [activeCows]);
 
-  // Compute breed composition for Pie Chart
-  const breedComposition = React.useMemo(() => {
+  // Demographic Pie Chart Data
+  const breedComposition = useMemo(() => {
     const map: Record<string, number> = {};
-    let activeTotal = 0;
-    data.stock.forEach(cow => {
-      if (cow.status.toLowerCase() !== 'active') return;
+    activeCows.forEach(cow => {
       map[cow.breed] = (map[cow.breed] || 0) + 1;
-      activeTotal++;
     });
     return Object.entries(map).map(([breed, count]) => ({
       name: breed,
       value: count,
-      percentage: activeTotal > 0 ? Math.round((count / activeTotal) * 100) : 0
+      percentage: activeCows.length > 0 ? Math.round((count / activeCows.length) * 100) : 0
     }));
-  }, [data.stock]);
+  }, [activeCows]);
 
-  // Compute health status composition for Pie Chart
-  const healthComposition = React.useMemo(() => {
+  const genderComposition = useMemo(() => {
     const map: Record<string, number> = {};
-    let activeTotal = 0;
-    data.stock.forEach(cow => {
-      if (cow.status.toLowerCase() !== 'active') return;
+    activeCows.forEach(cow => {
+      const sex = cow.sex || 'Unknown';
+      map[sex] = (map[sex] || 0) + 1;
+    });
+    return Object.entries(map).map(([sex, count]) => ({
+      name: sex,
+      value: count,
+      percentage: activeCows.length > 0 ? Math.round((count / activeCows.length) * 100) : 0
+    }));
+  }, [activeCows]);
+
+  const acquisitionComposition = useMemo(() => {
+    const map: Record<string, number> = {};
+    activeCows.forEach(cow => {
+      const type = cow.purchaseType || cow.buyType || 'Purchase';
+      map[type] = (map[type] || 0) + 1;
+    });
+    return Object.entries(map).map(([type, count]) => ({
+      name: type,
+      value: count,
+      percentage: activeCows.length > 0 ? Math.round((count / activeCows.length) * 100) : 0
+    }));
+  }, [activeCows]);
+
+  // Health Status Composition
+  const healthComposition = useMemo(() => {
+    const map: Record<string, number> = {};
+    activeCows.forEach(cow => {
       map[cow.healthStatus] = (map[cow.healthStatus] || 0) + 1;
-      activeTotal++;
     });
     return Object.entries(map).map(([status, count]) => ({
       name: status,
       value: count,
-      percentage: activeTotal > 0 ? Math.round((count / activeTotal) * 100) : 0
+      percentage: activeCows.length > 0 ? Math.round((count / activeCows.length) * 100) : 0
     }));
-  }, [data.stock]);
+  }, [activeCows]);
 
-  // Compute batch statistics
-  const batchAnalytics = React.useMemo(() => {
+  // Fattening Herd & ADG Growth Calculation
+  const batchAnalytics = useMemo(() => {
     return data.batches.map(batch => {
       const cowsInBatch = data.stock.filter(c => batch.cowIds.includes(c.id));
-      const activeCows = cowsInBatch.filter(c => c.status.toLowerCase() === 'active');
-      const avgWeight = activeCows.length > 0
-        ? Math.round(activeCows.reduce((sum, c) => sum + c.weight, 0) / activeCows.length)
+      const activeCowsInBatch = cowsInBatch.filter(c => c.status.toLowerCase() === 'active');
+      const avgWeight = activeCowsInBatch.length > 0
+        ? Math.round(activeCowsInBatch.reduce((sum, c) => sum + c.weight, 0) / activeCowsInBatch.length)
         : 0;
 
-      const poorHealthCount = activeCows.filter(c => c.healthStatus.toLowerCase() === 'poor').length;
-      const statusPercentage = activeCows.length > 0
-        ? Math.round(((activeCows.length - poorHealthCount) / activeCows.length) * 100)
-        : 100;
+      // ADG calculation across weight records
+      let totalAdgSum = 0;
+      let adgCount = 0;
+
+      activeCowsInBatch.forEach(cow => {
+        const records = data.weightTracking
+          .filter(w => w.cowId === cow.id && w.trackingDate)
+          .sort((a, b) => new Date(a.trackingDate!).getTime() - new Date(b.trackingDate!).getTime());
+        if (records.length >= 2) {
+          const earliest = records[0];
+          const latest = records[records.length - 1];
+          const daysDiff = Math.max(1, Math.round((new Date(latest.trackingDate!).getTime() - new Date(earliest.trackingDate!).getTime()) / (1000 * 60 * 60 * 24)));
+          const weightDiff = latest.currentWeight - earliest.currentWeight;
+          if (daysDiff > 0 && weightDiff > 0) {
+            totalAdgSum += weightDiff / daysDiff;
+            adgCount++;
+          }
+        }
+      });
+
+      const avgAdgKg = adgCount > 0 ? parseFloat((totalAdgSum / adgCount).toFixed(2)) : 0.85; // default benchmark if single weight
+
+      // Daily ration cost per head from feeding program
+      let dailyFeedCostPerHead = 0;
+      if (batch.feedingProgram && batch.feedingProgram.ingredients) {
+        dailyFeedCostPerHead = batch.feedingProgram.ingredients.reduce((sum, ing) => sum + (ing.portionPerHead * ing.unitCost), 0);
+      } else {
+        dailyFeedCostPerHead = (3.5 * 2000) + (15 * 350) + (2 * 150); // standard default formula ~ 12,550 KHR
+      }
 
       return {
         name: batch.name,
@@ -90,35 +163,29 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
         type: batch.type,
         count: cowsInBatch.length,
         'Avg Weight (kg)': avgWeight,
-        'Health Rate (%)': statusPercentage,
+        'ADG (kg/day)': avgAdgKg,
+        dailyFeedCostPerHead,
         status: batch.status
       };
     });
-  }, [data.batches, data.stock]);
+  }, [data.batches, data.stock, data.weightTracking]);
 
-  // Compute monthly financials (Revenue vs Expenses)
-  const financialMonthly = React.useMemo(() => {
-    // Collect from expenses
+  // Monthly Financial P&L
+  const financialMonthly = useMemo(() => {
     const monthlyMap: Record<string, { revenue: number; expenses: number }> = {};
 
     data.expenses.forEach(exp => {
-      const month = exp.date.substring(0, 7); // YYYY-MM
-      if (!monthlyMap[month]) {
-        monthlyMap[month] = { revenue: 0, expenses: 0 };
-      }
+      const month = exp.date ? exp.date.substring(0, 7) : new Date().toISOString().substring(0, 7);
+      if (!monthlyMap[month]) monthlyMap[month] = { revenue: 0, expenses: 0 };
       monthlyMap[month].expenses += exp.amount;
     });
 
-    // Collect from sales
     data.salesTracking.forEach(sale => {
       const month = sale.salesDate ? sale.salesDate.substring(0, 7) : new Date().toISOString().substring(0, 7);
-      if (!monthlyMap[month]) {
-        monthlyMap[month] = { revenue: 0, expenses: 0 };
-      }
+      if (!monthlyMap[month]) monthlyMap[month] = { revenue: 0, expenses: 0 };
       monthlyMap[month].revenue += sale.totalPrice;
     });
 
-    // Format for charts
     return Object.entries(monthlyMap)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([month, values]) => {
@@ -135,8 +202,8 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
       });
   }, [data.expenses, data.salesTracking]);
 
-  // Expense breakdown pie chart data
-  const expenseBreakdown = React.useMemo(() => {
+  // Operating Expense Breakdown
+  const expenseBreakdown = useMemo(() => {
     const map: Record<string, number> = {};
     data.expenses.forEach(exp => {
       map[exp.category] = (map[exp.category] || 0) + exp.amount;
@@ -147,85 +214,166 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
     }));
   }, [data.expenses]);
 
-  // Sales specific analytics
-  const { totalSalesRevenue, totalCowsSold, averageSalePrice, salesChartData } = React.useMemo(() => {
-    const totalSalesRevenue = data.salesTracking.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
-    const totalCowsSold = data.salesTracking.length;
-    const averageSalePrice = totalCowsSold > 0 ? Math.round(totalSalesRevenue / totalCowsSold) : 0;
-
-    const map: Record<string, number> = {};
-    data.salesTracking.forEach(s => {
-      if (s.salesDate) {
-        const dateStr = new Date(s.salesDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-        map[dateStr] = (map[dateStr] || 0) + s.totalPrice;
-      }
-    });
-
-    const salesChartData = Object.entries(map).map(([date, revenue]) => ({
-      date,
-      Revenue: revenue
-    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    return { totalSalesRevenue, totalCowsSold, averageSalePrice, salesChartData };
-  }, [data.salesTracking]);
-
   return (
-    <div className="space-y-6">
-      {/* Subtab selection headers */}
-      <div className="flex border-b border-slate-200">
+    <div className="space-y-6 text-left">
+      {/* Navigation sub-tabs */}
+      <div className="flex border-b border-slate-200 overflow-x-auto">
         <button
-          onClick={() => setSubTab('performance')}
-          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors ${
-            subTab === 'performance'
+          onClick={() => setSubTab('overview')}
+          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
+            subTab === 'overview'
               ? 'border-emerald-600 text-emerald-600'
               : 'border-transparent text-slate-400 hover:text-slate-700'
           }`}
         >
-          <Scale className="h-4 w-4" />
-          Herd Performance
+          <PieChartIcon className="h-4 w-4" />
+          Executive BI Overview
         </button>
         <button
-          onClick={() => setSubTab('batches')}
-          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors ${
-            subTab === 'batches'
+          onClick={() => setSubTab('demographics')}
+          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
+            subTab === 'demographics'
               ? 'border-emerald-600 text-emerald-600'
               : 'border-transparent text-slate-400 hover:text-slate-700'
           }`}
         >
           <Users className="h-4 w-4" />
-          Batch Reports
+          Herd Demographics & Stock
+        </button>
+        <button
+          onClick={() => setSubTab('batches')}
+          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
+            subTab === 'batches'
+              ? 'border-emerald-600 text-emerald-600'
+              : 'border-transparent text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <Scale className="h-4 w-4" />
+          Fattening & ADG Growth
+        </button>
+        <button
+          onClick={() => setSubTab('health')}
+          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
+            subTab === 'health'
+              ? 'border-emerald-600 text-emerald-600'
+              : 'border-transparent text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <Heart className="h-4 w-4" />
+          Health & Vet Analytics
         </button>
         <button
           onClick={() => setSubTab('financial')}
-          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors ${
+          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
             subTab === 'financial'
               ? 'border-emerald-600 text-emerald-600'
               : 'border-transparent text-slate-400 hover:text-slate-700'
           }`}
         >
           <DollarSign className="h-4 w-4" />
-          Financial Reports
-        </button>
-        <button
-          onClick={() => setSubTab('sales')}
-          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors ${
-            subTab === 'sales'
-              ? 'border-emerald-600 text-emerald-600'
-              : 'border-transparent text-slate-400 hover:text-slate-700'
-          }`}
-        >
-          <ShoppingBag className="h-4 w-4" />
-          Sales Reports
+          Financials & Sales BI
         </button>
       </div>
 
-      {/* Performance reports view */}
-      {subTab === 'performance' && (
+      {/* 1. Executive BI Overview */}
+      {subTab === 'overview' && (
         <div className="space-y-6">
-          {/* Row 1: Breed Performance & Breed Composition Pie Chart */}
+          {/* Top KPI Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-xs space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Active Herd</p>
+              <div className="flex items-center justify-between">
+                <p className="text-2xl font-black text-slate-800">{biKpis.totalActiveHead} <span className="text-xs font-bold text-emerald-600">Head</span></p>
+                <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  <Users className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-xs space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Herd Asset Valuation</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xl font-black text-emerald-600">៛ {biKpis.totalAssetValuation.toLocaleString()}</p>
+                <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  <Award className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-xs space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Net Profit / Loss</p>
+              <div className="flex items-center justify-between">
+                <p className={`text-xl font-black ${biKpis.netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  ៛ {biKpis.netProfit.toLocaleString()}
+                </p>
+                <div className="h-9 w-9 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+                  <DollarSign className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-xs space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Mortality Rate (%)</p>
+              <div className="flex items-center justify-between">
+                <p className="text-2xl font-black text-slate-800">{biKpis.mortalityRate}% <span className="text-xs text-slate-400 font-normal">({biKpis.deadCount} Dead)</span></p>
+                <div className="h-9 w-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold">
+                  <Activity className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Monthly P&L Financial Area Chart */}
+          <Card className="bg-white border border-slate-100 shadow-xs">
+            <CardHeader>
+              <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
+                Monthly Revenue vs Operating Expenses P&L
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-400">Track gross sales revenue against feed, medicine, and farm expenses month over month</CardDescription>
+            </CardHeader>
+            <CardContent className="h-[340px]">
+              {financialMonthly.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={financialMonthly} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px' }}
+                      itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+                      formatter={(val: any) => val ? `៛ ${Number(val).toLocaleString()}` : '៛ 0'}
+                    />
+                    <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
+                    <Area type="monotone" dataKey="Total Revenue (៛)" stroke="#10B981" fillOpacity={1} fill="url(#colorRev)" />
+                    <Area type="monotone" dataKey="Total Expenses (៛)" stroke="#EF4444" fillOpacity={1} fill="url(#colorExp)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-slate-400 text-xs">No financial records recorded.</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 2. Herd Demographics & Stock */}
+      {subTab === 'demographics' && (
+        <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Breed Weight Performance */}
             <div className="lg:col-span-2">
-              <Card className="bg-white border border-slate-100 shadow-sm">
+              <Card className="bg-white border border-slate-100 shadow-xs">
                 <CardHeader>
                   <CardTitle className="text-sm font-bold text-slate-800">Breed Weight Performance (តម្លៃមធ្យមធៀបទម្ងន់អតិបរមា)</CardTitle>
                   <CardDescription className="text-xs text-slate-400">Comparing weight metrics across active breeds</CardDescription>
@@ -253,8 +401,9 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
               </Card>
             </div>
 
+            {/* Breed Composition Pie Chart */}
             <div className="lg:col-span-1">
-              <Card className="bg-white border border-slate-100 shadow-sm h-full flex flex-col justify-between">
+              <Card className="bg-white border border-slate-100 shadow-xs h-full flex flex-col justify-between">
                 <CardHeader>
                   <CardTitle className="text-sm font-bold text-slate-800">Breed Composition (ចំណែកពូជគោសរុប)</CardTitle>
                   <CardDescription className="text-xs text-slate-400">Percentage share of each breed in active herd</CardDescription>
@@ -286,7 +435,6 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
-                      {/* Interactive Legend with indicators */}
                       <div className="grid grid-cols-2 gap-2 mt-2 max-h-[100px] overflow-y-auto pr-1">
                         {breedComposition.map((bc, idx) => (
                           <div key={idx} className="flex items-center gap-1.5 text-[10px] font-bold">
@@ -304,138 +452,70 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
             </div>
           </div>
 
-          {/* Row 2: Census Detail List & Health Breakdown Pie Chart */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <Card className="bg-white border border-slate-100 shadow-sm h-full">
-                <CardHeader>
-                  <CardTitle className="text-sm font-bold text-slate-800">Livestock Census Breakdown</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">Total active cows grouped by breed</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {breedPerformance.map((bp, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50/65 border border-slate-100/50 rounded-xl">
-                      <div>
-                        <p className="text-xs font-black text-slate-800">{bp.name}</p>
-                        <p className="text-[9px] text-slate-450 mt-0.5">Avg: {bp['Avg Weight (kg)']} kg • Max: {bp['Max Weight (kg)']} kg</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="inline-block px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-black rounded-full border border-emerald-100">
-                          {bp.count} Head
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                  {breedPerformance.length === 0 && (
-                    <div className="text-center py-10 text-xs text-slate-450 font-bold">No registered cows found in inventory.</div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+          {/* Gender Ratio & Acquisition Type */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="bg-white border border-slate-100 shadow-xs">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold text-slate-800">Gender Ratio Breakdown (ភេទ)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {genderComposition.map((g, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <span className="text-xs font-bold text-slate-800">{g.name}</span>
+                    <span className="text-xs font-black text-emerald-600">{g.value} Head ({g.percentage}%)</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
-            <div className="lg:col-span-2">
-              <Card className="bg-white border border-slate-100 shadow-sm h-full flex flex-col justify-between">
-                <CardHeader>
-                  <CardTitle className="text-sm font-bold text-slate-800">Active Herd Health Status (ស្ថានភាពសុខភាពហ្វូងគោ)</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">Distribution of active cattle by health condition</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col md:flex-row items-center justify-around gap-6 py-4">
-                  {healthComposition.length > 0 ? (
-                    <>
-                      <div className="h-[180px] w-[180px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={healthComposition}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={70}
-                              paddingAngle={3}
-                              dataKey="value"
-                            >
-                              {healthComposition.map((entry, index) => {
-                                const healthColors: Record<string, string> = {
-                                  Good: '#10B981',
-                                  Fair: '#F59E0B',
-                                  Poor: '#EF4444',
-                                  Dead: '#64748B'
-                                };
-                                return <Cell key={`cell-${index}`} fill={healthColors[entry.name] || COLORS[index % COLORS.length]} />;
-                              })}
-                            </Pie>
-                            <Tooltip
-                              contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px' }}
-                              itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                              formatter={(value: any, name: any, props: any) => [`${value} cows (${props.payload.percentage}%)`, name]}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-
-                      {/* Health breakdown indicators list */}
-                      <div className="flex-1 space-y-2.5 w-full">
-                        {healthComposition.map((hc, idx) => {
-                          const healthColors: Record<string, string> = {
-                            Good: '#10B981',
-                            Fair: '#F59E0B',
-                            Poor: '#EF4444',
-                            Dead: '#64748B'
-                          };
-                          const color = healthColors[hc.name] || COLORS[idx % COLORS.length];
-                          
-                          return (
-                            <div key={idx} className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-100 rounded-xl">
-                              <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                                <span className="h-3 w-3 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: color }} />
-                                <span>{hc.name} Condition</span>
-                              </div>
-                              <div className="text-right">
-                                <span className="text-xs font-black text-slate-800">{hc.value} head</span>
-                                <span className="text-[10px] text-slate-450 ml-1.5 font-bold">({hc.percentage}%)</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-slate-400 text-xs font-semibold py-8 w-full text-center">No active cattle health indicators found.</div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="bg-white border border-slate-100 shadow-xs">
+              <CardHeader>
+                <CardTitle className="text-sm font-bold text-slate-800">Acquisition Methods (របៀបទិញ/ចូល)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {acquisitionComposition.map((ac, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                    <span className="text-xs font-bold text-slate-800">{ac.name}</span>
+                    <span className="text-xs font-black text-slate-900">{ac.value} Head ({ac.percentage}%)</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}
 
-      {/* Batch Reports View */}
+      {/* 3. Fattening & ADG Growth */}
       {subTab === 'batches' && (
         <div className="space-y-6">
-          <Card className="bg-white border border-slate-100 shadow-sm">
+          <Card className="bg-white border border-slate-100 shadow-xs">
             <CardHeader>
-              <CardTitle className="text-sm font-bold text-slate-800">Batch Health & Weight Metrics</CardTitle>
-              <CardDescription className="text-xs text-slate-400">Performance indexes tracking each active/closed batch</CardDescription>
+              <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <Scale className="h-5 w-5 text-emerald-600" />
+                Fattening Herd ADG Performance & Feed Efficiency
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-400">Average daily gain (ADG kg/day) and daily ration cost per head across active batches</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       <th className="pb-3 pl-3">Batch Info</th>
-                      <th className="pb-3">Type</th>
-                      <th className="pb-3 text-center">Cattle Headcount</th>
+                      <th className="pb-3">Program Type</th>
+                      <th className="pb-3 text-center">Headcount</th>
                       <th className="pb-3">Avg Weight</th>
-                      <th className="pb-3">Herd Health Score</th>
+                      <th className="pb-3">ADG (kg/day)</th>
+                      <th className="pb-3">Daily Feed Cost / Head</th>
                       <th className="pb-3 text-right pr-3">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {batchAnalytics.map((ba, idx) => (
-                      <tr key={idx} className="text-xs hover:bg-slate-50/40">
+                      <tr key={idx} className="hover:bg-slate-50/40">
                         <td className="py-4 pl-3">
                           <p className="font-bold text-slate-800">{ba.name}</p>
-                          <p className="text-[10px] text-slate-450 mt-0.5">{ba.code}</p>
+                          <p className="text-[10px] font-mono text-slate-400 mt-0.5">{ba.code}</p>
                         </td>
                         <td className="py-4">
                           <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold text-[9px]">
@@ -444,16 +524,11 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
                         </td>
                         <td className="py-4 text-center font-bold text-slate-800">{ba.count} Head</td>
                         <td className="py-4 font-bold text-slate-800">{ba['Avg Weight (kg)']} kg</td>
-                        <td className="py-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-20 bg-slate-100 h-2 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full ${ba['Health Rate (%)'] < 80 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                                style={{ width: `${ba['Health Rate (%)']}%` }}
-                              />
-                            </div>
-                            <span className="font-extrabold text-[10px] text-slate-600">{ba['Health Rate (%)']}%</span>
-                          </div>
+                        <td className="py-4 font-extrabold text-emerald-600">
+                          {ba['ADG (kg/day)']} kg/day
+                        </td>
+                        <td className="py-4 font-bold text-slate-800">
+                          ៛ {ba.dailyFeedCostPerHead.toLocaleString()} / head / day
                         </td>
                         <td className="py-4 text-right pr-3">
                           <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase ${
@@ -464,11 +539,6 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
                         </td>
                       </tr>
                     ))}
-                    {batchAnalytics.length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="text-center py-10 text-xs text-slate-450 font-bold">No batches recorded in setup.</td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
@@ -477,199 +547,129 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
         </div>
       )}
 
-      {/* Financial Reports View */}
-      {subTab === 'financial' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="bg-white border border-slate-100 shadow-sm">
+      {/* 4. Health & Vet Analytics */}
+      {subTab === 'health' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-white border border-slate-100 shadow-xs">
               <CardHeader>
-                <CardTitle className="text-sm font-bold text-slate-800">Monthly Revenue vs Expenses P&L</CardTitle>
-                <CardDescription className="text-xs text-slate-450">Track cash inflow and feed/medical expenses month over month</CardDescription>
+                <CardTitle className="text-sm font-bold text-slate-800">Active Herd Health Condition Breakdown</CardTitle>
               </CardHeader>
-              <CardContent className="h-[320px]">
-                {financialMonthly.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={financialMonthly} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorExp" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#EF4444" stopOpacity={0.2} />
-                          <stop offset="95%" stopColor="#EF4444" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px' }}
-                        itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
-                      />
-                      <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
-                      <Area type="monotone" dataKey="Total Revenue (៛)" stroke="#10B981" fillOpacity={1} fill="url(#colorRev)" />
-                      <Area type="monotone" dataKey="Total Expenses (៛)" stroke="#EF4444" fillOpacity={1} fill="url(#colorExp)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-xs">No financial records recorded.</div>
-                )}
+              <CardContent className="space-y-3">
+                {healthComposition.map((hc, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold">
+                    <span>{hc.name} Condition</span>
+                    <span className="text-slate-900">{hc.value} Head ({hc.percentage}%)</span>
+                  </div>
+                ))}
               </CardContent>
             </Card>
-          </div>
 
-          <div className="lg:col-span-1">
-            <Card className="bg-white border border-slate-100 shadow-sm h-full">
+            <Card className="bg-white border border-slate-100 shadow-xs">
               <CardHeader>
-                <CardTitle className="text-sm font-bold text-slate-800">Operational Cost Allocation</CardTitle>
-                <CardDescription className="text-xs text-slate-400">Total expense amounts grouped by category</CardDescription>
+                <CardTitle className="text-sm font-bold text-slate-800">Health Log History ({data.healthLogs?.length || 0} Records)</CardTitle>
               </CardHeader>
-              <CardContent className="h-[250px] relative">
-                {expenseBreakdown.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={expenseBreakdown}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {expenseBreakdown.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px' }}
-                        itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                        formatter={(val: any) => val ? `៛ ${Number(val).toLocaleString()}` : '៛ 0'}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-xs">No costs logged.</div>
-                )}
-                {/* Legend summary below chart */}
-                <div className="mt-4 space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
-                  {expenseBreakdown.map((eb, idx) => (
-                    <div key={idx} className="flex items-center justify-between text-[11px] font-bold">
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full inline-block" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                        <span className="text-slate-600">{eb.name}</span>
+              <CardContent className="max-h-[300px] overflow-y-auto space-y-2 text-xs">
+                {data.healthLogs && data.healthLogs.length > 0 ? (
+                  data.healthLogs.map((log, idx) => (
+                    <div key={idx} className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-slate-800">Cow ID: {log.cowId} • {log.name}</p>
+                        <p className="text-[10px] text-slate-400">{log.type} ({log.date ? new Date(log.date).toLocaleDateString() : 'N/A'})</p>
                       </div>
-                      <span className="text-slate-900">៛ {eb.value.toLocaleString()}</span>
+                      <span className="text-xs font-extrabold text-emerald-600">៛ {(log.cost || 0).toLocaleString()}</span>
                     </div>
-                  ))}
-                </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400 font-semibold py-8 text-center">No medical health logs recorded.</p>
+                )}
               </CardContent>
             </Card>
           </div>
         </div>
       )}
 
-      {/* Sales Reports View */}
-      {subTab === 'sales' && (
+      {/* 5. Financials & Sales BI */}
+      {subTab === 'financial' && (
         <div className="space-y-6">
-          {/* Mini Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-            <div className="bg-white border border-slate-100 p-5 rounded-2xl flex items-center justify-between shadow-sm">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Sales Revenue</p>
-                <h4 className="text-2xl font-black text-emerald-600 mt-1.5">៛ {totalSalesRevenue.toLocaleString()}</h4>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <DollarSign className="h-5 w-5" />
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-100 p-5 rounded-2xl flex items-center justify-between shadow-sm">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cows Sold</p>
-                <h4 className="text-2xl font-black text-slate-900 mt-1.5">{totalCowsSold} head</h4>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                <ShoppingBag className="h-5 w-5" />
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-100 p-5 rounded-2xl flex items-center justify-between shadow-sm">
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Average Unit Value</p>
-                <h4 className="text-2xl font-black text-slate-900 mt-1.5">៛ {averageSalePrice.toLocaleString()}</h4>
-              </div>
-              <div className="h-12 w-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
-                <TrendingUp className="h-5 w-5" />
-              </div>
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Sales Chart */}
-            <div className="lg:col-span-2 bg-white border border-slate-100 p-6 rounded-2xl space-y-4 shadow-sm">
-              <div>
-                <h4 className="text-base font-bold text-slate-800">Revenue Performance Over Time</h4>
-                <p className="text-xs text-slate-400">Gross sales tracked by transaction date</p>
-              </div>
-              <div className="h-[260px]">
-                {salesChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={salesChartData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.1}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                      <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#ffffff', borderColor: '#f1f5f9', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}
-                        labelStyle={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold' }}
-                        itemStyle={{ color: '#059669', fontSize: '13px', fontWeight: 'bold' }}
-                      />
-                      <Bar dataKey="Revenue" fill="url(#salesGrad)" radius={[6, 6, 0, 0]} name="Sales (៛)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-sm font-semibold">
-                    No transaction data available.
+            {/* Operating Expense Breakdown Pie Chart */}
+            <div className="lg:col-span-1">
+              <Card className="bg-white border border-slate-100 shadow-xs h-full">
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold text-slate-800">Operational Cost Allocation</CardTitle>
+                  <CardDescription className="text-xs text-slate-400">Total expense amounts grouped by category</CardDescription>
+                </CardHeader>
+                <CardContent className="h-[250px] relative">
+                  {expenseBreakdown.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={expenseBreakdown}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {expenseBreakdown.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px' }}
+                          itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                          formatter={(val: any) => val ? `៛ ${Number(val).toLocaleString()}` : '៛ 0'}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-slate-400 text-xs">No costs logged.</div>
+                  )}
+                  <div className="mt-4 space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
+                    {expenseBreakdown.map((eb, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-[11px] font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <span className="h-2 w-2 rounded-full inline-block" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                          <span className="text-slate-600">{eb.name}</span>
+                        </div>
+                        <span className="text-slate-900">៛ {eb.value.toLocaleString()}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Transactions List */}
-            <div className="bg-white border border-slate-100 p-6 rounded-2xl space-y-4 shadow-sm flex flex-col">
-              <div>
-                <h4 className="text-base font-bold text-slate-800">Recent Transactions</h4>
-                <p className="text-xs text-slate-400">Historical records of closed sales</p>
-              </div>
-              <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[260px] pr-2">
-                {data.salesTracking.length > 0 ? (
-                  data.salesTracking.map((s, idx) => (
-                    <div key={idx} className="py-3 flex items-center justify-between text-xs hover:bg-slate-50/50 transition-colors px-1 rounded-lg font-medium">
-                      <div>
-                        <p className="font-bold text-slate-800">Cow ID: {s.cowId}</p>
-                        <p className="text-slate-400 font-medium">
-                          {s.salesDate ? new Date(s.salesDate).toLocaleDateString() : 'N/A'} • {s.breed}
-                        </p>
+            {/* Historical Sales Ledger */}
+            <div className="lg:col-span-2">
+              <Card className="bg-white border border-slate-100 shadow-xs h-full">
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <ShoppingBag className="h-5 w-5 text-emerald-600" />
+                    Historical Cattle Sales Ledger ({data.salesTracking.length} Transactions)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="max-h-[360px] overflow-y-auto">
+                  <div className="space-y-2">
+                    {data.salesTracking.map((s, idx) => (
+                      <div key={idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between text-xs font-semibold">
+                        <div>
+                          <p className="font-bold text-slate-800">Cow ID: {s.cowId} • {s.breed}</p>
+                          <p className="text-[10px] text-slate-400">{s.salesDate ? new Date(s.salesDate).toLocaleDateString() : 'N/A'} • {s.weight} kg @ ៛ {s.unitPrice.toLocaleString()}/kg</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-extrabold text-emerald-600">៛ {s.totalPrice.toLocaleString()}</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-extrabold text-emerald-600">៛ {s.totalPrice.toLocaleString()}</p>
-                        <p className="text-slate-400 font-mono font-semibold">{s.weight} kg @ ៛ {s.unitPrice.toLocaleString()}/kg</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-xs text-slate-400 font-semibold">
-                    No recent sales.
+                    ))}
+                    {data.salesTracking.length === 0 && (
+                      <p className="text-center py-10 text-xs text-slate-400 font-bold">No sales records found.</p>
+                    )}
                   </div>
-                )}
-              </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
