@@ -1,0 +1,1528 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { ERPLivestockData, BatchItem, HealthLogItem } from '@/lib/types';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
+import { Users, UserMinus, UserPlus, Calendar, Info, Layers, Trash2, ShieldAlert, TrendingUp, Plus, FileText, CheckCircle2, Heart, Scale, Sparkles, Search } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { ConfirmModal } from './ui/confirm-modal';
+import { BatchModal } from './features/batch/BatchModal';
+
+interface BatchTabProps {
+  data: ERPLivestockData;
+  onCreateBatch: (batch: Omit<BatchItem, 'cowIds'>) => Promise<void>;
+  onAssignCows: (batchId: string, cowIds: string[]) => Promise<void>;
+  onRemoveCow: (batchId: string, cowId: string) => Promise<void>;
+  onUpdateBatch: (batchId: string, updates: Partial<BatchItem>) => Promise<void>;
+  onRecordBatchWeights?: (records: { cowId: string; currentWeight: number; healthStatus: string; trackingDate?: string }[]) => Promise<void>;
+  onRecordBatchHealthLog?: (batchId: string, log: Omit<HealthLogItem, 'id' | 'cowId'>) => Promise<void>;
+  onDeleteBatch?: (batchId: string) => Promise<void>;
+}
+
+export default function BatchTab({
+  data,
+  onCreateBatch,
+  onAssignCows,
+  onRemoveCow,
+  onUpdateBatch,
+  onRecordBatchWeights,
+  onDeleteBatch
+}: BatchTabProps) {
+  const [selectedBatchId, setSelectedBatchId] = useState<string>('');
+  const [isCreateBatchModalOpen, setIsCreateBatchModalOpen] = useState(false);
+  const [editingBatch, setEditingBatch] = useState<BatchItem | null>(null);
+  const [isAllBatchesOpen, setIsAllBatchesOpen] = useState(false);
+
+  // Active or selected batch lookup
+  const activeBatches = data.batches.filter(b => b.status === 'Active');
+  const defaultBatch = data.batches.find(b => b.id === selectedBatchId)
+    || data.batches.find(b => b.status === 'Active' && (b.type === 'Fattening Program' || b.type.includes('Fattening')))
+    || activeBatches[0]
+    || data.batches[0];
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm?: () => void;
+    type: 'danger' | 'warning' | 'success' | 'info';
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    type: 'warning'
+  });
+
+  // Local tab views inside default batch
+  const [subView, setSubView] = useState<'members' | 'feed' | 'report'>('members');
+  const [isScalingOpen, setIsScalingOpen] = useState(false);
+
+  // Feeding Program Form States
+  const [portionDsr16, setPortionDsr16] = useState('3.5');
+  const [costDsr16, setCostDsr16] = useState('2000');
+  const [portionGrass, setPortionGrass] = useState('15.0');
+  const [costGrass, setCostGrass] = useState('350');
+  const [portionStraw, setPortionStraw] = useState('2.0');
+  const [costStraw, setCostStraw] = useState('150');
+  const [feedProgFrequency, setFeedProgFrequency] = useState('Twice Daily');
+  const [feedProgStartDate, setFeedProgStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [feedProgEndDate, setFeedProgEndDate] = useState('');
+  const [feedProgStatus, setFeedProgStatus] = useState<'Active' | 'Paused' | 'Completed'>('Active');
+  const [feedProgNote, setFeedProgNote] = useState('');
+  const [isSavingFeedProg, setIsSavingFeedProg] = useState(false);
+
+  // Weight scaling form states
+  const [scaleInputs, setScaleInputs] = useState<Record<string, { weight: number; healthStatus: string }>>({});
+  const [scalingDate, setScalingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSubmittingWeights, setIsSubmittingWeights] = useState(false);
+
+  // Sampling States
+  const [isSamplingMode, setIsSamplingMode] = useState(false);
+  const [sampleBestId, setSampleBestId] = useState('');
+  const [sampleMediumId, setSampleMediumId] = useState('');
+  const [sampleLowId, setSampleLowId] = useState('');
+  const [sampleBestWeight, setSampleBestWeight] = useState('');
+  const [sampleMediumWeight, setSampleMediumWeight] = useState('');
+  const [sampleLowWeight, setSampleLowWeight] = useState('');
+
+  // Search/Filters for unallocated cows
+  const [searchUnassigned, setSearchUnassigned] = useState('');
+  const [breedFilter, setBreedFilter] = useState('');
+  const [selectedCowIds, setSelectedCowIds] = useState<string[]>([]);
+  const [isInitializingHerd, setIsInitializingHerd] = useState(false);
+
+  // Sync feed program states when defaultBatch changes
+  useEffect(() => {
+    if (defaultBatch?.feedingProgram) {
+      const prog = defaultBatch.feedingProgram;
+      const dsr = prog.ingredients?.find(i => i.name.includes('DSR-16'));
+      const grass = prog.ingredients?.find(i => i.name.includes('ស្មៅ') || i.name.includes('ពោត'));
+      const straw = prog.ingredients?.find(i => i.name.includes('ចំបើង'));
+
+      if (dsr) {
+        setPortionDsr16(String(dsr.portionPerHead));
+        setCostDsr16(String(dsr.unitCost));
+      }
+      if (grass) {
+        setPortionGrass(String(grass.portionPerHead));
+        setCostGrass(String(grass.unitCost));
+      }
+      if (straw) {
+        setPortionStraw(String(straw.portionPerHead));
+        setCostStraw(String(straw.unitCost));
+      }
+      setFeedProgFrequency(prog.frequency || 'Twice Daily');
+      setFeedProgStartDate(prog.startDate || new Date().toISOString().split('T')[0]);
+      setFeedProgEndDate(prog.endDate || '');
+      setFeedProgStatus(prog.status || 'Active');
+      setFeedProgNote(prog.notes || '');
+    }
+  }, [defaultBatch]);
+
+  // Sync scaling inputs when dialog opens
+  const openScalingDialog = () => {
+    if (!defaultBatch) return;
+    const cohortCows = activeCows.filter(c => defaultBatch.cowIds.includes(c.id));
+    const inputs: Record<string, { weight: number; healthStatus: string }> = {};
+    cohortCows.forEach(c => {
+      inputs[c.id] = { weight: c.weight, healthStatus: c.healthStatus };
+    });
+    setScaleInputs(inputs);
+    setScalingDate(new Date().toISOString().split('T')[0]);
+    setIsScalingOpen(true);
+  };
+
+  // Find cows that are NOT in any active batch
+  const allAssignedCowIds = data.batches
+    .filter(b => b.status === 'Active')
+    .flatMap(b => b.cowIds);
+
+  const activeCows = data.stock.filter(c => c.status.toLowerCase() === 'active');
+  const unassignedCows = activeCows.filter(c => !allAssignedCowIds.includes(c.id));
+
+  const filteredUnassignedCows = unassignedCows.filter(cow => {
+    const query = searchUnassigned.toLowerCase().trim();
+    const matchesSearch = !query ||
+      cow.id.toLowerCase().includes(query) ||
+      cow.breed.toLowerCase().includes(query) ||
+      cow.location.toLowerCase().includes(query);
+    const matchesBreed = !breedFilter || cow.breed === breedFilter;
+    return matchesSearch && matchesBreed;
+  });
+
+  const handleSelectAllFiltered = () => {
+    const ids = filteredUnassignedCows.map(c => c.id);
+    setSelectedCowIds(prev => Array.from(new Set([...prev, ...ids])));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedCowIds([]);
+  };
+
+  // Initialize Fattening Herd Default Batch
+  const handleInitializeHerd = async () => {
+    setIsInitializingHerd(true);
+    try {
+      const defaultFeeding = {
+        ingredients: [
+          { name: "ចំណីសំរេច (DSR-16)", portionPerHead: 3.5, unitCost: 2000 },
+          { name: "ស្មៅ ឬ ពោត ផ្អាប់", portionPerHead: 15.0, unitCost: 350 },
+          { name: "ចំបើង", portionPerHead: 2.0, unitCost: 150 }
+        ],
+        frequency: 'Twice Daily',
+        startDate: new Date().toISOString().split('T')[0],
+        status: 'Active' as const,
+        notes: 'Default recommended fattening program diet.'
+      };
+
+      const newBatchId = `FAT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
+      await onCreateBatch({
+        id: newBatchId,
+        name: 'Fattening Herd (ហ្វូងគោបំប៉ន)',
+        type: 'Fattening Program',
+        startDate: new Date().toISOString().split('T')[0],
+        status: 'Active',
+        notes: 'Unified Active Fattening Program Herd.',
+        feedingProgram: defaultFeeding
+      });
+
+      setSelectedBatchId(newBatchId);
+
+      setConfirmModal({
+        isOpen: true,
+        title: 'កម្មវិធីបំប៉នត្រូវបានចាប់ផ្តើម',
+        description: 'កម្មវិធីបំប៉នសរុបត្រូវបានបង្កើតឡើងដោយជោគជ័យ។ ឥឡូវលោកអ្នកអាចបន្ថែមគោបំប៉ន និងកំណត់ចំណីអាហារបានហើយ!',
+        type: 'success',
+        confirmText: 'Okay'
+      });
+    } catch (err: any) {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Error Starting Program',
+        description: err.message || 'Failed to start default fattening herd.',
+        type: 'danger',
+        confirmText: 'Dismiss'
+      });
+    } finally {
+      setIsInitializingHerd(false);
+    }
+  };
+
+  const handleSaveBatch = async (batchData: Omit<BatchItem, 'cowIds'>, initialCowIds: string[]) => {
+    try {
+      if (editingBatch) {
+        await onUpdateBatch(batchData.id, batchData);
+        setConfirmModal({
+          isOpen: true,
+          title: 'កែប្រែបានជោគជ័យ',
+          description: `ព័ត៌មានក្រុម "${batchData.name}" ត្រូវបានកែប្រែ។`,
+          type: 'success',
+          confirmText: 'Okay'
+        });
+      } else {
+        await onCreateBatch(batchData);
+        if (initialCowIds.length > 0) {
+          await onAssignCows(batchData.id, initialCowIds);
+        }
+        setSelectedBatchId(batchData.id);
+        setConfirmModal({
+          isOpen: true,
+          title: 'បង្កើតក្រុមថ្មីបានជោគជ័យ',
+          description: `ក្រុម "${batchData.name}" (${batchData.id}) ត្រូវបានបង្កើតឡើង។`,
+          type: 'success',
+          confirmText: 'Okay'
+        });
+      }
+      setEditingBatch(null);
+      setIsCreateBatchModalOpen(false);
+    } catch (err: any) {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Batch Action Error',
+        description: err.message || 'Failed to save batch.',
+        type: 'danger',
+        confirmText: 'Dismiss'
+      });
+    }
+  };
+
+  const handleDeleteBatch = (batchId: string) => {
+    if (!onDeleteBatch) return;
+    const targetBatch = data.batches.find(b => b.id === batchId);
+    setConfirmModal({
+      isOpen: true,
+      title: 'លុបក្រុមគោ (Delete Batch)?',
+      description: `តើលោកអ្នកប្រាកដជាចង់លុបក្រុម "${targetBatch?.name || batchId}" ដែរឬទេ? គោនៅក្នុងក្រុមនេះនឹងត្រូវបកត្រឡប់ទៅជាគោទំនេរវិញ។`,
+      type: 'danger',
+      confirmText: 'លុបក្រុម',
+      onConfirm: async () => {
+        try {
+          await onDeleteBatch(batchId);
+          setSelectedBatchId('');
+          setConfirmModal({
+            isOpen: true,
+            title: 'លុបបានជោគជ័យ',
+            description: `ក្រុម "${batchId}" ត្រូវបានលុបចេញពីប្រព័ន្ធ។`,
+            type: 'success',
+            confirmText: 'Okay'
+          });
+        } catch (err: any) {
+          alert(err.message || 'Failed to delete batch.');
+        }
+      }
+    });
+  };
+
+  // Submit allocation of unassigned cows
+  const handleAllocateCows = async () => {
+    if (!defaultBatch || selectedCowIds.length === 0) return;
+    try {
+      await onAssignCows(defaultBatch.id, selectedCowIds);
+      setSelectedCowIds([]);
+      setConfirmModal({
+        isOpen: true,
+        title: 'គោត្រូវបានដាក់ចូលបំប៉ន',
+        description: `គោចំនួន ${selectedCowIds.length} ក្បាល ត្រូវបានបញ្ចូលទៅក្នុងកម្មវិធីបំប៉នរួចរាល់។`,
+        type: 'success',
+        confirmText: 'Okay'
+      });
+    } catch (err: any) {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Allocation Error',
+        description: err.message || 'Failed to allocate cows.',
+        type: 'danger',
+        confirmText: 'Dismiss'
+      });
+    }
+  };
+
+  // Remove a single cow from the program
+  const handleRemoveCowFromProgram = async (cowId: string) => {
+    if (!defaultBatch) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'ដកគោចេញពីកម្មវិធីបំប៉ន?',
+      description: `តើលោកអ្នកប្រាកដជាចង់ដកគោលេខសម្គាល់ ${cowId} ចេញពីកម្មវិធីបំប៉នដែរឬទេ?`,
+      type: 'warning',
+      confirmText: 'ដកចេញ',
+      onConfirm: async () => {
+        try {
+          await onRemoveCow(defaultBatch.id, cowId);
+        } catch (err: any) {
+          alert(err.message || 'Failed to remove cow.');
+        }
+      }
+    });
+  };
+
+  // Submit feeding program updates
+  const handleSaveFeeding = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!defaultBatch) return;
+    setIsSavingFeedProg(true);
+    try {
+      const feedingConfig = {
+        ingredients: [
+          { name: "ចំណីសំរេច (DSR-16)", portionPerHead: Number(portionDsr16) || 0, unitCost: Number(costDsr16) || 0 },
+          { name: "ស្មៅ ឬ ពោត ផ្អាប់", portionPerHead: Number(portionGrass) || 0, unitCost: Number(costGrass) || 0 },
+          { name: "ចំបើង", portionPerHead: Number(portionStraw) || 0, unitCost: Number(costStraw) || 0 }
+        ],
+        frequency: feedProgFrequency,
+        startDate: feedProgStartDate,
+        endDate: feedProgEndDate || undefined,
+        status: feedProgStatus,
+        notes: feedProgNote
+      };
+
+      await onUpdateBatch(defaultBatch.id, {
+        feedingProgram: feedingConfig
+      });
+
+      setConfirmModal({
+        isOpen: true,
+        title: 'Feeding Program Updated',
+        description: 'របបអាហារប្រចាំថ្ងៃសម្រាប់គោបំប៉ន ត្រូវបានកែប្រែដោយជោគជ័យ។',
+        type: 'success',
+        confirmText: 'Okay'
+      });
+    } catch (err: any) {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Error Saving Ration',
+        description: err.message || 'Failed to update feeding program.',
+        type: 'danger',
+        confirmText: 'Dismiss'
+      });
+    } finally {
+      setIsSavingFeedProg(false);
+    }
+  };
+
+  // Compute metrics for fattening herd
+  const fatteningCowsInHerd = defaultBatch
+    ? activeCows.filter(c => defaultBatch.cowIds.includes(c.id))
+    : [];
+  const totalBiomass = fatteningCowsInHerd.reduce((sum, c) => sum + c.weight, 0);
+  const avgBiomass = fatteningCowsInHerd.length > 0 ? Math.round(totalBiomass / fatteningCowsInHerd.length) : 0;
+
+  // Calculate daily feed cost per head
+  const dsrDailyCost = (Number(portionDsr16) || 0) * (Number(costDsr16) || 0);
+  const grassDailyCost = (Number(portionGrass) || 0) * (Number(costGrass) || 0);
+  const strawDailyCost = (Number(portionStraw) || 0) * (Number(costStraw) || 0);
+  const dailyFeedCostPerHead = dsrDailyCost + grassDailyCost + strawDailyCost;
+  const totalHerdDailyFeedCost = dailyFeedCostPerHead * fatteningCowsInHerd.length;
+
+  return (
+    <div className="space-y-6">
+      {/* Onboarding Welcome Panel if defaultBatch doesn't exist */}
+      {!defaultBatch ? (
+        <Card className="max-w-xl mx-auto bg-white border border-slate-100 p-8 rounded-2xl shadow-sm text-center space-y-6">
+          <div className="mx-auto h-16 w-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
+            <TrendingUp className="h-8 w-8" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-bold text-slate-900">កម្មវិធីគ្រប់គ្រងការបំប៉នគោ (Fattening Program)</h3>
+            <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+              លោកអ្នកមិនបាច់បំបែកគោជាក្រុមឡើយ! ចាប់ផ្តើមកម្មវិធីបំប៉នសរុបមួយ ដើម្បីគ្រប់គ្រងរបបអាហារ ចំណាយប្រចាំថ្ងៃ ព្រមទាំងតាមដានការកើនទម្ងន់គោដោយផ្ទាល់។
+            </p>
+          </div>
+
+          <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-500 text-left space-y-2.5 max-w-md mx-auto">
+            <p className="font-bold text-slate-700 flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4 text-emerald-600" /> លក្ខណៈងាយស្រួលសម្រាប់ម្ចាស់កសិដ្ឋាន៖
+            </p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>កំណត់របបចំណីអាហារប្រចាំថ្ងៃសម្រាប់ហ្វូងគោបំប៉នទាំងមូល</li>
+              <li>កត់ទម្ងន់រហ័សដោយស្ទង់យកគោគំរូ ៣ ក្បាល (Sampling Mode)</li>
+              <li>មិនចាំបាច់បង្កើតកូដក្រុម ឬគ្រប់គ្រងកាលបរិច្ឆេទក្រុមនីមួយៗឡើយ</li>
+            </ul>
+          </div>
+
+          <Button
+            onClick={handleInitializeHerd}
+            disabled={isInitializingHerd}
+            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-600 font-bold text-white px-8 py-3 rounded-xl shadow-md cursor-pointer transition-transform active:scale-95"
+          >
+            {isInitializingHerd ? 'Starting...' : '🚀 ចាប់ផ្តើមកម្មវិធីបំប៉ន (Start Fattening)'}
+          </Button>
+        </Card>
+      ) : (
+        /* Main Dashboard Panel */
+        <>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+                <TrendingUp className="h-6 w-6 text-emerald-600 animate-pulse" />
+                កម្មវិធីបំប៉នគោសាច់ (Fattening Management)
+              </h3>
+              <p className="text-[11px] text-slate-400 font-semibold">
+                Manage rations, weights, and average daily gain (ADG) for the entire fattening herd.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {data.batches.length > 0 && (
+                <select
+                  value={defaultBatch?.id || ''}
+                  onChange={e => setSelectedBatchId(e.target.value)}
+                  className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 shadow-xs focus:outline-none cursor-pointer"
+                >
+                  {data.batches.map(b => (
+                    <option key={b.id} value={b.id}>
+                      {b.name} ({b.id}) - {b.status}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <Button
+                onClick={() => {
+                  setEditingBatch(null);
+                  setIsCreateBatchModalOpen(true);
+                }}
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="h-4 w-4" /> ក្រុមថ្មី (New Batch)
+              </Button>
+
+              {defaultBatch && (
+                <>
+                  <Button
+                    onClick={() => {
+                      setEditingBatch(defaultBatch);
+                      setIsCreateBatchModalOpen(true);
+                    }}
+                    className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
+                  >
+                    ✏️ កែប្រែ (Edit)
+                  </Button>
+
+                  {onDeleteBatch && (
+                    <Button
+                      onClick={() => handleDeleteBatch(defaultBatch.id)}
+                      className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> លុប (Delete)
+                    </Button>
+                  )}
+                </>
+              )}
+
+              <Button
+                onClick={() => setIsAllBatchesOpen(true)}
+                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
+              >
+                <Layers className="h-4 w-4 text-emerald-600" /> 📋 ក្រុមទាំងអស់ ({data.batches.length})
+              </Button>
+
+              <Button
+                onClick={openScalingDialog}
+                className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs py-2 px-4 shadow-md flex items-center gap-1.5 cursor-pointer transition-all hover:translate-y-[-1px]"
+              >
+                <Scale className="h-4 w-4" /> ⚖️ កត់គីឡូគោបំប៉ន (Record Weights)
+              </Button>
+            </div>
+          </div>
+
+          {/* KPI Dashboard Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-left">
+            <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
+              <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Cattle In Fattening</p>
+              <p className="text-2xl font-black text-slate-800 mt-1">
+                {fatteningCowsInHerd.length}{' '}
+                <span className="text-xs font-bold text-emerald-600">Head (ក្បាល)</span>
+              </p>
+            </div>
+            <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
+              <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Total Herd Biomass</p>
+              <p className="text-2xl font-black text-slate-800 mt-1">
+                {totalBiomass.toLocaleString()}{' '}
+                <span className="text-xs font-bold text-blue-600">kg</span>
+              </p>
+            </div>
+            <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
+              <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Avg Weight per Head</p>
+              <p className="text-2xl font-black text-slate-800 mt-1">
+                {avgBiomass}{' '}
+                <span className="text-xs font-bold text-slate-500">kg</span>
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-50/20 to-teal-50/25 border border-emerald-100/50 p-4.5 rounded-2xl shadow-xs animate-pulse">
+              <p className="text-[9px] font-black uppercase text-emerald-700 tracking-wider">Daily Feed Cost (Total)</p>
+              <p className="text-2xl font-black text-emerald-700 mt-1">
+                ៛ {totalHerdDailyFeedCost.toLocaleString()}{' '}
+                <span className="text-[10px] font-bold opacity-85">/ day</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Sub Navigation Tabs */}
+          <div className="flex bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-xs font-bold w-fit">
+            <button
+              onClick={() => setSubView('members')}
+              className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                subView === 'members'
+                  ? 'bg-white text-emerald-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              🧑‍🌾 ហ្វូងគោបំប៉ន & បន្ថែមគោ (Herd & Allocation)
+            </button>
+            <button
+              onClick={() => setSubView('feed')}
+              className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                subView === 'feed'
+                  ? 'bg-white text-emerald-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              🌾 ចំណីអាហារប្រចាំថ្ងៃ (Daily Feed Ration)
+            </button>
+            <button
+              onClick={() => setSubView('report')}
+              className={`px-4 py-2 rounded-lg transition-all cursor-pointer ${
+                subView === 'report'
+                  ? 'bg-white text-emerald-700 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              📊 របាយការណ៍លូតលាស់ & FCR (ADG Reports)
+            </button>
+          </div>
+
+          {/* Sub View Contents */}
+          {subView === 'members' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Herd List (2 cols) */}
+              <div className="lg:col-span-2 space-y-4">
+                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
+                  បញ្ជីឈ្មោះគោបំប៉នបច្ចុប្បន្ន (FATTENING HERD MEMBERS)
+                </h4>
+
+                <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-xs">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 uppercase font-black text-[9.5px] tracking-wider">
+                          <th className="py-3 px-4">Cow ID</th>
+                          <th className="py-3 px-4">Breed (ពូជ)</th>
+                          <th className="py-3 px-4">Current Weight</th>
+                          <th className="py-3 px-4">Health Status</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fatteningCowsInHerd.length > 0 ? (
+                          fatteningCowsInHerd.map(cow => (
+                            <tr key={cow.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
+                              <td className="py-3.5 px-4 font-black text-slate-800">{cow.id}</td>
+                              <td className="py-3.5 px-4 text-slate-750">{cow.breed}</td>
+                              <td className="py-3.5 px-4 font-mono font-bold text-slate-800">
+                                {cow.weight} <span className="text-slate-400 text-[10px]">kg</span>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-bold border ${
+                                  cow.healthStatus === 'Good'
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                    : cow.healthStatus === 'Poor'
+                                    ? 'bg-rose-50 text-rose-600 border-rose-100'
+                                    : 'bg-amber-50 text-amber-600 border-amber-100'
+                                }`}>
+                                  {cow.healthStatus}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveCowFromProgram(cow.id)}
+                                  className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50/50 transition-colors cursor-pointer"
+                                  title="Remove from Fattening Program"
+                                >
+                                  <UserMinus className="h-4 w-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={5} className="py-12 text-center text-slate-400 font-bold">
+                              គ្មានគោនៅក្នុងកម្មវិធីបំប៉នបច្ចុប្បន្នទេ។ សូមបន្ថែមគោពីបញ្ជីខាងស្តាំ!
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              {/* Allocation List (1 col) */}
+              <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-xs space-y-4 max-h-[600px] flex flex-col">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">
+                      បន្ថែមគោចូលកម្មវិធីបំប៉ន (Add to Fattening)
+                    </h4>
+                    <span className="text-[10px] font-black text-emerald-650 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                      {selectedCowIds.length} Selected
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Select unassigned active stock cows to put on fattening</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                    <Input
+                      placeholder="ID/Breed..."
+                      value={searchUnassigned}
+                      onChange={e => setSearchUnassigned(e.target.value)}
+                      className="h-8 text-xs pl-8 placeholder:text-slate-400"
+                    />
+                  </div>
+                  <select
+                    value={breedFilter}
+                    onChange={e => setBreedFilter(e.target.value)}
+                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                  >
+                    <option value="">All Breeds</option>
+                    {(data.settings.breeds || []).map(b => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] font-bold px-1">
+                  <button
+                    type="button"
+                    onClick={handleSelectAllFiltered}
+                    disabled={filteredUnassignedCows.length === 0}
+                    className="text-emerald-600 hover:text-emerald-700 disabled:opacity-40 cursor-pointer"
+                  >
+                    + Select All ({filteredUnassignedCows.length})
+                  </button>
+                  {selectedCowIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleDeselectAll}
+                      className="text-slate-400 hover:text-rose-500 cursor-pointer"
+                    >
+                      Clear Selection
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-2 border border-slate-100 p-2 rounded-xl bg-slate-50/40">
+                  {filteredUnassignedCows.length > 0 ? (
+                    filteredUnassignedCows.map(cow => {
+                      const isSelected = selectedCowIds.includes(cow.id);
+                      return (
+                        <div
+                          key={cow.id}
+                          onClick={() => {
+                            setSelectedCowIds(prev =>
+                              prev.includes(cow.id) ? prev.filter(id => id !== cow.id) : [...prev, cow.id]
+                            );
+                          }}
+                          className={`p-2.5 rounded-lg border text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold shadow-xs'
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="text-left">
+                            <span className="font-black text-slate-800">{cow.id}</span>
+                            <p className="text-[9px] text-slate-400 mt-0.5">{cow.breed} • {cow.weight} kg</p>
+                          </div>
+                          {isSelected ? (
+                            <UserMinus className="h-4 w-4 text-emerald-600" />
+                          ) : (
+                            <UserPlus className="h-4 w-4 text-slate-400" />
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-[10px] text-center text-slate-400 py-10 font-bold">
+                      {unassignedCows.length === 0 ? 'All cows allocated.' : 'No stock cows match filter.'}
+                    </p>
+                  )}
+                </div>
+
+                <Button
+                  onClick={handleAllocateCows}
+                  disabled={selectedCowIds.length === 0}
+                  className="w-full bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-bold py-2 shadow disabled:opacity-50 cursor-pointer"
+                >
+                  🚀 ដាក់ចូលបំប៉ន ({selectedCowIds.length} ក្បាល)
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {subView === 'feed' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Feeding Program Configuration Form (2 cols) */}
+              <div className="lg:col-span-2 bg-white border border-slate-100 rounded-2xl p-6 shadow-xs text-left">
+                <div className="border-b border-slate-200 pb-3 mb-4">
+                  <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Layers className="h-4 w-4 text-emerald-600" />
+                    របបអាហារបំប៉នប្រចាំថ្ងៃ (Daily Feeding Ration Config)
+                  </h4>
+                  <p className="text-[10.5px] text-slate-400 mt-1">
+                    Set portion sizes and unit costs for daily concentrates and roughages fed per cow.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSaveFeeding} className="space-y-5">
+                  {/* Ingredient 1: DSR-16 */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-800 flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        1. ចំណីសំរេច (DSR-16 Concentrate Feed)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="portion_dsr" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Portion (kg/head/day)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          id="portion_dsr"
+                          value={portionDsr16}
+                          onChange={e => setPortionDsr16(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="cost_dsr" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Unit Cost (៛ Riel / kg)</Label>
+                        <Input
+                          type="number"
+                          id="cost_dsr"
+                          value={costDsr16}
+                          onChange={e => setCostDsr16(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ingredient 2: Silage */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-800 flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        2. ស្មៅ ឬ ពោត ផ្អាប់ (Grass / Corn Silage)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="portion_grass" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Portion (kg/head/day)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          id="portion_grass"
+                          value={portionGrass}
+                          onChange={e => setPortionGrass(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="cost_grass" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Unit Cost (៛ Riel / kg)</Label>
+                        <Input
+                          type="number"
+                          id="cost_grass"
+                          value={costGrass}
+                          onChange={e => setCostGrass(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ingredient 3: Straw */}
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4.5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-800 flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        3. ចំបើង (Rice Straw / Hay Roughage)
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="portion_straw" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Portion (kg/head/day)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          id="portion_straw"
+                          value={portionStraw}
+                          onChange={e => setPortionStraw(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="cost_straw" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Unit Cost (៛ Riel / kg)</Label>
+                        <Input
+                          type="number"
+                          id="cost_straw"
+                          value={costStraw}
+                          onChange={e => setCostStraw(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="f_frequency" className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Feeding Frequency</Label>
+                      <select
+                        id="f_frequency"
+                        value={feedProgFrequency}
+                        onChange={e => setFeedProgFrequency(e.target.value)}
+                        className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none cursor-pointer font-bold"
+                      >
+                        <option value="Once Daily">Once Daily</option>
+                        <option value="Twice Daily">Twice Daily</option>
+                        <option value="Three Times Daily">Three Times Daily</option>
+                        <option value="Ad-Libitum">Ad-Libitum (Free Choice)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="f_start" className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ration Start Date</Label>
+                      <Input
+                        type="date"
+                        id="f_start"
+                        value={feedProgStartDate}
+                        onChange={e => setFeedProgStartDate(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-2 border-t border-slate-100">
+                    <Button
+                      type="submit"
+                      disabled={isSavingFeedProg}
+                      className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs py-2 px-6 font-bold shadow-md cursor-pointer transition-transform active:scale-95"
+                    >
+                      {isSavingFeedProg ? 'Saving...' : '💾 រក្សាទុករបបអាហារ (Save Ration)'}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Feed Cost Summary Sidebar (1 col) */}
+              <div className="space-y-4">
+                <Card className="bg-white border border-slate-100 p-5 rounded-2xl shadow-xs text-left">
+                  <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-50 pb-2 mb-3">
+                    គណនាថ្លៃចំណី (Feed Cost Analysis)
+                  </h5>
+                  <div className="space-y-3.5 text-xs text-slate-650">
+                    <div className="flex justify-between border-b border-slate-50 pb-1.5">
+                      <span>DSR-16 Concentrate Cost</span>
+                      <span className="font-mono font-bold text-slate-800">៛ {dsrDailyCost.toLocaleString()} / head</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-50 pb-1.5">
+                      <span>Silage Roughage Cost</span>
+                      <span className="font-mono font-bold text-slate-800">៛ {grassDailyCost.toLocaleString()} / head</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-50 pb-1.5">
+                      <span>Straw Roughage Cost</span>
+                      <span className="font-mono font-bold text-slate-800">៛ {strawDailyCost.toLocaleString()} / head</span>
+                    </div>
+                    <div className="flex justify-between font-black text-slate-800 text-sm bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">
+                      <span className="text-emerald-800 font-bold">Total / Head / Day</span>
+                      <span className="text-emerald-800 font-bold">៛ {dailyFeedCostPerHead.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between font-black text-slate-800 text-sm bg-teal-50/50 p-2.5 rounded-xl border border-teal-100/50">
+                      <span className="text-teal-800 font-bold">Herd Daily Cost ({fatteningCowsInHerd.length} head)</span>
+                      <span className="text-teal-800 font-bold">៛ {totalHerdDailyFeedCost.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {subView === 'report' && (
+            (() => {
+              const batchStart = new Date(defaultBatch.startDate);
+              const today = new Date();
+              const diffTime = Math.abs(today.getTime() - batchStart.getTime());
+              const daysInBatch = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+              const reportData = fatteningCowsInHerd.map(cow => {
+                const cowRecords = data.weightTracking.filter(r => r.cowId === cow.id);
+                const sortedRecords = [...cowRecords].sort((a, b) => new Date(a.trackingDate || '').getTime() - new Date(b.trackingDate || '').getTime());
+
+                const initialWeight = sortedRecords.length > 0
+                  ? (sortedRecords[0].oldWeight || sortedRecords[0].currentWeight)
+                  : cow.weight;
+
+                const currentWeight = cow.weight;
+                const gain = currentWeight - initialWeight;
+                const adg = gain / daysInBatch;
+
+                return {
+                  cow,
+                  initialWeight,
+                  currentWeight,
+                  gain,
+                  adg,
+                  daysInBatch
+                };
+              });
+
+              const averageADG = reportData.length > 0
+                ? reportData.reduce((sum, r) => sum + r.adg, 0) / reportData.length
+                : 0;
+
+              const sortedReportByADG = [...reportData].sort((a, b) => b.adg - a.adg);
+              const topPerformer = sortedReportByADG.length > 0 ? sortedReportByADG[0] : null;
+              const underPerformer = sortedReportByADG.length > 0 ? sortedReportByADG[sortedReportByADG.length - 1] : null;
+
+              return (
+                <div className="space-y-4 mt-4">
+                  <div className="text-left">
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">របាយការណ៍លូតលាស់សរុប (HERD PERFORMANCE REPORT)</h4>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Average Daily Gain (ADG) calculated relative to herd program start date ({defaultBatch.startDate?.split('T')[0]}).</p>
+                  </div>
+
+                  {/* Summary Widgets */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                    <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl shadow-xs">
+                      <p className="text-[9px] uppercase font-bold text-emerald-700 tracking-wider">Herd Average ADG</p>
+                      <p className="text-xl font-black text-emerald-800 mt-1">{averageADG.toFixed(2)} <span className="text-xs font-bold">kg / day</span></p>
+                    </div>
+                    {topPerformer && (
+                      <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl shadow-xs">
+                        <p className="text-[9px] uppercase font-bold text-blue-700 tracking-wider">Top Performer (លូតលាស់ល្អបំផុត)</p>
+                        <p className="text-xl font-black text-blue-800 mt-1">{topPerformer.cow.id} <span className="text-xs font-bold text-blue-650">({topPerformer.adg.toFixed(2)} kg/d)</span></p>
+                      </div>
+                    )}
+                    {underPerformer && (
+                      <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl shadow-xs">
+                        <p className="text-[9px] uppercase font-bold text-rose-700 tracking-wider">Under Performer (លូតលាស់ខ្សោយបំផុត)</p>
+                        <p className="text-xl font-black text-rose-800 mt-1">{underPerformer.cow.id} <span className="text-xs font-bold text-rose-650">({underPerformer.adg.toFixed(2)} kg/d)</span></p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Report Table */}
+                  <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-xs">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 uppercase font-black text-[9.5px] tracking-wider">
+                            <th className="py-3 px-4">Cow ID</th>
+                            <th className="py-3 px-4">Breed</th>
+                            <th className="py-3 px-4">Initial Weight</th>
+                            <th className="py-3 px-4">Current Weight</th>
+                            <th className="py-3 px-4">Net Gain</th>
+                            <th className="py-3 px-4">ADG (Average Daily Gain)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reportData.length > 0 ? (
+                            reportData.map(({ cow, initialWeight, currentWeight, gain, adg }) => (
+                              <tr key={cow.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
+                                <td className="py-3 px-4 font-black text-slate-800">{cow.id}</td>
+                                <td className="py-3 px-4 text-slate-500">{cow.breed}</td>
+                                <td className="py-3 px-4 font-mono font-bold text-slate-650">{initialWeight} kg</td>
+                                <td className="py-3 px-4 font-mono font-black text-slate-800">{currentWeight} kg</td>
+                                <td className="py-3 px-4">
+                                  <span className={`font-mono font-black text-xs ${gain >= 0 ? 'text-emerald-650' : 'text-rose-500'}`}>
+                                    {gain >= 0 ? `+${gain}` : gain} kg
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 font-mono">
+                                  <span className={`px-2 py-0.5 rounded-md font-bold ${
+                                    adg >= 1.0
+                                      ? 'bg-emerald-50 text-emerald-600'
+                                      : adg >= 0.5
+                                      ? 'bg-blue-50 text-blue-600'
+                                      : 'bg-rose-50 text-rose-600'
+                                  }`}>
+                                    {adg.toFixed(2)} kg/day
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="py-12 text-center text-slate-400 font-bold">
+                                No report data available. Add cows to the program to begin tracking!
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
+          )}
+        </>
+      )}
+
+      {/* Scaling Weight Dialog */}
+      {defaultBatch && (
+        <Dialog open={isScalingOpen} onOpenChange={setIsScalingOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white p-6 rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-base font-black text-slate-800">⚖️ កត់ទម្ងន់គោបំប៉ន (Herd Weight Logging)</DialogTitle>
+              <DialogDescription className="text-xs text-slate-400 mt-0.5">
+                Record new weights for the fattening herd using all-cow or random sampling mode.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 mt-4 text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Cohort Batch Scaling</h4>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Record current weights and update health conditions using all-scale or random sampling estimation.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="scale_date" className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date</Label>
+                    <Input
+                      type="date"
+                      id="scale_date"
+                      className="h-8 py-1 px-2 text-xs w-32 border border-slate-200 rounded-lg text-slate-800"
+                      value={scalingDate}
+                      onChange={e => setScalingDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Scaling Mode Selector Toggle */}
+              <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-[10px] font-bold w-fit">
+                <button
+                  type="button"
+                  onClick={() => setIsSamplingMode(false)}
+                  className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${!isSamplingMode ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Weigh All Cows (គត់គីឡូទាំងអស់)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSamplingMode(true)}
+                  className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${isSamplingMode ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Sampling Estimation (ស្ទង់ទម្ងន់គំរូ 3)
+                </button>
+              </div>
+
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!onRecordBatchWeights) return;
+                  setIsSubmittingWeights(true);
+                  try {
+                    let records = [];
+                    const cohortCows = activeCows.filter(c => defaultBatch.cowIds.includes(c.id));
+
+                    if (isSamplingMode) {
+                      const bestCow = cohortCows.find(c => c.id === sampleBestId);
+                      const mediumCow = cohortCows.find(c => c.id === sampleMediumId);
+                      const lowCow = cohortCows.find(c => c.id === sampleLowId);
+
+                      if (!bestCow || !mediumCow || !lowCow || !sampleBestWeight || !sampleMediumWeight || !sampleLowWeight) {
+                        throw new Error('សូមជ្រើសរើសគោគំរូទាំង៣ និងបញ្ចូលទម្ងន់ឱ្យបានត្រឹមត្រូវ។ (Please select all 3 sample cows and enter their weights.)');
+                      }
+
+                      const bestGain = Number(sampleBestWeight) - bestCow.weight;
+                      const mediumGain = Number(sampleMediumWeight) - mediumCow.weight;
+                      const lowGain = Number(sampleLowWeight) - lowCow.weight;
+                      const avgGain = (bestGain + mediumGain + lowGain) / 3;
+
+                      records = cohortCows.map(cow => {
+                        let finalWeight = cow.weight;
+                        if (cow.id === sampleBestId) {
+                          finalWeight = Number(sampleBestWeight);
+                        } else if (cow.id === sampleMediumId) {
+                          finalWeight = Number(sampleMediumWeight);
+                        } else if (cow.id === sampleLowId) {
+                          finalWeight = Number(sampleLowWeight);
+                        } else {
+                          finalWeight = Math.round((cow.weight + avgGain) * 10) / 10;
+                        }
+                        return {
+                          cowId: cow.id,
+                          currentWeight: finalWeight,
+                          healthStatus: cow.healthStatus,
+                          trackingDate: scalingDate
+                        };
+                      });
+                    } else {
+                      records = Object.entries(scaleInputs).map(([cowId, input]) => ({
+                        cowId,
+                        currentWeight: Number(input.weight),
+                        healthStatus: input.healthStatus,
+                        trackingDate: scalingDate
+                      }));
+                    }
+
+                    await onRecordBatchWeights(records);
+                    setIsScalingOpen(false);
+                    setConfirmModal({
+                      isOpen: true,
+                      title: 'Weights Recorded',
+                      description: isSamplingMode
+                        ? 'Sample weights logged successfully and average gains applied to all other herd members.'
+                        : 'All cattle weight records for the fattening herd have been successfully logged.',
+                      type: 'success',
+                      confirmText: 'View Report',
+                      onConfirm: () => setSubView('report')
+                    });
+                  } catch (err: any) {
+                    setConfirmModal({
+                      isOpen: true,
+                      title: 'Error Logging Weights',
+                      description: err.message || 'Unknown error occurred while saving weights.',
+                      type: 'danger',
+                      confirmText: 'Dismiss'
+                    });
+                  } finally {
+                    setIsSubmittingWeights(false);
+                  }
+                }}
+                className="space-y-4"
+              >
+                {isSamplingMode ? (
+                  <div className="space-y-4 bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                    <div className="border-b border-slate-200 pb-2">
+                      <span className="text-xs font-black text-slate-800">ស្ទង់ទម្ងន់គំរូ 3 (Log 3 Representative Sample Weights)</span>
+                      <p className="text-[10px] text-slate-400 mt-0.5">Select one high-performing, one average, and one under-performing cow from the cohort.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* High Sample */}
+                      <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-2.5">
+                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full uppercase">1. Best Grower (ល្អបំផុត)</span>
+                        <div className="space-y-1">
+                          <Label htmlFor="sample_best" className="text-[9px] uppercase font-bold text-slate-400">Cow ID</Label>
+                          <select
+                            id="sample_best"
+                            value={sampleBestId}
+                            onChange={e => {
+                              setSampleBestId(e.target.value);
+                              const cow = activeCows.find(c => c.id === e.target.value);
+                              if (cow) setSampleBestWeight(String(cow.weight));
+                            }}
+                            className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 cursor-pointer font-bold"
+                            required
+                          >
+                            <option value="">-- Select cow --</option>
+                            {activeCows.filter(c => defaultBatch.cowIds.includes(c.id) && c.id !== sampleMediumId && c.id !== sampleLowId).map(c => (
+                              <option key={c.id} value={c.id}>{c.id} ({c.breed} - {c.weight} kg)</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="sample_best_w" className="text-[9px] uppercase font-bold text-slate-400">New Weight (kg)</Label>
+                          <Input
+                            type="number"
+                            id="sample_best_w"
+                            value={sampleBestWeight}
+                            onChange={e => setSampleBestWeight(e.target.value)}
+                            className="h-8 text-xs font-mono font-bold text-slate-800"
+                            placeholder="New Wt"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Medium Sample */}
+                      <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-2.5">
+                        <span className="text-[10px] font-black text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full uppercase">2. Medium Grower (មធ្យម)</span>
+                        <div className="space-y-1">
+                          <Label htmlFor="sample_med" className="text-[9px] uppercase font-bold text-slate-400">Cow ID</Label>
+                          <select
+                            id="sample_med"
+                            value={sampleMediumId}
+                            onChange={e => {
+                              setSampleMediumId(e.target.value);
+                              const cow = activeCows.find(c => c.id === e.target.value);
+                              if (cow) setSampleMediumWeight(String(cow.weight));
+                            }}
+                            className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 cursor-pointer font-bold"
+                            required
+                          >
+                            <option value="">-- Select cow --</option>
+                            {activeCows.filter(c => defaultBatch.cowIds.includes(c.id) && c.id !== sampleBestId && c.id !== sampleLowId).map(c => (
+                              <option key={c.id} value={c.id}>{c.id} ({c.breed} - {c.weight} kg)</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="sample_med_w" className="text-[9px] uppercase font-bold text-slate-400">New Weight (kg)</Label>
+                          <Input
+                            type="number"
+                            id="sample_med_w"
+                            value={sampleMediumWeight}
+                            onChange={e => setSampleMediumWeight(e.target.value)}
+                            className="h-8 text-xs font-mono font-bold text-slate-800"
+                            placeholder="New Wt"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      {/* Low Sample */}
+                      <div className="bg-white border border-slate-100 rounded-xl p-3.5 space-y-2.5">
+                        <span className="text-[10px] font-black text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full uppercase">3. Low Grower (ខ្សោយបំផុត)</span>
+                        <div className="space-y-1">
+                          <Label htmlFor="sample_low" className="text-[9px] uppercase font-bold text-slate-400">Cow ID</Label>
+                          <select
+                            id="sample_low"
+                            value={sampleLowId}
+                            onChange={e => {
+                              setSampleLowId(e.target.value);
+                              const cow = activeCows.find(c => c.id === e.target.value);
+                              if (cow) setSampleLowWeight(String(cow.weight));
+                            }}
+                            className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 cursor-pointer font-bold"
+                            required
+                          >
+                            <option value="">-- Select cow --</option>
+                            {activeCows.filter(c => defaultBatch.cowIds.includes(c.id) && c.id !== sampleBestId && c.id !== sampleMediumId).map(c => (
+                              <option key={c.id} value={c.id}>{c.id} ({c.breed} - {c.weight} kg)</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="sample_low_w" className="text-[9px] uppercase font-bold text-slate-400">New Weight (kg)</Label>
+                          <Input
+                            type="number"
+                            id="sample_low_w"
+                            value={sampleLowWeight}
+                            onChange={e => setSampleLowWeight(e.target.value)}
+                            className="h-8 text-xs font-mono font-bold text-slate-800"
+                            placeholder="New Wt"
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dynamic Preview Panel */}
+                    {(() => {
+                      const cohortCows = activeCows.filter(c => defaultBatch.cowIds.includes(c.id));
+                      const bestCow = cohortCows.find(c => c.id === sampleBestId);
+                      const mediumCow = cohortCows.find(c => c.id === sampleMediumId);
+                      const lowCow = cohortCows.find(c => c.id === sampleLowId);
+
+                      if (bestCow && mediumCow && lowCow && sampleBestWeight && sampleMediumWeight && sampleLowWeight) {
+                        const bestGain = Number(sampleBestWeight) - bestCow.weight;
+                        const mediumGain = Number(sampleMediumWeight) - mediumCow.weight;
+                        const lowGain = Number(sampleLowWeight) - lowCow.weight;
+                        const avgGain = (bestGain + mediumGain + lowGain) / 3;
+
+                        return (
+                          <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3.5 space-y-2 text-xs text-left">
+                            <p className="font-extrabold text-[#003B33] flex items-center gap-1.5">
+                              📊 Results & Estimation Math (ការគណនាស្វ័យប្រវត្ត)
+                            </p>
+                            <div className="grid grid-cols-4 gap-2 text-center py-1">
+                              <div className="bg-white border border-slate-100 p-2 rounded-lg">
+                                <p className="text-[9px] text-slate-400 font-bold uppercase">Best Gain</p>
+                                <p className="font-mono font-black text-emerald-600">+{bestGain.toFixed(1)} kg</p>
+                              </div>
+                              <div className="bg-white border border-slate-100 p-2 rounded-lg">
+                                <p className="text-[9px] text-slate-400 font-bold uppercase">Medium Gain</p>
+                                <p className="font-mono font-black text-blue-600">+{mediumGain.toFixed(1)} kg</p>
+                              </div>
+                              <div className="bg-white border border-slate-100 p-2 rounded-lg">
+                                <p className="text-[9px] text-slate-400 font-bold uppercase">Low Gain</p>
+                                <p className="font-mono font-black text-rose-600">+{lowGain.toFixed(1)} kg</p>
+                              </div>
+                              <div className="bg-emerald-600 text-white p-2 rounded-lg">
+                                <p className="text-[9px] opacity-80 font-bold uppercase">Avg Gain</p>
+                                <p className="font-mono font-black">+{avgGain.toFixed(1)} kg</p>
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-emerald-800 font-medium">
+                              💡 <strong>Assumption Applied</strong>: The system will automatically add <strong>+{avgGain.toFixed(1)} kg</strong> to the last recorded weight of all remaining {cohortCows.length - 3} cows in this cohort.
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </div>
+                ) : (
+                  /* Weigh All mode */
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-1">
+                    {activeCows.filter(c => defaultBatch.cowIds.includes(c.id)).map(cow => {
+                      const currentVal = scaleInputs[cow.id] || { weight: cow.weight, healthStatus: cow.healthStatus };
+                      return (
+                        <div key={cow.id} className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-black text-slate-800">{cow.id} ({cow.breed})</span>
+                            <span className="text-[10px] text-slate-400 font-bold">ទម្ងន់ចាស់: <span className="font-mono text-slate-700 font-extrabold">{cow.weight} kg</span></span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label htmlFor={`w_${cow.id}`} className="text-[9px] font-bold uppercase text-slate-400">ទម្ងន់ថ្មី (New Wt)</Label>
+                              <Input
+                                type="number"
+                                id={`w_${cow.id}`}
+                                required
+                                min={1}
+                                max={1500}
+                                className="h-8 text-xs font-semibold font-mono text-slate-800 mt-0.5"
+                                value={currentVal.weight}
+                                onChange={e => setScaleInputs(prev => ({
+                                  ...prev,
+                                  [cow.id]: { ...prev[cow.id], weight: parseFloat(e.target.value) || 0 }
+                                }))}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor={`h_${cow.id}`} className="text-[9px] font-bold uppercase text-slate-400">សុខភាព (Health)</Label>
+                              <select
+                                id={`h_${cow.id}`}
+                                className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 mt-0.5 cursor-pointer font-bold"
+                                value={currentVal.healthStatus}
+                                onChange={e => setScaleInputs(prev => ({
+                                  ...prev,
+                                  [cow.id]: { ...prev[cow.id], healthStatus: e.target.value }
+                                }))}
+                              >
+                                <option value="Good">👍 Good</option>
+                                <option value="Fair">😐 Fair</option>
+                                <option value="Poor">⚠️ Poor</option>
+                                <option value="Dead">💀 Dead</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {activeCows.filter(c => defaultBatch.cowIds.includes(c.id)).length === 0 && (
+                      <p className="col-span-2 py-8 text-center text-slate-400 font-semibold text-xs bg-slate-50 border border-slate-100 rounded-xl">
+                        No cows allocated in the fattening program.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-2 border-t border-slate-100">
+                  <Button
+                    type="button"
+                    onClick={() => setIsScalingOpen(false)}
+                    variant="outline"
+                    className="rounded-xl text-xs py-1.5 px-4 font-bold border-slate-200 text-slate-650 hover:bg-slate-50"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmittingWeights || activeCows.filter(c => defaultBatch.cowIds.includes(c.id)).length === 0}
+                    className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs py-1.5 px-4 font-bold shadow-md"
+                  >
+                    {isSubmittingWeights ? 'Saving Weights...' : 'រក្សាទុកទម្ងន់ (Save Weights)'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Create / Edit Custom Batch Modal */}
+      <BatchModal
+        isOpen={isCreateBatchModalOpen}
+        onClose={() => {
+          setIsCreateBatchModalOpen(false);
+          setEditingBatch(null);
+        }}
+        onSubmit={handleSaveBatch}
+        unassignedCows={unassignedCows}
+        batchTypes={data.settings?.batchTypes}
+        initialBatch={editingBatch}
+      />
+
+      {/* All Batches Table Modal (Read & Manage All Batches) */}
+      <Dialog open={isAllBatchesOpen} onOpenChange={setIsAllBatchesOpen}>
+        <DialogContent className="max-w-4xl bg-white p-6 rounded-2xl border border-slate-100 shadow-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="text-left pb-4 border-b border-slate-100">
+            <DialogTitle className="text-lg font-black text-slate-900 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-emerald-600" />
+                បញ្ជីក្រុមទាំងស្រុង (All Batches Ledger - {data.batches.length})
+              </span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              គ្រប់គ្រងក្រុមគោទាំងអស់ កែប្រែព័ត៌មាន ឬលុបក្រុមចេញពីប្រព័ន្ធ។
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="overflow-x-auto pt-4">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 uppercase font-black text-[9.5px] tracking-wider">
+                  <th className="py-3 px-4">Batch ID</th>
+                  <th className="py-3 px-4">Name (ឈ្មោះក្រុម)</th>
+                  <th className="py-3 px-4">Program Type</th>
+                  <th className="py-3 px-4">Headcount</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {data.batches.length > 0 ? (
+                  data.batches.map(b => (
+                    <tr key={b.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-800">{b.id}</td>
+                      <td className="py-3 px-4 font-bold text-slate-800">{b.name}</td>
+                      <td className="py-3 px-4 text-slate-600">{b.type}</td>
+                      <td className="py-3 px-4 font-semibold text-slate-700">{b.cowIds?.length || 0} Head</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          b.status === 'Active'
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                            : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}>
+                          {b.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right space-x-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedBatchId(b.id);
+                            setIsAllBatchesOpen(false);
+                          }}
+                          className="px-2.5 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                        >
+                          Select
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingBatch(b);
+                            setIsCreateBatchModalOpen(true);
+                            setIsAllBatchesOpen(false);
+                          }}
+                          className="px-2 py-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                        {onDeleteBatch && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              handleDeleteBatch(b.id);
+                              setIsAllBatchesOpen(false);
+                            }}
+                            className="px-2 py-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400 font-bold">
+                      គ្មានក្រុមក្នុងប្រព័ន្ធទេ។
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Action Dialog Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        type={confirmModal.type}
+        confirmText={confirmModal.confirmText || 'Confirm'}
+        onConfirm={() => {
+          if (confirmModal.onConfirm) confirmModal.onConfirm();
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }}
+        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+      />
+    </div>
+  );
+}

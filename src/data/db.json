@@ -1,0 +1,1891 @@
+{
+  "stock": [
+    {
+      "id": "F-12",
+      "no": "01",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 258,
+      "ownerName": "បងវ័រ",
+      "location": "រទាំង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 3050001,
+      "totalPrice": 3050001,
+      "healthStatus": "Dead",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "F-00",
+      "no": "02",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 386,
+      "ownerName": "បងព្រៃវែង",
+      "location": "ព្រៃវែង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2987500,
+      "totalPrice": 2987500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "F-09",
+      "no": "03",
+      "breed": "គោទន្លេ",
+      "sex": "M",
+      "age": "N/A",
+      "weight": 339,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "F-10",
+      "no": "04",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 358,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "F-11",
+      "no": "05",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 337,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "F-01",
+      "no": "26",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 335,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Dead",
+      "status": "Sold",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-002",
+      "no": "06",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 258,
+      "ownerName": "បងវ័រ",
+      "location": "រទាំង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 3050000,
+      "totalPrice": 3050000,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-004",
+      "no": "07",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 271,
+      "ownerName": "បងវ័រ",
+      "location": "រទាំង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 3050000,
+      "totalPrice": 3050000,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-005",
+      "no": "08",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 337,
+      "ownerName": "បងព្រៃវែង",
+      "location": "ព្រៃវែង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2987500,
+      "totalPrice": 2987500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-006",
+      "no": "09",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 226,
+      "ownerName": "បងព្រៃវែង",
+      "location": "ព្រៃវែង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2987500,
+      "totalPrice": 2987500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-007",
+      "no": "10",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 207,
+      "ownerName": "បងព្រៃវែង",
+      "location": "ព្រៃវែង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2987500,
+      "totalPrice": 2987500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-008",
+      "no": "11",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 228,
+      "ownerName": "បងព្រៃវែង",
+      "location": "ព្រៃវែង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2987500,
+      "totalPrice": 2987500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-009",
+      "no": "12",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 248,
+      "ownerName": "បងព្រៃវែង",
+      "location": "ព្រៃវែង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2987500,
+      "totalPrice": 2987500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-011",
+      "no": "13",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 253,
+      "ownerName": "បងព្រៃវែង",
+      "location": "ព្រៃវែង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2987500,
+      "totalPrice": 2987500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-013",
+      "no": "14",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 245,
+      "ownerName": "បងវ័រ",
+      "location": "រទាំង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 3050000,
+      "totalPrice": 3050000,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-010",
+      "no": "15",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 226,
+      "ownerName": "បងព្រៃវែង",
+      "location": "ព្រៃវែង",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2987500,
+      "totalPrice": 2987500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-08T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-003",
+      "no": "16",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 264,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-012",
+      "no": "17",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 322,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-013_",
+      "no": "18",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 315,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-014",
+      "no": "19",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 349,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-015",
+      "no": "20",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 250,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-016",
+      "no": "21",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 235,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-017",
+      "no": "22",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 290,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-018_",
+      "no": "23",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 241,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-019",
+      "no": "24",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 257,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-020",
+      "no": "25",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 226,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-018",
+      "no": "27",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 196,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-021",
+      "no": "28",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 227,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-022",
+      "no": "29",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 230,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "C-001",
+      "no": "30",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 150,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Active",
+      "purchaseDate": "2026-04-23T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "F-06",
+      "no": "31",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 134,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-24T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "F-07",
+      "no": "32",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 106,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-25T00:00:00.000Z",
+      "remark": ""
+    },
+    {
+      "id": "F-08",
+      "no": "33",
+      "breed": "គោទន្លេ",
+      "sex": "F",
+      "age": "N/A",
+      "weight": 51,
+      "ownerName": "ពូបន្ទាយមានជ័យ",
+      "location": "បន្ទាយមានជ័យ",
+      "phone": "N/A",
+      "buyType": "Lumsum",
+      "unitPrice": 2628500,
+      "totalPrice": 2628500,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "purchaseDate": "2026-04-26T00:00:00.000Z",
+      "remark": ""
+    }
+  ],
+  "weightTracking": [
+    {
+      "cowId": "F-12",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 258,
+      "currentWeight": 1,
+      "gainLoss": -0.9961240310077519,
+      "healthStatus": "Dead",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "C-004",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 271,
+      "currentWeight": 283,
+      "gainLoss": 0.04428044280442804,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "C-002",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 258,
+      "currentWeight": 286,
+      "gainLoss": 0.10852713178294573,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "C-005",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 337,
+      "currentWeight": 340,
+      "gainLoss": 0.008902077151335312,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "C-006",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 226,
+      "currentWeight": 252,
+      "gainLoss": 0.11504424778761062,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "C-007",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 207,
+      "currentWeight": 226,
+      "gainLoss": 0.09178743961352658,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "C-008",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 228,
+      "currentWeight": 256,
+      "gainLoss": 0.12280701754385964,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "C-009",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 248,
+      "currentWeight": 257,
+      "gainLoss": 0.036290322580645164,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "C-011",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 253,
+      "currentWeight": 275,
+      "gainLoss": 0.08695652173913043,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "F-09",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 339,
+      "currentWeight": 339,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "F-10",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 358,
+      "currentWeight": 358,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "F-11",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 337,
+      "currentWeight": 337,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "F-00",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 386,
+      "currentWeight": 1,
+      "gainLoss": -0.9974093264248705,
+      "healthStatus": "Good",
+      "status": "Sold",
+      "trackingDate": null
+    },
+    {
+      "cowId": "F-01",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 335,
+      "currentWeight": 1,
+      "gainLoss": -0.9970149253731343,
+      "healthStatus": "Dead",
+      "status": "Sold",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-001",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 245,
+      "currentWeight": 285,
+      "gainLoss": 0.16326530612244897,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-010",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 226,
+      "currentWeight": 303,
+      "gainLoss": 0.3407079646017699,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-017",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 290,
+      "currentWeight": 303,
+      "gainLoss": 0.04482758620689655,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-014",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 349,
+      "currentWeight": 361,
+      "gainLoss": 0.034383954154727794,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-013",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 315,
+      "currentWeight": 331,
+      "gainLoss": 0.050793650793650794,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-012",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 322,
+      "currentWeight": 344,
+      "gainLoss": 0.06832298136645963,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-019",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 257,
+      "currentWeight": 282,
+      "gainLoss": 0.09727626459143969,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-018",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 241,
+      "currentWeight": 264,
+      "gainLoss": 0.0954356846473029,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-020",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 226,
+      "currentWeight": 259,
+      "gainLoss": 0.14601769911504425,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-016",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 235,
+      "currentWeight": 221,
+      "gainLoss": -0.059574468085106386,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-003",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 264,
+      "currentWeight": 301,
+      "gainLoss": 0.14015151515151514,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-015",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 250,
+      "currentWeight": 261,
+      "gainLoss": 0.044,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-02",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 196,
+      "currentWeight": 227,
+      "gainLoss": 0.15816326530612246,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-03",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 227,
+      "currentWeight": 250,
+      "gainLoss": 0.1013215859030837,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-04",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 230,
+      "currentWeight": 215,
+      "gainLoss": -0.06521739130434782,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-05",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 150,
+      "currentWeight": 199,
+      "gainLoss": 0.32666666666666666,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-06",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 134,
+      "currentWeight": 134,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-07",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 106,
+      "currentWeight": 106,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-08",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 51,
+      "currentWeight": 51,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-05-15T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-001",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 245,
+      "currentWeight": 300,
+      "gainLoss": 0.22448979591836735,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-020",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 226,
+      "currentWeight": 226,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "F-02",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 196,
+      "currentWeight": 220,
+      "gainLoss": 0.12244897959183673,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "F-03",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 227,
+      "currentWeight": 227,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "F-04",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 230,
+      "currentWeight": 230,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "F-07",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 106,
+      "currentWeight": 106,
+      "gainLoss": 0,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-010",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 226,
+      "currentWeight": 230,
+      "gainLoss": 0.017699115044247787,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-003",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 264,
+      "currentWeight": 300,
+      "gainLoss": 0.13636363636363635,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-012",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 322,
+      "currentWeight": 350,
+      "gainLoss": 0.08695652173913043,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-014",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 349,
+      "currentWeight": 340,
+      "gainLoss": -0.025787965616045846,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-013",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 315,
+      "currentWeight": 330,
+      "gainLoss": 0.047619047619047616,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-015",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 250,
+      "currentWeight": 300,
+      "gainLoss": 0.2,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-016",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 235,
+      "currentWeight": 250,
+      "gainLoss": 0.06382978723404255,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-017",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 290,
+      "currentWeight": 300,
+      "gainLoss": 0.034482758620689655,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-018",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 241,
+      "currentWeight": 250,
+      "gainLoss": 0.03734439834024896,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "F-05",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 150,
+      "currentWeight": 180,
+      "gainLoss": 0.2,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "C-019",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 257,
+      "currentWeight": 269,
+      "gainLoss": 0.04669260700389105,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "F-06",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 134,
+      "currentWeight": 150,
+      "gainLoss": 0.11940298507462686,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "F-08",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 51,
+      "currentWeight": 70,
+      "gainLoss": 0.37254901960784315,
+      "healthStatus": "Good",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    },
+    {
+      "cowId": "F-07",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "oldWeight": 106,
+      "currentWeight": 106,
+      "gainLoss": 0,
+      "healthStatus": "Fair",
+      "status": "Active",
+      "trackingDate": "2026-06-03"
+    }
+  ],
+  "salesTracking": [
+    {
+      "cowId": "C-002",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 286,
+      "unitPrice": 9700,
+      "totalPrice": 2774200,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-12",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 1,
+      "unitPrice": 860000,
+      "totalPrice": 860000,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-004",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 283,
+      "unitPrice": 9700,
+      "totalPrice": 2745100,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-005",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 340,
+      "unitPrice": 9700,
+      "totalPrice": 3298000,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-006",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 252,
+      "unitPrice": 9700,
+      "totalPrice": 2444400,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-007",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 226,
+      "unitPrice": 9700,
+      "totalPrice": 2192200,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-008",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 256,
+      "unitPrice": 9700,
+      "totalPrice": 2483200,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-009",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 257,
+      "unitPrice": 9700,
+      "totalPrice": 2492900,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "C-011",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 275,
+      "unitPrice": 9700,
+      "totalPrice": 2667500,
+      "status": "Sold",
+      "salesDate": "2026-04-20T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-09",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 339,
+      "unitPrice": 12000,
+      "totalPrice": 4068000,
+      "status": "Sold",
+      "salesDate": "2026-04-30T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-10",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 358,
+      "unitPrice": 11500,
+      "totalPrice": 4117000,
+      "status": "Sold",
+      "salesDate": "2026-04-30T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-11",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 337,
+      "unitPrice": 11500,
+      "totalPrice": 3875500,
+      "status": "Sold",
+      "salesDate": "2026-04-30T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-00",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 1,
+      "unitPrice": 4100000,
+      "totalPrice": 4100000,
+      "status": "Sold",
+      "salesDate": "2026-04-23T00:00:00.000Z"
+    },
+    {
+      "cowId": "F-01",
+      "breed": "គោទន្លេ",
+      "age": "N/A",
+      "weight": 1,
+      "unitPrice": 1000000,
+      "totalPrice": 1000000,
+      "status": "Sold",
+      "salesDate": "2026-05-18T00:00:00.000Z"
+    }
+  ],
+  "common": {
+    "breeds": [
+      "គោទន្លេ",
+      "កាត់ Brahman",
+      "កាត់ Wagyu"
+    ],
+    "healthStatuses": [
+      "Good",
+      "Fair",
+      "Poor",
+      "Dead"
+    ],
+    "statuses": [
+      "Active",
+      "Sold"
+    ],
+    "buyTypes": [
+      "Lumsum",
+      "Weight"
+    ],
+    "sexes": [
+      "M",
+      "F"
+    ]
+  },
+  "batches": [
+    {
+      "id": "Company Batch1",
+      "name": "Company Batch",
+      "type": "Fattening Program",
+      "startDate": "2026-06-03",
+      "status": "Active",
+      "notes": "",
+      "cowIds": [
+        "C-001",
+        "C-010",
+        "C-003",
+        "C-012",
+        "C-013",
+        "C-014",
+        "C-015",
+        "C-016",
+        "C-017",
+        "C-018",
+        "C-019"
+      ]
+    },
+    {
+      "id": "Company Batch2",
+      "name": "Company Batch",
+      "type": "Fattening Program",
+      "startDate": "2026-06-03",
+      "status": "Active",
+      "notes": "Note",
+      "cowIds": [
+        "C-020",
+        "F-02",
+        "F-03",
+        "F-04",
+        "F-07"
+      ]
+    },
+    {
+      "id": "FAT-DEFAULT",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-21",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-21",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-DEFAULT",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-21",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-21",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-DEFAULT",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-21",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-21",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-DEFAULT",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-21",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-21",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-DEFAULT",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-21",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-21",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-DEFAULT",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-21",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-21",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    }
+  ],
+  "healthLogs": [],
+  "expenses": [
+    {
+      "category": "Feed",
+      "amount": 100000,
+      "date": "2026-06-03",
+      "description": "Remarks\n",
+      "id": "EXP-2GRUTUGZ0"
+    }
+  ],
+  "settings": {
+    "breeds": [
+      "កាត់ Brahman",
+      "កាត់ Wagyu",
+      "គោទន្លេ"
+    ],
+    "locations": [
+      "រទាំង",
+      "ព្រៃវែង",
+      "បន្ទាយមានជ័យ",
+      "ក្រោល A",
+      "ក្រោល B"
+    ],
+    "buyTypes": [
+      "Lumsum",
+      "Weight"
+    ],
+    "healthStatuses": [
+      "Good",
+      "Fair",
+      "Poor",
+      "Dead"
+    ],
+    "vaccineTypes": [
+      "Foot and Mouth",
+      "Brucellosis",
+      "Anthrax",
+      "Dewormer A",
+      "Vitamin Boost"
+    ],
+    "feedTypes": [
+      "ចំណីសំរេច (DSR-16)",
+      "ស្មៅ ឬ ពោត ផ្អាប់",
+      "ចំបើង"
+    ],
+    "expenseCategories": [
+      "គោសំបក",
+      "ចំណី",
+      "ពោត",
+      "ចំបើង",
+      "វ៉ាក់សាំង និងថ្នាំ",
+      "ប្រាក់ខែ",
+      "ទឹក-ភ្លើង",
+      "ទ្រព្យសកម្ម",
+      "ផ្សេងៗ",
+      "ការប្រាក់ធនាគារ",
+      "ដើមទុនធនាគារ"
+    ],
+    "paymentMethods": [
+      "ABA Pay",
+      "Cash",
+      "Bank Transfer"
+    ],
+    "sexes": [
+      "Male",
+      "Female"
+    ],
+    "diseaseTypes": [
+      "Foot and Mouth Disease (FMD)",
+      "Brucellosis",
+      "Anthrax",
+      "Pneumonia",
+      "Parasite Infection"
+    ],
+    "batchTypes": [
+      "Fattening Program",
+      "Quanrantin & Vet Card",
+      "Selling Pool"
+    ],
+    "weightUnits": [
+      "kg",
+      "lbs"
+    ],
+    "revenueTypes": [
+      "Livestock Sale",
+      "Manure Sale",
+      "Milk Sale",
+      "Partnership Share"
+    ],
+    "purchaseTypes": [
+      "Purchase",
+      "Born in Farm",
+      "Transfer",
+      "Partnership"
+    ],
+    "users": [
+      {
+        "id": "1",
+        "name": "Vannak Admin",
+        "email": "vannak@snrfarm.com",
+        "role": "Super Admin",
+        "status": "Active",
+        "password": "password123"
+      },
+      {
+        "id": "3",
+        "name": "Bona Vet",
+        "email": "bona.v@snrfarm.com",
+        "role": "Farm User",
+        "status": "Active",
+        "password": "password123"
+      },
+      {
+        "id": "4",
+        "name": "Dara Staff",
+        "email": "dara.s@snrfarm.com",
+        "role": "Farm Staff User",
+        "status": "Active",
+        "password": "password123"
+      },
+      {
+        "id": "USR-FBNCUNDE9",
+        "name": "Chay Pang",
+        "email": "pang@snrfarm.com",
+        "role": "Company User",
+        "status": "Active",
+        "password": "password123"
+      },
+      {
+        "id": "USR-UM6IRRMWX",
+        "name": "Dara Rath",
+        "email": "rath@snrfarm.com",
+        "role": "Operation User",
+        "status": "Active",
+        "password": "password123"
+      }
+    ]
+  },
+  "sales": [
+    {
+      "id": "SALE-001",
+      "cowId": "C-002",
+      "salePrice": 2774200,
+      "saleDate": "2026-04-20",
+      "weight": 286,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-002"
+    },
+    {
+      "id": "SALE-002",
+      "cowId": "F-12",
+      "salePrice": 860000,
+      "saleDate": "2026-04-20",
+      "weight": 1,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-12"
+    },
+    {
+      "id": "SALE-003",
+      "cowId": "C-004",
+      "salePrice": 2745100,
+      "saleDate": "2026-04-20",
+      "weight": 283,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-004"
+    },
+    {
+      "id": "SALE-004",
+      "cowId": "C-005",
+      "salePrice": 3298000,
+      "saleDate": "2026-04-20",
+      "weight": 340,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-005"
+    },
+    {
+      "id": "SALE-005",
+      "cowId": "C-006",
+      "salePrice": 2444400,
+      "saleDate": "2026-04-20",
+      "weight": 252,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-006"
+    },
+    {
+      "id": "SALE-006",
+      "cowId": "C-007",
+      "salePrice": 2192200,
+      "saleDate": "2026-04-20",
+      "weight": 226,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-007"
+    },
+    {
+      "id": "SALE-007",
+      "cowId": "C-008",
+      "salePrice": 2483200,
+      "saleDate": "2026-04-20",
+      "weight": 256,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-008"
+    },
+    {
+      "id": "SALE-008",
+      "cowId": "C-009",
+      "salePrice": 2492900,
+      "saleDate": "2026-04-20",
+      "weight": 257,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-009"
+    },
+    {
+      "id": "SALE-009",
+      "cowId": "C-011",
+      "salePrice": 2667500,
+      "saleDate": "2026-04-20",
+      "weight": 275,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-011"
+    },
+    {
+      "id": "SALE-010",
+      "cowId": "F-09",
+      "salePrice": 4068000,
+      "saleDate": "2026-04-30",
+      "weight": 339,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-09"
+    },
+    {
+      "id": "SALE-011",
+      "cowId": "F-10",
+      "salePrice": 4117000,
+      "saleDate": "2026-04-30",
+      "weight": 358,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-10"
+    },
+    {
+      "id": "SALE-012",
+      "cowId": "F-11",
+      "salePrice": 3875500,
+      "saleDate": "2026-04-30",
+      "weight": 337,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-11"
+    },
+    {
+      "id": "SALE-013",
+      "cowId": "F-00",
+      "salePrice": 4100000,
+      "saleDate": "2026-04-23",
+      "weight": 1,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-00"
+    },
+    {
+      "id": "SALE-014",
+      "cowId": "F-01",
+      "salePrice": 1000000,
+      "saleDate": "2026-05-18",
+      "weight": 1,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-01"
+    },
+    {
+      "id": "SALE-015",
+      "cowId": "F-06",
+      "salePrice": 1716000,
+      "saleDate": "2026-05-29",
+      "weight": 156,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-06"
+    },
+    {
+      "id": "SALE-016",
+      "cowId": "F-07",
+      "salePrice": 1298000,
+      "saleDate": "2026-05-29",
+      "weight": 118,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-07"
+    },
+    {
+      "id": "SALE-017",
+      "cowId": "F-08",
+      "salePrice": 770000,
+      "saleDate": "2026-05-29",
+      "weight": 70,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for F-08"
+    },
+    {
+      "id": "SALE-018",
+      "cowId": "C-018_",
+      "salePrice": 3643200,
+      "saleDate": "2026-06-08",
+      "weight": 276,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-018_"
+    },
+    {
+      "id": "SALE-019",
+      "cowId": "C-013_",
+      "salePrice": 4316400,
+      "saleDate": "2026-06-08",
+      "weight": 327,
+      "buyerName": "System Import",
+      "notes": "System seeded revenue sale for C-013_"
+    }
+  ]
+}

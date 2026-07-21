@@ -1,0 +1,70 @@
+import { Request, Response } from 'express';
+import { stockService } from '../services/stock.service';
+
+export class StockController {
+  async getAll(req: Request, res: Response): Promise<void> {
+    const stock = await stockService.getAllStock();
+    res.status(200).json({
+      success: true,
+      message: 'Stock items retrieved successfully',
+      data: stock
+    });
+  }
+
+  async getById(req: Request, res: Response): Promise<void> {
+    const id = String(req.params.id);
+    const stock = await stockService.getStockById(id);
+    if (!stock) {
+      res.status(404).json({
+        success: false,
+        message: `Cow with ID ${id} not found`,
+        data: null
+      });
+      return;
+    }
+    res.status(200).json({
+      success: true,
+      message: 'Stock item retrieved successfully',
+      data: stock
+    });
+  }
+
+  async create(req: Request, res: Response): Promise<void> {
+    const newItem = await stockService.createStock(req.body);
+    res.status(201).json({
+      success: true,
+      message: 'Stock item created successfully',
+      data: newItem
+    });
+  }
+
+  async update(req: Request, res: Response): Promise<void> {
+    const id = String(req.params.id);
+    const updated = await stockService.updateStock(id, req.body);
+    res.status(200).json({
+      success: true,
+      message: 'Stock item updated successfully',
+      data: updated
+    });
+  }
+
+  async delete(req: Request, res: Response): Promise<void> {
+    const id = String(req.params.id);
+    const deleted = await stockService.deleteStock(id);
+    if (!deleted) {
+      res.status(404).json({
+        success: false,
+        message: `Cow with ID ${id} not found`,
+        data: null
+      });
+      return;
+    }
+    res.status(200).json({
+      success: true,
+      message: 'Stock item deleted successfully',
+      data: null
+    });
+  }
+}
+
+export const stockController = new StockController();
