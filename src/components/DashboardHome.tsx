@@ -46,7 +46,7 @@ export default function DashboardHome({ data, onNavigateToTab }: DashboardHomePr
   return (
     <div className="space-y-6">
       {/* Upper Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <Card className="bg-white border border-slate-100 shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="text-xs uppercase tracking-wider font-bold text-slate-400">Total Livestock</CardDescription>

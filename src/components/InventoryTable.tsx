@@ -115,7 +115,7 @@ export default function InventoryTable({
       {/* Search and Filters Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 border border-slate-200/60 rounded-2xl shadow-sm">
         {/* Search Input */}
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 w-full md:max-w-sm">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
             type="text"
