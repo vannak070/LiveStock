@@ -37,7 +37,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
 
   // Input states for adding new configurations
   const [newItemText, setNewItemText] = useState<string>('');
-  const [activeCategory, setActiveCategory] = useState<keyof Omit<MasterSetup, 'users' | 'roles'>>('breeds');
+  const [activeCategory, setActiveCategory] = useState<keyof Omit<MasterSetup, 'users' | 'roles' | 'farms'>>('breeds');
 
   // Available roles list (system + custom created roles)
   const currentRoles: CustomRoleDefinition[] = settings.roles && settings.roles.length > 0 ? settings.roles : DEFAULT_SYSTEM_ROLES;
@@ -331,7 +331,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
   };
 
   // Human-readable titles for configuration arrays
-  const categoriesMeta: Record<keyof Omit<MasterSetup, 'users' | 'roles'>, { label: string; description: string }> = {
+  const categoriesMeta: Record<keyof Omit<MasterSetup, 'users' | 'roles' | 'farms'>, { label: string; description: string }> = {
     breeds: { label: 'Breeds', description: 'Master catalog of registered cattle breeds.' },
     locations: { label: 'Locations / Barns', description: 'Locations and stall/pasture identifier names.' },
     buyTypes: { label: 'Acquisition / Buy Types', description: 'Methods through which cattle enter inventory.' },
@@ -348,7 +348,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     purchaseTypes: { label: 'Purchase Type Structures', description: 'Acquisition categories mapped to finances.' }
   };
 
-  const livestockKeys: (keyof Omit<MasterSetup, 'users' | 'roles'>)[] = [
+  const livestockKeys: (keyof Omit<MasterSetup, 'users' | 'roles' | 'farms'>)[] = [
     'breeds',
     'locations',
     'buyTypes',
@@ -361,7 +361,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     'weightUnits'
   ];
 
-  const financialKeys: (keyof Omit<MasterSetup, 'users' | 'roles'>)[] = [
+  const financialKeys: (keyof Omit<MasterSetup, 'users' | 'roles' | 'farms'>)[] = [
     'expenseCategories',
     'revenueTypes',
     'purchaseTypes',

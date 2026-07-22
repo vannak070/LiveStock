@@ -1,6 +1,14 @@
 import { query } from '../config/database';
-import { MasterSetup, UserRoleItem, CustomRoleDefinition, DEFAULT_ROLE_PERMISSIONS } from '../lib/types';
+import { MasterSetup, UserRoleItem, CustomRoleDefinition, DEFAULT_ROLE_PERMISSIONS, FarmItem } from '../lib/types';
 import { PoolClient } from 'pg';
+
+const DEFAULT_FARMS: FarmItem[] = [
+  { id: 'FARM-01', name: 'រទាំង', ownerId: '4', address: 'រទាំង, ព្រែកព្នៅ, ភ្នំពេញ', capacity: 100, notes: 'ទីតាំងបំប៉នសាច់ និងផលិតចំណី' },
+  { id: 'FARM-02', name: 'ព្រៃវែង', ownerId: '6', address: 'ក្រុងព្រៃវែង, ខេត្តព្រៃវែង', capacity: 150, notes: 'ទីតាំងបង្កាត់ពូជ និងព្យាបាល' },
+  { id: 'FARM-03', name: 'បន្ទាយមានជ័យ', address: 'ក្រុងសិរីសោភ័ណ, ខេត្តបន្ទាយមានជ័យ', capacity: 80, notes: 'ក្រោលផ្ទេរ និងចែកចាយ' },
+  { id: 'FARM-04', name: 'ក្រោល A', capacity: 50, notes: 'ក្រោលបំប៉នពិសេស A' },
+  { id: 'FARM-05', name: 'ក្រោល B', capacity: 50, notes: 'ក្រោលបំប៉នពិសេស B' }
+];
 
 const DEFAULT_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-01', name: 'Super Admin', description: 'Full system management and security authority.', permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'], isSystem: true },
@@ -49,12 +57,16 @@ export class SettingsRepository {
         revenueTypes: ['Livestock Sale', 'Manure Sale', 'Milk Sale', 'Partnership Share'],
         purchaseTypes: ['Purchase', 'Born in Farm', 'Transfer', 'Partnership'],
         users: DEFAULT_USERS,
-        roles: DEFAULT_ROLES
+        roles: DEFAULT_ROLES,
+        farms: DEFAULT_FARMS
       };
     } else {
       settings = res.rows[0].data;
       if (!settings.roles || settings.roles.length === 0) {
         settings.roles = DEFAULT_ROLES;
+      }
+      if (!settings.farms || settings.farms.length === 0) {
+        settings.farms = DEFAULT_FARMS;
       }
     }
 

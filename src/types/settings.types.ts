@@ -21,7 +21,8 @@ export type PermissionKey =
   | 'expenses_record'
   | 'expenses_delete'
   | 'analytics_view'
-  | 'settings_manage';
+  | 'settings_manage'
+  | 'farms_manage';
 
 export interface PermissionCategory {
   id: string;
@@ -39,63 +40,63 @@ export const PERMISSION_MODULES: PermissionCategory[] = [
   },
   {
     id: 'stock',
-    label: '🧑‍🌾 Cattle Stock & Inventory',
+    label: '🐄 Livestock Inventory',
     items: [
-      { key: 'stock_view', label: 'View Inventory', description: 'View cattle stock list and details.' },
-      { key: 'stock_create', label: 'Add Cattle', description: 'Register new cattle into inventory.' },
-      { key: 'stock_edit', label: 'Edit Cattle Details', description: 'Update breed, weight, owner, location.' },
-      { key: 'stock_delete', label: 'Delete Cattle', description: 'Remove cattle records from stock.' }
+      { key: 'stock_view', label: 'View Cattle Inventory', description: 'Access list of active and archived stock.' },
+      { key: 'stock_create', label: 'Register New Cattle', description: 'Add new cattle profiles to herd list.' },
+      { key: 'stock_edit', label: 'Modify Cattle Details', description: 'Update age, breed, weight, and stats.' },
+      { key: 'stock_delete', label: 'Delete Cattle Records', description: 'Permanently remove cattle logs from database.' }
     ]
   },
   {
     id: 'batch',
-    label: '🐂 Fattening Program Batches',
+    label: '🌾 Fattening Programs',
     items: [
-      { key: 'batch_view', label: 'View Batches', description: 'View fattening herds and rations.' },
-      { key: 'batch_create', label: 'Create Batch', description: 'Create new fattening or breeding groups.' },
-      { key: 'batch_edit', label: 'Edit Batch & Rations', description: 'Modify batch settings and diet formulas.' },
-      { key: 'batch_delete', label: 'Delete Batch', description: 'Remove batches from the system.' }
+      { key: 'batch_view', label: 'View Fattening Batches', description: 'Access list of active feeding batches.' },
+      { key: 'batch_create', label: 'Create Fattening Groups', description: 'Define new feeding programs and rations.' },
+      { key: 'batch_edit', label: 'Modify Feeding Groups', description: 'Assign/remove cattle and update feed targets.' },
+      { key: 'batch_delete', label: 'Delete Fattening Groups', description: 'Close and delete feed batch configurations.' }
     ]
   },
   {
     id: 'weight',
-    label: '⚖️ Weight & ADG Tracking',
+    label: '⚖️ Growth & Weight Tracker',
     items: [
-      { key: 'weight_view', label: 'View Weight Logs', description: 'Inspect ADG growth and scaling history.' },
-      { key: 'weight_record', label: 'Record Weight', description: 'Log new weight scaling measurements.' },
-      { key: 'weight_delete', label: 'Delete Weight Log', description: 'Remove incorrect weight logs.' }
+      { key: 'weight_view', label: 'View Weight Logs', description: 'Access ADG growth progress histories.' },
+      { key: 'weight_record', label: 'Record Weight Events', description: 'Log new weight check metrics for cattle.' },
+      { key: 'weight_delete', label: 'Delete Weight Logs', description: 'Void or remove past weight tracking records.' }
     ]
   },
   {
     id: 'health',
-    label: '💉 Health & Vaccination',
+    label: '🩺 Health & Treatment Logs',
     items: [
-      { key: 'health_view', label: 'View Health Records', description: 'Access medical history and vet cards.' },
-      { key: 'health_record', label: 'Add Medical Record', description: 'Log treatments, vaccines, and diseases.' },
-      { key: 'health_delete', label: 'Delete Health Log', description: 'Remove medical entries.' }
+      { key: 'health_view', label: 'View Medical Ledger', description: 'Access vaccine and clinical log charts.' },
+      { key: 'health_record', label: 'Log Treatment/Vaccines', description: 'Record medical injections and medications.' },
+      { key: 'health_delete', label: 'Delete Treatment Records', description: 'Remove historical clinical records.' }
     ]
   },
   {
     id: 'sales',
-    label: '💰 Sales & Transactions',
+    label: '💰 Sales Revenue Tracking',
     items: [
-      { key: 'sales_view', label: 'View Sales History', description: 'Inspect sales invoices and buyers.' },
-      { key: 'sales_record', label: 'Record Sale', description: 'Process cattle sales transactions.' },
-      { key: 'sales_delete', label: 'Delete Sale Record', description: 'Void or remove sales transactions.' }
+      { key: 'sales_view', label: 'View Sales Revenue', description: 'Access records of sold cattle and values.' },
+      { key: 'sales_record', label: 'Record Sales Events', description: 'Log cattle checkout parameters and income.' },
+      { key: 'sales_delete', label: 'Void Sales Records', description: 'Rollback checkout transactions.' }
     ]
   },
   {
     id: 'expenses',
-    label: '💳 Operating Expenses',
+    label: '💸 Operational Expenditures',
     items: [
-      { key: 'expenses_view', label: 'View Expenses', description: 'Access farm operating cost ledgers.' },
-      { key: 'expenses_record', label: 'Record Expense', description: 'Log feed, vet, or utility costs.' },
-      { key: 'expenses_delete', label: 'Delete Expense Record', description: 'Remove expense items.' }
+      { key: 'expenses_view', label: 'View Expense Ledger', description: 'Access detailed cost allocation ledger.' },
+      { key: 'expenses_record', label: 'Log Operations Cost', description: 'Log feed, clinical, and utility expenditures.' },
+      { key: 'expenses_delete', label: 'Delete Expense Log', description: 'Void or delete logged transactions.' }
     ]
   },
   {
     id: 'analytics',
-    label: '📈 Financial Analytics',
+    label: '📈 Business Intelligence Reports',
     items: [
       { key: 'analytics_view', label: 'View Analytics', description: 'Access profit, loss, and cost breakdown charts.' }
     ]
@@ -104,7 +105,8 @@ export const PERMISSION_MODULES: PermissionCategory[] = [
     id: 'settings',
     label: '⚙️ ERP Master Setup',
     items: [
-      { key: 'settings_manage', label: 'Manage ERP Setup & Users', description: 'Configure master dropdowns and user permissions.' }
+      { key: 'settings_manage', label: 'Manage ERP Setup & Users', description: 'Configure master dropdowns and user permissions.' },
+      { key: 'farms_manage', label: 'Manage Farms & Branches', description: 'Create and configure details, capacity, and owner/manager for each farm.' }
     ]
   }
 ];
@@ -115,7 +117,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   'Super Admin': ALL_PERMISSIONS,
   'Admin': ALL_PERMISSIONS,
   'Company': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage'), 'settings_manage'],
-  'Farm Owner': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage'), 'settings_manage'],
+  'Farm Owner': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage' && p !== 'farms_manage'), 'settings_manage'],
   'Farm Staff': ['dashboard_view', 'stock_view', 'batch_view', 'weight_view', 'weight_record', 'health_view', 'health_record'],
   'Veterinarian': ['dashboard_view', 'stock_view', 'stock_edit', 'weight_view', 'weight_record', 'health_view', 'health_record', 'health_delete']
 };
@@ -139,6 +141,16 @@ export interface UserRoleItem {
   farmLocation?: string;
 }
 
+export interface FarmItem {
+  id: string;
+  name: string;
+  ownerId?: string;
+  managerId?: string;
+  address?: string;
+  capacity?: number;
+  notes?: string;
+}
+
 export interface MasterSetup {
   breeds: string[];
   locations: string[];
@@ -156,4 +168,5 @@ export interface MasterSetup {
   purchaseTypes: string[];
   users: UserRoleItem[];
   roles?: CustomRoleDefinition[];
+  farms?: FarmItem[];
 }

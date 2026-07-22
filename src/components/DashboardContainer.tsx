@@ -36,6 +36,7 @@ import WeightTab from './WeightTab';
 import FinanceTab from './FinanceTab';
 import AnalyticsTab from './AnalyticsTab';
 import SettingsTab from './SettingsTab';
+import FarmsTab from './FarmsTab';
 import CowDetails from './CowDetails';
 import QuickEntryModal from './QuickEntryModal';
 import { ERPLivestockData } from '@/lib/types';
@@ -453,6 +454,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     else if (activeTab === 'sales-finance') permissionKey = 'sales_view';
     else if (activeTab === 'analytics') permissionKey = 'analytics_view';
     else if (activeTab === 'settings') permissionKey = 'settings_manage';
+    else if (activeTab === 'farms') permissionKey = 'farms_manage';
 
     if (permissionKey && !hasPermission(currentUser, permissionKey)) {
       setActiveTab('dashboard');
@@ -669,6 +671,15 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
         <SettingsTab
           settings={dbData.settings}
           currentUser={currentUser}
+        />
+      )}
+
+      {activeTab === 'farms' && (
+        <FarmsTab
+          settings={dbData.settings}
+          currentUser={currentUser}
+          stock={dbData.stock}
+          batches={dbData.batches}
         />
       )}
 

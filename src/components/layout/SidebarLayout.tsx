@@ -14,7 +14,8 @@ import {
   PieChart, 
   LayoutDashboard,
   Menu,
-  X
+  X,
+  Building
 } from 'lucide-react';
 import { StockItem } from '@/lib/xlsx-parser';
 import { UserRoleItem } from '@/lib/types';
@@ -28,7 +29,8 @@ export type ActiveTabType =
   | 'weight-tracking' 
   | 'sales-finance' 
   | 'analytics' 
-  | 'settings';
+  | 'settings'
+  | 'farms';
 
 interface SidebarLayoutProps {
   children: React.ReactNode;
@@ -201,20 +203,37 @@ export default function SidebarLayout({
           )}
 
           {/* Configuration */}
-          {hasPermission(currentUser, 'settings_manage') && (
+          {(hasPermission(currentUser, 'settings_manage') || hasPermission(currentUser, 'farms_manage')) && (
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Administration</p>
-              <button
-                onClick={() => handleTabChange('settings')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                  activeTab === 'settings'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                }`}
-              >
-                <Settings className="h-4 w-4 flex-shrink-0" />
-                ERP Master Setup
-              </button>
+              <div className="space-y-1">
+                {hasPermission(currentUser, 'farms_manage') && (
+                  <button
+                    onClick={() => handleTabChange('farms')}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                      activeTab === 'farms'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
+                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
+                    }`}
+                  >
+                    <Building className="h-4 w-4 flex-shrink-0" />
+                    Farms & Branches
+                  </button>
+                )}
+                {hasPermission(currentUser, 'settings_manage') && (
+                  <button
+                    onClick={() => handleTabChange('settings')}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                      activeTab === 'settings'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
+                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
+                    }`}
+                  >
+                    <Settings className="h-4 w-4 flex-shrink-0" />
+                    ERP Master Setup
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
