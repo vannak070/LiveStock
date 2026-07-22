@@ -227,7 +227,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     setEditingRole(null);
     setRoleName('');
     setRoleDescription('');
-    setRolePermissions(DEFAULT_ROLE_PERMISSIONS['Operation User']);
+    setRolePermissions(DEFAULT_ROLE_PERMISSIONS['Farm Staff'] || []);
     setIsRoleModalOpen(true);
   };
 
@@ -235,7 +235,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     setEditingRole(role);
     setRoleName(role.name);
     setRoleDescription(role.description || '');
-    setRolePermissions(role.permissions);
+    setRolePermissions(role.permissions || []);
     setIsRoleModalOpen(true);
   };
 
