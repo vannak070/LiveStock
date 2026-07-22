@@ -617,192 +617,6 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
               )}
             </CardHeader>
             <CardContent className="p-6">
-              {/* User Account + Function Permission Matrix Editor Form */}
-              {isAddingUser && (
-                <form onSubmit={handleAddUser} className="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-6 space-y-6">
-                  <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
-                    <h5 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                      <KeyRound className="h-4 w-4 text-emerald-600" />
-                      {editingUserId ? `Edit User & Permissions: ${userName}` : 'Configure New User Account & Permissions'}
-                    </h5>
-                    <span className="text-[10px] text-slate-400 font-bold">
-                      {userPermissions.length} / {ALL_PERMISSIONS.length} Functions Enabled
-                    </span>
-                  </div>
-
-                  {/* Core Account Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Employee Name</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Sokha Manager"
-                        value={userName}
-                        onChange={e => setUserName(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Corporate Email</label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="sokha@snrfarm.com"
-                        value={userEmail}
-                        onChange={e => setUserEmail(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Password</label>
-                      <input
-                        type="password"
-                        required={!editingUserId}
-                        placeholder={editingUserId ? "New password (optional)..." : "Password..."}
-                        value={userPassword}
-                        onChange={e => setUserPassword(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Role Selection</label>
-                      <select
-                        value={userRole}
-                        disabled={editingUserId !== null && settings.users.find(u => u.id === editingUserId)?.role === 'Super Admin'}
-                        onChange={e => handleRoleSelectChange(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
-                      >
-                        {currentRoles
-                          .filter(r => !isFarmOwner || r.name === 'Farm Staff' || r.name === 'Veterinarian')
-                          .map(r => (
-                            <option key={r.id} value={r.name}>{r.name}</option>
-                          ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold uppercase text-slate-400">Farm Location Scope</label>
-                      <select
-                        value={userFarmLocation}
-                        disabled={isFarmOwner}
-                        onChange={e => setUserFarmLocation(e.target.value)}
-                        className="w-full bg-white border border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
-                      >
-                        <option value="">All Farms (គ្មានដែនកំណត់)</option>
-                        {(settings.locations || []).map(loc => (
-                          <option key={loc} value={loc}>{loc}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Quick Preset Buttons */}
-                  <div className="bg-white p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
-                      <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Apply Quick Permission Preset:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {!isFarmOwner && (
-                        <button
-                          type="button"
-                          onClick={() => handleApplyPreset('all')}
-                          className="px-2.5 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                        >
-                          Select All (Super Admin)
-                        </button>
-                      )}
-                      {currentRoles
-                        .slice(1)
-                        .filter(r => !isFarmOwner || r.name === 'Farm Staff' || r.name === 'Veterinarian')
-                        .map(r => (
-                          <button
-                            key={r.id}
-                            type="button"
-                            onClick={() => handleApplyPreset(r.name)}
-                            className="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                          >
-                            {r.name}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                  {/* Function Permission Matrix Checkboxes Grid */}
-                  {!isFarmOwner && (
-                    <div className="space-y-4">
-                      <h6 className="text-xs font-bold text-slate-800 tracking-tight">
-                        Granular Function Permission Matrix (23 Functions Across 9 Modules)
-                      </h6>
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {PERMISSION_MODULES.map(module => {
-                          const moduleKeys = module.items.map(i => i.key);
-                          const isAllEnabled = moduleKeys.every(k => userPermissions.includes(k));
-                          return (
-                            <div key={module.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2 shadow-2xs">
-                              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                                <span className="text-xs font-black text-slate-800">{module.label}</span>
-                                <button
-                                  type="button"
-                                  onClick={() => toggleModulePermissions(moduleKeys)}
-                                  className="text-[10px] font-bold text-emerald-650 hover:underline cursor-pointer"
-                                >
-                                  {isAllEnabled ? 'Deselect All' : 'Select All'}
-                                </button>
-                              </div>
-                              <div className="space-y-2">
-                                {module.items.map(item => {
-                                  const isChecked = userPermissions.includes(item.key);
-                                  return (
-                                    <label
-                                      key={item.key}
-                                      className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-all ${
-                                        isChecked
-                                          ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950 font-bold'
-                                          : 'bg-white border-slate-200 text-slate-650 hover:bg-slate-50'
-                                      }`}
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        checked={isChecked}
-                                        onChange={() => togglePermission(item.key)}
-                                        className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                                      />
-                                      <div>
-                                        <p className="font-bold leading-tight">{item.label}</p>
-                                        <p className="text-[10px] text-slate-400 font-normal leading-tight mt-0.5">{item.description}</p>
-                                      </div>
-                                    </label>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-2.5 border-t border-slate-200 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddingUser(false);
-                        setEditingUserId(null);
-                      }}
-                      className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-6 py-2 rounded-xl shadow-sm transition-all active:scale-[0.98] cursor-pointer"
-                    >
-                      {editingUserId ? '💾 Update User & Permissions' : '💾 Save New User'}
-                    </button>
-                  </div>
-                </form>
-              )}
-
               {/* Users Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
@@ -1003,6 +817,197 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
                 className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-6 py-2 rounded-xl shadow-sm cursor-pointer"
               >
                 💾 Save Custom Role
+              </button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create / Edit User Dialog Modal */}
+      <Dialog open={isAddingUser} onOpenChange={(open) => { if (!open) { setIsAddingUser(false); setEditingUserId(null); } }}>
+        <DialogContent className={`bg-white p-6 rounded-2xl border border-slate-100 shadow-xl max-h-[90vh] overflow-y-auto ${isFarmOwner ? 'max-w-md' : 'max-w-4xl'}`}>
+          <DialogHeader className="text-left pb-4 border-b border-slate-100">
+            <DialogTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-emerald-600 animate-pulse" />
+              {editingUserId ? `Edit User Account: ${userName}` : 'Configure New User Account'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-400">
+              {editingUserId ? 'Modify employee profile, system role, and access rights.' : 'Create an account for a new staff member or veterinarian.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleAddUser} className="space-y-6 pt-4 text-left">
+            {/* Core Account Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Employee Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Sokha Manager"
+                  value={userName}
+                  onChange={e => setUserName(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Corporate Email</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="sokha@snrfarm.com"
+                  value={userEmail}
+                  onChange={e => setUserEmail(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Password</label>
+                <input
+                  type="password"
+                  required={!editingUserId}
+                  placeholder={editingUserId ? "New password (optional)..." : "Password..."}
+                  value={userPassword}
+                  onChange={e => setUserPassword(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Role Selection</label>
+                <select
+                  value={userRole}
+                  disabled={editingUserId !== null && settings.users.find(u => u.id === editingUserId)?.role === 'Super Admin'}
+                  onChange={e => handleRoleSelectChange(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                >
+                  {currentRoles
+                    .filter(r => !isFarmOwner || r.name === 'Farm Staff' || r.name === 'Veterinarian')
+                    .map(r => (
+                      <option key={r.id} value={r.name}>{r.name}</option>
+                    ))}
+                </select>
+              </div>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Farm Location Scope</label>
+                <select
+                  value={userFarmLocation}
+                  disabled={isFarmOwner}
+                  onChange={e => setUserFarmLocation(e.target.value)}
+                  className="w-full bg-white border border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                >
+                  <option value="">All Farms (គ្មានដែនកំណត់)</option>
+                  {(settings.locations || []).map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Quick Preset Buttons */}
+            {!isFarmOwner && (
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Apply Quick Permission Preset:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {!isFarmOwner && (
+                    <button
+                      type="button"
+                      onClick={() => handleApplyPreset('all')}
+                      className="px-2.5 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                    >
+                      Select All (Super Admin)
+                    </button>
+                  )}
+                  {currentRoles
+                    .slice(1)
+                    .filter(r => !isFarmOwner || r.name === 'Farm Staff' || r.name === 'Veterinarian')
+                    .map(r => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => handleApplyPreset(r.name)}
+                        className="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                      >
+                        {r.name}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Function Permission Matrix Checkboxes Grid */}
+            {!isFarmOwner && (
+              <div className="space-y-4">
+                <h6 className="text-xs font-bold text-slate-800 tracking-tight">
+                  Granular Function Permission Matrix ({userPermissions.length} / {ALL_PERMISSIONS.length} Enabled)
+                </h6>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {PERMISSION_MODULES.map(module => {
+                    const moduleKeys = module.items.map(i => i.key);
+                    const isAllEnabled = moduleKeys.every(k => userPermissions.includes(k));
+                    return (
+                      <div key={module.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2 shadow-2xs">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                          <span className="text-xs font-black text-slate-800">{module.label}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleModulePermissions(moduleKeys)}
+                            className="text-[10px] font-bold text-emerald-650 hover:underline cursor-pointer"
+                          >
+                            {isAllEnabled ? 'Deselect All' : 'Select All'}
+                          </button>
+                        </div>
+                        <div className="space-y-2">
+                          {module.items.map(item => {
+                            const isChecked = userPermissions.includes(item.key);
+                            return (
+                              <label
+                                key={item.key}
+                                className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-all ${
+                                  isChecked
+                                    ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950 font-bold'
+                                    : 'bg-white border-slate-200 text-slate-650 hover:bg-slate-50'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => togglePermission(item.key)}
+                                  className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                />
+                                <div>
+                                  <p className="font-bold leading-tight">{item.label}</p>
+                                  <p className="text-[10px] text-slate-400 font-normal leading-tight mt-0.5">{item.description}</p>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2.5 border-t border-slate-200 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddingUser(false);
+                  setEditingUserId(null);
+                }}
+                className="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-6 py-2 rounded-xl shadow-sm transition-all active:scale-[0.98] cursor-pointer"
+              >
+                {editingUserId ? '💾 Update User & Permissions' : '💾 Save New User'}
               </button>
             </div>
           </form>
