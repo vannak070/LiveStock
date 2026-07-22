@@ -64,6 +64,9 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
   const [selectedCowDetailsId, setSelectedCowDetailsId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+  // Admin Farm Filter — only used when user is Super Admin/Admin/Company (no farmLocation)
+  const [selectedFarmFilter, setSelectedFarmFilter] = useState<string | null>(null);
+
   // TanStack Query for dynamic data fetching
   const { data: rawDbData } = useQuery<ERPLivestockData>({
     queryKey: ['livestock'],
@@ -78,12 +81,22 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     refetchOnWindowFocus: true,
   });
 
-  // Scoped Data based on Current User's farmLocation
+  // Scoped Data based on Current User's farmLocation OR Admin's selected farm filter
   const dbData = useMemo(() => {
     if (!rawDbData) return rawDbData;
-    if (!currentUser || !currentUser.farmLocation) return rawDbData;
 
-    const farmLoc = currentUser.farmLocation;
+    // Determine which farm location to filter by:
+    // 1. Farm-scoped users always use their own location
+    // 2. Admin users with a selected filter use that
+    // 3. Admin users with no filter see ALL data
+    const filterLoc = currentUser?.farmLocation
+      ? currentUser.farmLocation   // farm-level user: always scoped
+      : selectedFarmFilter         // admin with filter selected
+      ?? null;                     // admin with no filter: null = show all
+
+    if (!filterLoc) return rawDbData; // no scope = full data for admins
+
+    const farmLoc = filterLoc;
 
     // 1. Filter stock items to only those at this farm location
     const scopedStock = rawDbData.stock.filter(item => item.location === farmLoc);
@@ -93,8 +106,8 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     const scopedBatches = rawDbData.batches.map(batch => ({
       ...batch,
       cowIds: batch.cowIds.filter(id => scopedStockIds.includes(id))
-    })).filter(batch => 
-      batch.farmLocation === farmLoc || 
+    })).filter(batch =>
+      batch.farmLocation === farmLoc ||
       batch.cowIds.length > 0
     );
 
@@ -110,10 +123,10 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     // 6. Filter expenses that belong to this farm location
     const scopedExpenses = rawDbData.expenses.filter(item => item.farmLocation === farmLoc);
 
-    // 7. Common settings locations list (restrict to user's farm location so they cannot create/edit cows to other farms)
+    // 7. Restrict locations list so scoped users can't assign cows to other farms
     const scopedCommon = {
       ...rawDbData.common,
-      locations: [farmLoc]
+      locations: currentUser?.farmLocation ? [farmLoc] : rawDbData.common.locations
     };
 
     return {
@@ -126,7 +139,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       expenses: scopedExpenses,
       common: scopedCommon
     };
-  }, [rawDbData, currentUser]);
+  }, [rawDbData, currentUser, selectedFarmFilter]);
 
   // Mutations
   const addCowMutation = useMutation({
@@ -564,6 +577,9 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       vaccineAlertsCount={vaccineAlertsCount}
       currentUser={currentUser}
       onLogout={handleLogout}
+      farms={rawDbData?.settings?.farms ?? []}
+      selectedFarmFilter={selectedFarmFilter}
+      onFarmFilterChange={(loc) => setSelectedFarmFilter(loc)}
     >
       {/* Dynamic Tab Rendering */}
       {activeTab === 'dashboard' && (

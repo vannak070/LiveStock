@@ -18,10 +18,12 @@ import {
   Building,
   ChevronRight,
   Beef,
-  Syringe
+  Syringe,
+  MapPin,
+  Filter
 } from 'lucide-react';
 import { StockItem } from '@/lib/xlsx-parser';
-import { UserRoleItem } from '@/lib/types';
+import { UserRoleItem, FarmItem } from '@/lib/types';
 import { hasPermission } from '@/lib/utils';
 
 export type ActiveTabType = 
@@ -45,6 +47,10 @@ interface SidebarLayoutProps {
   vaccineAlertsCount: number;
   currentUser?: UserRoleItem | null;
   onLogout?: () => void;
+  // Admin farm filter
+  farms?: FarmItem[];
+  selectedFarmFilter?: string | null;
+  onFarmFilterChange?: (location: string | null) => void;
 }
 
 interface NavItemProps {
@@ -113,7 +119,10 @@ export default function SidebarLayout({
   healthAlertsCount,
   vaccineAlertsCount,
   currentUser,
-  onLogout
+  onLogout,
+  farms = [],
+  selectedFarmFilter,
+  onFarmFilterChange
 }: SidebarLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -188,6 +197,51 @@ export default function SidebarLayout({
           </p>
         </div>
       </div>
+
+      {/* ─── Admin: Farm Scope Selector ─── */}
+      {!currentUser?.farmLocation && farms.length > 0 && onFarmFilterChange && (
+        <div className="mx-4 mb-1">
+          <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-600 mb-2 flex items-center gap-2">
+            <span className="h-px flex-1 bg-slate-700/40" />
+            View Scope
+            <span className="h-px flex-1 bg-slate-700/40" />
+          </p>
+          <div className="space-y-1">
+            {/* All Farms pill */}
+            <button
+              onClick={() => onFarmFilterChange(null)}
+              className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                !selectedFarmFilter
+                  ? 'bg-emerald-600/25 text-emerald-300 border border-emerald-600/40'
+                  : 'text-slate-500 hover:text-slate-200 hover:bg-white/5 border border-transparent'
+              }`}
+            >
+              <span className={`h-2 w-2 rounded-full flex-shrink-0 ${!selectedFarmFilter ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+              All Farms &amp; Branches
+            </button>
+            {/* Individual farm pills */}
+            {farms.map((farm) => {
+              const isActive = selectedFarmFilter === farm.name;
+              return (
+                <button
+                  key={farm.id}
+                  onClick={() => onFarmFilterChange(isActive ? null : farm.name)}
+                  className={`w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    isActive
+                      ? 'bg-teal-600/25 text-teal-300 border border-teal-600/40'
+                      : 'text-slate-500 hover:text-slate-200 hover:bg-white/5 border border-transparent'
+                  }`}
+                >
+                  <span className={`h-2 w-2 rounded-full flex-shrink-0 ${
+                    isActive ? 'bg-teal-400' : 'bg-slate-700'
+                  }`} />
+                  <span className="truncate">{farm.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ─── Navigation Links ─── */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4 scrollbar-thin scrollbar-thumb-emerald-900/60">
@@ -364,6 +418,23 @@ export default function SidebarLayout({
               {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
           </div>
+
+          {/* Farm Scope Active Banner — shown when admin has filtered to a specific farm */}
+          {!currentUser?.farmLocation && selectedFarmFilter && onFarmFilterChange && (
+            <div className="mb-3 flex items-center gap-2 bg-teal-50 border border-teal-200 rounded-xl px-4 py-2">
+              <Filter className="h-3.5 w-3.5 text-teal-600 flex-shrink-0" />
+              <MapPin className="h-3.5 w-3.5 text-teal-600 flex-shrink-0" />
+              <p className="text-xs text-teal-700 font-bold flex-1 truncate">
+                Viewing scope: <span className="font-black">{selectedFarmFilter}</span>
+              </p>
+              <button
+                onClick={() => onFarmFilterChange(null)}
+                className="text-[10px] font-black text-teal-600 hover:text-teal-800 bg-teal-100 hover:bg-teal-200 px-2 py-0.5 rounded-lg transition-colors cursor-pointer flex-shrink-0"
+              >
+                ✕ Clear Filter
+              </button>
+            </div>
+          )}
 
           {/* Responsive Stats Strip */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
