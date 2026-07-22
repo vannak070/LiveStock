@@ -146,6 +146,9 @@ export interface FarmItem {
   name: string;
   ownerId?: string;
   managerId?: string;
+  ownerName?: string;
+  ownerEmail?: string;
+  ownerPassword?: string;
   address?: string;
   capacity?: number;
   notes?: string;

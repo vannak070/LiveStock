@@ -13,13 +13,15 @@ import {
   BarChart2, 
   Compass, 
   Check,
-  AlertCircle
+  AlertCircle,
+  Key,
+  Mail,
+  Lock
 } from 'lucide-react';
 import { updateSettingsAction } from '@/app/actions';
-import { MasterSetup, FarmItem, UserRoleItem, PermissionKey } from '@/lib/types';
+import { MasterSetup, FarmItem, UserRoleItem, DEFAULT_ROLE_PERMISSIONS } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { ConfirmModal } from './ui/confirm-modal';
-import { hasPermission } from '@/lib/utils';
 
 interface FarmsTabProps {
   settings: MasterSetup;
@@ -37,8 +39,9 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
   const [farmName, setFarmName] = useState('');
   const [farmAddress, setFarmAddress] = useState('');
   const [farmCapacity, setFarmCapacity] = useState<number>(100);
-  const [farmOwnerId, setFarmOwnerId] = useState('');
-  const [farmManagerId, setFarmManagerId] = useState('');
+  const [ownerName, setOwnerName] = useState('');
+  const [ownerEmail, setOwnerEmail] = useState('');
+  const [ownerPassword, setOwnerPassword] = useState('');
   const [farmNotes, setFarmNotes] = useState('');
 
   const [confirmModal, setConfirmModal] = useState<{
@@ -56,8 +59,6 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
   });
 
   const farms = settings.farms || [];
-  const farmOwners = (settings.users || []).filter(u => u.role === 'Farm Owner');
-  const farmStaff = (settings.users || []).filter(u => u.role === 'Farm Staff' || u.role === 'Veterinarian');
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (updatedSettings: MasterSetup) => {
@@ -75,8 +76,9 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
     setFarmName('');
     setFarmAddress('');
     setFarmCapacity(100);
-    setFarmOwnerId('');
-    setFarmManagerId('');
+    setOwnerName('');
+    setOwnerEmail('');
+    setOwnerPassword('');
     setFarmNotes('');
     setIsAddingFarm(true);
   };
@@ -86,8 +88,13 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
     setFarmName(farm.name);
     setFarmAddress(farm.address || '');
     setFarmCapacity(farm.capacity || 100);
-    setFarmOwnerId(farm.ownerId || '');
-    setFarmManagerId(farm.managerId || '');
+    
+    // Find the owner user of this farm location
+    const ownerUser = settings.users.find(u => u.farmLocation === farm.name && u.role === 'Farm Owner');
+    setOwnerName(ownerUser ? ownerUser.name : farm.ownerName || '');
+    setOwnerEmail(ownerUser ? ownerUser.email : farm.ownerEmail || '');
+    setOwnerPassword(ownerUser ? ownerUser.password || '' : farm.ownerPassword || '');
+    
     setFarmNotes(farm.notes || '');
     setIsAddingFarm(true);
   };
@@ -100,48 +107,72 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
     let updatedLocations = [...(settings.locations || [])];
     let updatedUsers = [...(settings.users || [])];
 
+    const newName = farmName.trim();
+    const email = ownerEmail.trim().toLowerCase();
+
     if (editingFarm) {
       const oldName = editingFarm.name;
-      const newName = farmName.trim();
 
       updatedFarms = updatedFarms.map(f => f.id === editingFarm.id ? {
         ...f,
         name: newName,
         address: farmAddress.trim(),
         capacity: farmCapacity,
-        ownerId: farmOwnerId || undefined,
-        managerId: farmManagerId || undefined,
+        ownerName: ownerName.trim(),
+        ownerEmail: email,
+        ownerPassword: ownerPassword.trim(),
         notes: farmNotes.trim()
       } : f);
 
-      // Sync Location names
+      // Sync Location names list
       updatedLocations = updatedLocations.map(loc => loc === oldName ? newName : loc);
       if (!updatedLocations.includes(newName)) {
         updatedLocations.push(newName);
       }
 
-      // Sync User location scopes
+      // Sync User location scopes and update owner user credentials
+      const existingOwnerIdx = updatedUsers.findIndex(u => u.farmLocation === oldName && u.role === 'Farm Owner');
+      
+      if (existingOwnerIdx !== -1) {
+        updatedUsers[existingOwnerIdx] = {
+          ...updatedUsers[existingOwnerIdx],
+          name: ownerName.trim(),
+          email: email,
+          password: ownerPassword.trim(),
+          farmLocation: newName,
+          permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner']
+        };
+      } else {
+        const newOwnerUser: UserRoleItem = {
+          id: `USR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          name: ownerName.trim(),
+          email: email,
+          role: 'Farm Owner',
+          status: 'Active',
+          password: ownerPassword.trim(),
+          farmLocation: newName,
+          permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner']
+        };
+        updatedUsers.push(newOwnerUser);
+      }
+
+      // Sync location scope for other users on this farm (Staff, Vets)
       updatedUsers = updatedUsers.map(u => {
-        let updatedLoc = u.farmLocation;
         if (u.farmLocation === oldName) {
-          updatedLoc = newName;
+          return { ...u, farmLocation: newName };
         }
-        // If owner selected in form, bind user location
-        if (u.id === farmOwnerId) {
-          updatedLoc = newName;
-        }
-        return { ...u, farmLocation: updatedLoc };
+        return u;
       });
 
     } else {
-      const newName = farmName.trim();
       const newFarm: FarmItem = {
         id: `FARM-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         name: newName,
         address: farmAddress.trim(),
         capacity: farmCapacity,
-        ownerId: farmOwnerId || undefined,
-        managerId: farmManagerId || undefined,
+        ownerName: ownerName.trim(),
+        ownerEmail: email,
+        ownerPassword: ownerPassword.trim(),
         notes: farmNotes.trim()
       };
 
@@ -152,13 +183,18 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
         updatedLocations.push(newName);
       }
 
-      // Bind location to owner/manager
-      updatedUsers = updatedUsers.map(u => {
-        if (u.id === farmOwnerId || u.id === farmManagerId) {
-          return { ...u, farmLocation: newName };
-        }
-        return u;
-      });
+      // Create owner user login account
+      const newOwnerUser: UserRoleItem = {
+        id: `USR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+        name: ownerName.trim(),
+        email: email,
+        role: 'Farm Owner',
+        status: 'Active',
+        password: ownerPassword.trim(),
+        farmLocation: newName,
+        permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner']
+      };
+      updatedUsers.push(newOwnerUser);
     }
 
     const updatedSettings: MasterSetup = {
@@ -179,18 +215,22 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
     setConfirmModal({
       isOpen: true,
       title: 'Delete Farm Branch?',
-      description: `Are you sure you want to delete the farm "${target.name}"? Active cows and staff assigned to this farm will have their location scopes unassigned.`,
+      description: `Are you sure you want to delete the farm "${target.name}"? Active cows and staff assigned to this farm will have their location scopes unassigned. The owner login account will be removed.`,
       type: 'danger',
       confirmText: 'Delete Farm',
       onConfirm: () => {
         const updatedFarms = farms.filter(f => f.id !== farmId);
         const updatedLocations = (settings.locations || []).filter(loc => loc !== target.name);
-        const updatedUsers = (settings.users || []).map(u => {
-          if (u.farmLocation === target.name) {
-            return { ...u, farmLocation: undefined };
-          }
-          return u;
-        });
+        
+        // Remove owner user account and set location scope to undefined for others
+        const updatedUsers = (settings.users || [])
+          .filter(u => !(u.farmLocation === target.name && u.role === 'Farm Owner'))
+          .map(u => {
+            if (u.farmLocation === target.name) {
+              return { ...u, farmLocation: undefined };
+            }
+            return u;
+          });
 
         const updatedSettings: MasterSetup = {
           ...settings,
@@ -214,7 +254,7 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
             Farm Locations & Branches Management
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Create, update, and manage locations, capacities, farm owners, and operational parameters.
+            Create and edit farm locations, set cattle capacity, and configure farm owner login credentials.
           </p>
         </div>
         <button
@@ -236,8 +276,7 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
           const occupancyRate = Math.min(Math.round((cowCount / capacity) * 100), 100);
 
           // Find Owner and Staff details
-          const owner = settings.users.find(u => u.id === farm.ownerId || (u.role === 'Farm Owner' && u.farmLocation === farm.name));
-          const manager = settings.users.find(u => u.id === farm.managerId);
+          const owner = settings.users.find(u => u.farmLocation === farm.name && u.role === 'Farm Owner');
           const staffCount = settings.users.filter(u => u.farmLocation === farm.name && u.role !== 'Farm Owner').length;
           
           // Calculate active feeding batches
@@ -306,17 +345,24 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
                   </div>
                 </div>
 
-                {/* People assignments */}
-                <div className="space-y-2 pt-2 border-t border-slate-100">
+                {/* Owner Account and Login */}
+                <div className="space-y-2.5 pt-3 border-t border-slate-100">
                   <div className="flex items-center gap-2 text-xs">
-                    <User className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-slate-500 font-medium">Owner:</span>
-                    <span className="text-slate-800 font-bold">{owner ? owner.name : 'Not Assigned (គ្មានកំណត់)'}</span>
+                    <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                    <span className="text-slate-500 font-medium">Farm Owner:</span>
+                    <span className="text-slate-800 font-bold">{owner ? owner.name : farm.ownerName || 'Not Created (គ្មានកំណត់)'}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Users className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-slate-500 font-medium">Manager:</span>
-                    <span className="text-slate-800 font-bold">{manager ? manager.name : 'Not Assigned (គ្មានកំណត់)'}</span>
+                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 space-y-1 text-[10px]">
+                    <div className="flex items-center gap-1.5 text-slate-600 font-bold">
+                      <Mail className="h-3 w-3 text-emerald-600" />
+                      <span>Email:</span>
+                      <span className="text-slate-800 select-all">{owner ? owner.email : farm.ownerEmail || '—'}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-600 font-bold">
+                      <Key className="h-3 w-3 text-emerald-600" />
+                      <span>Password:</span>
+                      <span className="text-slate-800 select-all">{owner ? owner.password : farm.ownerPassword || '—'}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -350,26 +396,27 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
               {editingFarm ? `Edit Farm: ${editingFarm.name}` : 'Create New Farm Branch'}
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-400">
-              Configure parameters, capacities, address and staff assignments for this location.
+              Configure parameters, capacities, address and owner login credentials for this location.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSaveFarm} className="space-y-4 pt-4 text-left">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-slate-400">Farm Branch Name (ទីតាំងក្រោល)</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. ក្រោល C, ព្រៃវែង"
-                value={farmName}
-                onChange={e => setFarmName(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
-              />
-            </div>
-
+            {/* Core Details */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-slate-400">Capacity (Cows)</label>
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Farm Branch Name (ទីតាំងក្រោល)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. ក្រោល C, ព្រៃវែង"
+                  value={farmName}
+                  onChange={e => setFarmName(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                />
+              </div>
+
+              <div className="space-y-1 col-span-2">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Capacity (Cows Limit)</label>
                 <input
                   type="number"
                   required
@@ -381,34 +428,50 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
                   className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
                 />
               </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-slate-400">Farm Owner Assign</label>
-                <select
-                  value={farmOwnerId}
-                  onChange={e => setFarmOwnerId(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
-                >
-                  <option value="">Unassigned (គ្មានកំណត់)</option>
-                  {farmOwners.map(o => (
-                    <option key={o.id} value={o.id}>{o.name} ({o.email})</option>
-                  ))}
-                </select>
-              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase text-slate-400">Manager Assign</label>
-              <select
-                value={farmManagerId}
-                onChange={e => setFarmManagerId(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
-              >
-                <option value="">Unassigned (គ្មានកំណត់)</option>
-                {farmStaff.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
-                ))}
-              </select>
+            {/* Farm Owner Login Creation Details */}
+            <div className="bg-slate-50 border border-slate-150 rounded-2xl p-4 space-y-3.5">
+              <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5 border-b border-slate-200 pb-2">
+                <Lock className="h-4 w-4 text-emerald-600" />
+                Configure Farm Owner Login Account
+              </h4>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Owner Full Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Bona SNR Owner"
+                  value={ownerName}
+                  onChange={e => setOwnerName(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-650"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Login Corporate Email (Username)</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. owner@snrfarm.com"
+                  value={ownerEmail}
+                  onChange={e => setOwnerEmail(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-650"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Login Password</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. pass123"
+                  value={ownerPassword}
+                  onChange={e => setOwnerPassword(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-655"
+                />
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -445,7 +508,7 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
                 type="submit"
                 className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-6 py-2 rounded-xl shadow-sm transition-all active:scale-[0.98] cursor-pointer"
               >
-                {editingFarm ? '💾 Update Farm Branch' : '💾 Save Farm Branch'}
+                {editingFarm ? '💾 Update Farm & Login' : '💾 Save Farm & Login'}
               </button>
             </div>
           </form>
