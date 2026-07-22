@@ -512,70 +512,72 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
       {subTab === 'users' && (
         <div className="space-y-6 text-left">
           {/* Custom Roles Manager Panel */}
-          <Card className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 p-6 gap-4">
-              <div>
-                <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
-                  <Award className="h-5 w-5 text-emerald-600" />
-                  ERP Master Roles Management ({currentRoles.length} Roles Defined)
-                </CardTitle>
-                <CardDescription className="text-xs text-slate-400 mt-1">
-                  Create custom system roles (e.g. Veterinarian, Accountant, Feed Manager) with preset permission matrixes.
-                </CardDescription>
-              </div>
-              <button
-                onClick={openCreateRoleModal}
-                className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
-              >
-                <Plus className="h-4 w-4 text-emerald-400" />
-                Create New Custom Role
-              </button>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {currentRoles.map(role => (
-                  <div key={role.id} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3 flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-xs text-slate-800">{role.name}</span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                          role.isSystem ? 'bg-slate-200 text-slate-600' : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                          {role.isSystem ? 'System' : 'Custom'}
-                        </span>
+          {!isFarmOwner && (
+            <Card className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 p-6 gap-4">
+                <div>
+                  <CardTitle className="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <Award className="h-5 w-5 text-emerald-600" />
+                    ERP Master Roles Management ({currentRoles.length} Roles Defined)
+                  </CardTitle>
+                  <CardDescription className="text-xs text-slate-400 mt-1">
+                    Create custom system roles (e.g. Veterinarian, Accountant, Feed Manager) with preset permission matrixes.
+                  </CardDescription>
+                </div>
+                <button
+                  onClick={openCreateRoleModal}
+                  className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
+                >
+                  <Plus className="h-4 w-4 text-emerald-400" />
+                  Create New Custom Role
+                </button>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {currentRoles.map(role => (
+                    <div key={role.id} className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-3 flex flex-col justify-between hover:border-slate-300 transition-all">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-xs text-slate-800">{role.name}</span>
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                            role.isSystem ? 'bg-slate-200 text-slate-600' : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {role.isSystem ? 'System' : 'Custom'}
+                          </span>
+                        </div>
+                        <p className="text-[10.5px] text-slate-500 line-clamp-2">{role.description}</p>
                       </div>
-                      <p className="text-[10.5px] text-slate-500 line-clamp-2">{role.description}</p>
-                    </div>
 
-                    <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5 text-xs">
-                      <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                        {role.permissions.length} / {ALL_PERMISSIONS.length} Functions
-                      </span>
-                      <div className="space-x-1">
-                        <button
-                          type="button"
-                          onClick={() => openEditRoleModal(role)}
-                          className="px-2 py-1 text-slate-600 hover:text-slate-900 text-[10px] font-bold cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                        {!role.isSystem && (
+                      <div className="flex items-center justify-between border-t border-slate-200/60 pt-2.5 text-xs">
+                        <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                          {role.permissions.length} / {ALL_PERMISSIONS.length} Functions
+                        </span>
+                        <div className="space-x-1">
                           <button
                             type="button"
-                            onClick={() => handleDeleteRole(role.id)}
-                            className="px-2 py-1 text-rose-500 hover:text-rose-700 text-[10px] font-bold cursor-pointer"
+                            onClick={() => openEditRoleModal(role)}
+                            className="px-2 py-1 text-slate-600 hover:text-slate-900 text-[10px] font-bold cursor-pointer"
                           >
-                            Delete
+                            Edit
                           </button>
-                        )}
+                          {!role.isSystem && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteRole(role.id)}
+                              className="px-2 py-1 text-rose-500 hover:text-rose-700 text-[10px] font-bold cursor-pointer"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* User Accounts & Permission Assignment Card */}
           <Card className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
@@ -724,60 +726,61 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
                         ))}
                     </div>
                   </div>
-
                   {/* Function Permission Matrix Checkboxes Grid */}
-                  <div className="space-y-4">
-                    <h6 className="text-xs font-bold text-slate-800 tracking-tight">
-                      Granular Function Permission Matrix (23 Functions Across 9 Modules)
-                    </h6>
+                  {!isFarmOwner && (
+                    <div className="space-y-4">
+                      <h6 className="text-xs font-bold text-slate-800 tracking-tight">
+                        Granular Function Permission Matrix (23 Functions Across 9 Modules)
+                      </h6>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {PERMISSION_MODULES.map(module => {
-                        const moduleKeys = module.items.map(i => i.key);
-                        const isAllEnabled = moduleKeys.every(k => userPermissions.includes(k));
-                        return (
-                          <div key={module.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2 shadow-2xs">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                              <span className="text-xs font-black text-slate-800">{module.label}</span>
-                              <button
-                                type="button"
-                                onClick={() => toggleModulePermissions(moduleKeys)}
-                                className="text-[10px] font-bold text-emerald-600 hover:underline cursor-pointer"
-                              >
-                                {isAllEnabled ? 'Deselect All' : 'Select All'}
-                              </button>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {PERMISSION_MODULES.map(module => {
+                          const moduleKeys = module.items.map(i => i.key);
+                          const isAllEnabled = moduleKeys.every(k => userPermissions.includes(k));
+                          return (
+                            <div key={module.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2 shadow-2xs">
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                                <span className="text-xs font-black text-slate-800">{module.label}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => toggleModulePermissions(moduleKeys)}
+                                  className="text-[10px] font-bold text-emerald-650 hover:underline cursor-pointer"
+                                >
+                                  {isAllEnabled ? 'Deselect All' : 'Select All'}
+                                </button>
+                              </div>
+                              <div className="space-y-2">
+                                {module.items.map(item => {
+                                  const isChecked = userPermissions.includes(item.key);
+                                  return (
+                                    <label
+                                      key={item.key}
+                                      className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-all ${
+                                        isChecked
+                                          ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950 font-bold'
+                                          : 'bg-white border-slate-200 text-slate-650 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isChecked}
+                                        onChange={() => togglePermission(item.key)}
+                                        className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                                      />
+                                      <div>
+                                        <p className="font-bold leading-tight">{item.label}</p>
+                                        <p className="text-[10px] text-slate-400 font-normal leading-tight mt-0.5">{item.description}</p>
+                                      </div>
+                                    </label>
+                                  );
+                                })}
+                              </div>
                             </div>
-                            <div className="space-y-2">
-                              {module.items.map(item => {
-                                const isChecked = userPermissions.includes(item.key);
-                                return (
-                                  <label
-                                    key={item.key}
-                                    className={`flex items-start gap-2.5 p-2 rounded-lg border text-xs cursor-pointer transition-all ${
-                                      isChecked
-                                        ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950 font-bold'
-                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                                    }`}
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isChecked}
-                                      onChange={() => togglePermission(item.key)}
-                                      className="mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
-                                    />
-                                    <div>
-                                      <p className="font-bold leading-tight">{item.label}</p>
-                                      <p className="text-[10px] text-slate-400 font-normal leading-tight mt-0.5">{item.description}</p>
-                                    </div>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex justify-end gap-2.5 border-t border-slate-200 pt-4">
                     <button

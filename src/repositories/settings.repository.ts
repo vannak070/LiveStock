@@ -103,7 +103,18 @@ export class SettingsRepository {
     `;
     await this.executeQuery(sql, [JSON.stringify(settings)], client);
 
-    if (settings.users && settings.users.length > 0) {
+    if (settings.users) {
+      if (settings.users.length > 0) {
+        const userIds = settings.users.map(u => u.id);
+        await this.executeQuery(
+          `DELETE FROM users WHERE id NOT IN (${userIds.map((_, idx) => `$${idx + 1}`).join(', ')})`,
+          userIds,
+          client
+        );
+      } else {
+        await this.executeQuery(`DELETE FROM users`, [], client);
+      }
+
       for (const u of settings.users) {
         const permsToSave = u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || [];
         await this.executeQuery(
