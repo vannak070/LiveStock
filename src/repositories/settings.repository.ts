@@ -4,21 +4,20 @@ import { PoolClient } from 'pg';
 
 const DEFAULT_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-01', name: 'Super Admin', description: 'Full system management and security authority.', permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'], isSystem: true },
-  { id: 'ROLE-02', name: 'Operation User', description: 'Manages daily farm operations, weight scaling, and feeds.', permissions: DEFAULT_ROLE_PERMISSIONS['Operation User'], isSystem: true },
-  { id: 'ROLE-03', name: 'Company User', description: 'Executive view-only access to records and financial ledgers.', permissions: DEFAULT_ROLE_PERMISSIONS['Company User'], isSystem: true },
-  { id: 'ROLE-04', name: 'Farm User', description: 'Manages cattle inventory, health logs, and expenses.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm User'], isSystem: true },
-  { id: 'ROLE-05', name: 'Farm Staff User', description: 'Records weights, vaccinations, and daily check logs.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff User'], isSystem: true },
-  { id: 'ROLE-06', name: 'Veterinarian', description: 'Specialized health management, vaccine cards, and disease tracking.', permissions: ['dashboard_view', 'stock_view', 'health_view', 'health_record', 'health_delete', 'weight_view'], isSystem: false },
-  { id: 'ROLE-07', name: 'Accountant', description: 'Financial ledgers, sales transactions, operating expenses, and analytics.', permissions: ['dashboard_view', 'sales_view', 'sales_record', 'expenses_view', 'expenses_record', 'analytics_view'], isSystem: false }
+  { id: 'ROLE-02', name: 'Admin', description: 'Full business operations control and user creation privileges.', permissions: DEFAULT_ROLE_PERMISSIONS['Admin'], isSystem: true },
+  { id: 'ROLE-03', name: 'Company', description: 'Manages user accounts, permissions, and multiple farms under them.', permissions: DEFAULT_ROLE_PERMISSIONS['Company'], isSystem: true },
+  { id: 'ROLE-04', name: 'Farm Owner', description: 'Full operational control and lifecycle management of their specific farm.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'], isSystem: true },
+  { id: 'ROLE-05', name: 'Farm Staff', description: 'Records weights, health logs, and tracks daily checklists based on custom permissions.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], isSystem: true },
+  { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true }
 ];
 
 const DEFAULT_USERS: UserRoleItem[] = [
   { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'] },
-  { id: '2', name: 'Sokha Manager', email: 'sokha.m@snrfarm.com', role: 'Operation User', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Operation User'] },
-  { id: '3', name: 'Bona Vet', email: 'bona.v@snrfarm.com', role: 'Farm User', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm User'] },
-  { id: '4', name: 'Dara Staff', email: 'dara.s@snrfarm.com', role: 'Farm Staff User', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff User'] },
-  { id: '5', name: 'Chay Pang', email: 'pang@snrfarm.com', role: 'Company User', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Company User'] },
-  { id: '6', name: 'Dara Rath', email: 'rath@snrfarm.com', role: 'Operation User', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Operation User'] }
+  { id: '2', name: 'Sokha Manager', email: 'sokha.m@snrfarm.com', role: 'Admin', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Admin'] },
+  { id: '3', name: 'Chay Pang', email: 'pang@snrfarm.com', role: 'Company', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Company'] },
+  { id: '4', name: 'Bona Owner', email: 'bona.v@snrfarm.com', role: 'Farm Owner', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'] },
+  { id: '5', name: 'Dara Staff', email: 'dara.s@snrfarm.com', role: 'Farm Staff', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'] },
+  { id: '6', name: 'Dara Rath', email: 'rath@snrfarm.com', role: 'Veterinarian', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'] }
 ];
 
 export class SettingsRepository {

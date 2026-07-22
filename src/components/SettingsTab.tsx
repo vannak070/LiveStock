@@ -15,10 +15,11 @@ interface SettingsTabProps {
 
 const DEFAULT_SYSTEM_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-01', name: 'Super Admin', description: 'Full system management and security authority.', permissions: ALL_PERMISSIONS, isSystem: true },
-  { id: 'ROLE-02', name: 'Operation User', description: 'Manages daily farm operations, weight scaling, and feeds.', permissions: DEFAULT_ROLE_PERMISSIONS['Operation User'], isSystem: true },
-  { id: 'ROLE-03', name: 'Company User', description: 'Executive view-only access to records and financial ledgers.', permissions: DEFAULT_ROLE_PERMISSIONS['Company User'], isSystem: true },
-  { id: 'ROLE-04', name: 'Farm User', description: 'Manages cattle inventory, health logs, and expenses.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm User'], isSystem: true },
-  { id: 'ROLE-05', name: 'Farm Staff User', description: 'Records weights, vaccinations, and daily check logs.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff User'], isSystem: true }
+  { id: 'ROLE-02', name: 'Admin', description: 'Full business operations control and user creation privileges.', permissions: DEFAULT_ROLE_PERMISSIONS['Admin'], isSystem: true },
+  { id: 'ROLE-03', name: 'Company', description: 'Manages user accounts, permissions, and multiple farms under them.', permissions: DEFAULT_ROLE_PERMISSIONS['Company'], isSystem: true },
+  { id: 'ROLE-04', name: 'Farm Owner', description: 'Full operational control and lifecycle management of their specific farm.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'], isSystem: true },
+  { id: 'ROLE-05', name: 'Farm Staff', description: 'Records weights, health logs, and tracks daily checklists based on custom permissions.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], isSystem: true },
+  { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true }
 ];
 
 export default function SettingsTab({ settings }: SettingsTabProps) {
@@ -37,8 +38,8 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
-  const [userRole, setUserRole] = useState<string>('Company User');
-  const [userPermissions, setUserPermissions] = useState<PermissionKey[]>(DEFAULT_ROLE_PERMISSIONS['Company User'] || []);
+  const [userRole, setUserRole] = useState<string>('Company');
+  const [userPermissions, setUserPermissions] = useState<PermissionKey[]>(DEFAULT_ROLE_PERMISSIONS['Company'] || []);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
 
   // Custom Role Modal States

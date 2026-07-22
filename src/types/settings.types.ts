@@ -113,10 +113,11 @@ export const ALL_PERMISSIONS: PermissionKey[] = PERMISSION_MODULES.flatMap(m => 
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   'Super Admin': ALL_PERMISSIONS,
-  'Operation User': ALL_PERMISSIONS.filter(p => !p.endsWith('_delete') && p !== 'settings_manage'),
-  'Company User': ['dashboard_view', 'stock_view', 'batch_view', 'weight_view', 'health_view', 'sales_view', 'expenses_view', 'analytics_view'],
-  'Farm User': ['dashboard_view', 'stock_view', 'stock_create', 'stock_edit', 'batch_view', 'batch_create', 'batch_edit', 'weight_view', 'weight_record', 'health_view', 'health_record', 'expenses_view', 'expenses_record'],
-  'Farm Staff User': ['dashboard_view', 'stock_view', 'weight_view', 'weight_record', 'health_view', 'health_record']
+  'Admin': ALL_PERMISSIONS,
+  'Company': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage'), 'settings_manage'],
+  'Farm Owner': ALL_PERMISSIONS.filter(p => p !== 'settings_manage'),
+  'Farm Staff': ['dashboard_view', 'stock_view', 'batch_view', 'weight_view', 'weight_record', 'health_view', 'health_record'],
+  'Veterinarian': ['dashboard_view', 'stock_view', 'stock_edit', 'weight_view', 'weight_record', 'health_view', 'health_record', 'health_delete']
 };
 
 export interface CustomRoleDefinition {
@@ -131,7 +132,7 @@ export interface UserRoleItem {
   id: string;
   name: string;
   email: string;
-  role: 'Super Admin' | 'Operation User' | 'Company User' | 'Farm User' | 'Farm Staff User' | string;
+  role: 'Super Admin' | 'Admin' | 'Company' | 'Farm Owner' | 'Farm Staff' | 'Veterinarian' | string;
   status: 'Active' | 'Inactive';
   password?: string;
   permissions?: PermissionKey[];
