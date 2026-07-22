@@ -8,15 +8,17 @@ import { Label } from './ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { ShieldCheck, Heart, User, Calendar, Activity, DollarSign, Edit2, Trash2 } from 'lucide-react';
 import { ConfirmModal } from './ui/confirm-modal';
+import { hasPermission } from '@/lib/utils';
 
 interface HealthTabProps {
   data: ERPLivestockData;
   onAddHealthLog: (log: Omit<HealthLogItem, 'id'>) => Promise<void>;
   onDeleteHealthLog?: (logId: string) => Promise<void>;
   onUpdateHealthLog?: (logId: string, updates: Partial<HealthLogItem>) => Promise<void>;
+  currentUser?: any;
 }
 
-export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onUpdateHealthLog }: HealthTabProps) {
+export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onUpdateHealthLog, currentUser }: HealthTabProps) {
   const [isLogging, setIsLogging] = useState(false);
   const [selectedCohortId, setSelectedCohortId] = useState<string>('all');
 
@@ -99,20 +101,22 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
           <h3 className="text-xl font-bold text-slate-900 tracking-tight">Health & Veterinary Clinic</h3>
           <p className="text-xs text-slate-400 font-medium">Record biological events, vaccinations, dewormers, and disease treatment history.</p>
         </div>
-        <Button 
-          onClick={() => {
-            if (isLogging) {
-              setEditingLogId(null);
-              setCowId('');
-              setName('');
-              setNotes('');
-            }
-            setIsLogging(!isLogging);
-          }} 
-          className="bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-xs py-2 shadow"
-        >
-          {isLogging ? 'View Health Ledger' : '+ Log Medical Event'}
-        </Button>
+        {hasPermission(currentUser, 'health_record') && (
+          <Button 
+            onClick={() => {
+              if (isLogging) {
+                setEditingLogId(null);
+                setCowId('');
+                setName('');
+                setNotes('');
+              }
+              setIsLogging(!isLogging);
+            }} 
+            className="bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-xs py-2 shadow"
+          >
+            {isLogging ? 'View Health Ledger' : '+ Log Medical Event'}
+          </Button>
+        )}
       </div>
 
       {isLogging ? (
@@ -289,50 +293,52 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
                         <td className="py-3.5 px-4 text-slate-600">{log.administeredBy}</td>
                         <td className="py-3.5 px-4 font-mono text-slate-800 font-semibold">៛ {log.cost.toLocaleString()}</td>
                         <td className="py-3.5 px-4 text-slate-500 max-w-xs truncate" title={log.notes}>{log.notes || '-'}</td>
-                      <td className="py-3.5 px-4 text-right pr-4">
-                        <div className="flex justify-end items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setCowId(log.cowId);
-                              setType(log.type);
-                              setName(log.name);
-                              setDate(log.date.split('T')[0]);
-                              setAdministeredBy(log.administeredBy);
-                              setCost(log.cost);
-                              setNotes(log.notes || '');
-                              setEditingLogId(log.id);
-                              setIsLogging(true);
-                            }}
-                            className="text-slate-400 hover:text-emerald-600 p-1 rounded hover:bg-slate-55 transition-colors cursor-pointer"
-                            title="Edit Health Log"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          {onDeleteHealthLog && (
-                            <button
-                              onClick={() => {
-                                setConfirmModal({
-                                  isOpen: true,
-                                  title: 'Delete Medical Event',
-                                  description: 'Are you sure you want to permanently delete this health log record? This action cannot be undone.',
-                                  type: 'danger',
-                                  confirmText: 'Delete Record',
-                                  onConfirm: async () => {
-                                    await onDeleteHealthLog(log.id);
-                                  }
-                                });
-                              }}
-                              className="text-slate-400 hover:text-rose-500 p-1 rounded hover:bg-rose-55 transition-colors cursor-pointer"
-                              title="Delete Health Log"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+                        <td className="py-3.5 px-4 text-right pr-4">
+                          <div className="flex justify-end items-center gap-2">
+                            {hasPermission(currentUser, 'health_record') && (
+                              <button
+                                onClick={() => {
+                                  setCowId(log.cowId);
+                                  setType(log.type);
+                                  setName(log.name);
+                                  setDate(log.date.split('T')[0]);
+                                  setAdministeredBy(log.administeredBy);
+                                  setCost(log.cost);
+                                  setNotes(log.notes || '');
+                                  setEditingLogId(log.id);
+                                  setIsLogging(true);
+                                }}
+                                className="text-slate-400 hover:text-emerald-600 p-1 rounded hover:bg-slate-55 transition-colors cursor-pointer"
+                                title="Edit Health Log"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </button>
+                            )}
+                            {onDeleteHealthLog && hasPermission(currentUser, 'health_delete') && (
+                              <button
+                                onClick={() => {
+                                  setConfirmModal({
+                                    isOpen: true,
+                                    title: 'Delete Medical Event',
+                                    description: 'Are you sure you want to permanently delete this health log record? This action cannot be undone.',
+                                    type: 'danger',
+                                    confirmText: 'Delete Record',
+                                    onConfirm: async () => {
+                                      await onDeleteHealthLog(log.id);
+                                    }
+                                  });
+                                }}
+                                className="text-slate-400 hover:text-rose-500 p-1 rounded hover:bg-rose-55 transition-colors cursor-pointer"
+                                title="Delete Health Log"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td colSpan={8} className="py-8 text-center text-slate-400 font-semibold">

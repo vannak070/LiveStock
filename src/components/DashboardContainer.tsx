@@ -602,6 +602,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           onDeleteBatch={async (batchId) => {
             await deleteBatchMutation.mutateAsync(batchId);
           }}
+          currentUser={currentUser}
         />
       )}
 
@@ -617,6 +618,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           onUpdateHealthLog={async (logId, updates) => {
             await updateHealthLogMutation.mutateAsync({ logId, updates });
           }}
+          currentUser={currentUser}
         />
       )}
 
@@ -630,6 +632,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           onUpdateWeightRecord={async (cowId, trackingDate, currentWeight, healthStatus) => {
             await updateWeightRecordMutation.mutateAsync({ cowId, trackingDate, currentWeight, healthStatus });
           }}
+          currentUser={currentUser}
         />
       )}
 
@@ -652,6 +655,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
             await updateSalesRecordMutation.mutateAsync({ cowId, updates });
           }}
           onRecordSaleClick={() => handleOpenQuickEntry('sale', null)}
+          currentUser={currentUser}
         />
       )}
 

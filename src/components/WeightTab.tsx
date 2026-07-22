@@ -9,15 +9,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { ConfirmModal } from './ui/confirm-modal';
+import { hasPermission } from '@/lib/utils';
 
 interface WeightTabProps {
   data: ERPLivestockData;
   onOpenLogWeight: (cowId?: string) => void;
   onDeleteWeightRecord?: (cowId: string, trackingDate: string) => Promise<void>;
   onUpdateWeightRecord?: (cowId: string, trackingDate: string, currentWeight: number, healthStatus: string) => Promise<void>;
+  currentUser?: any;
 }
 
-export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord, onUpdateWeightRecord }: WeightTabProps) {
+export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord, onUpdateWeightRecord, currentUser }: WeightTabProps) {
   const [scheduleType, setScheduleType] = useState<'biweekly' | 'monthly'>('biweekly');
   const [selectedCohortId, setSelectedCohortId] = useState<string>('all');
 
@@ -150,9 +152,11 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
               Monthly (30d)
             </button>
           </div>
-          <Button onClick={() => onOpenLogWeight()} className="bg-emerald-600 hover:bg-emerald-500 gap-2 rounded-xl text-xs font-bold py-2.5 shadow-md shadow-emerald-500/10">
-            <Scale className="h-4 w-4" /> Log Weight Record
-          </Button>
+          {hasPermission(currentUser, 'weight_record') && (
+            <Button onClick={() => onOpenLogWeight()} className="bg-emerald-600 hover:bg-emerald-500 gap-2 rounded-xl text-xs font-bold py-2.5 shadow-md shadow-emerald-500/10">
+              <Scale className="h-4 w-4" /> Log Weight Record
+            </Button>
+          )}
         </div>
       </div>
 
@@ -293,21 +297,23 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
                       )}
                     </div>
                     <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => {
-                          setEditingWeightRecord({
-                            cowId: log.cowId,
-                            trackingDate: log.trackingDate || '',
-                            currentWeight: log.currentWeight,
-                            healthStatus: log.healthStatus
-                          });
-                        }}
-                        className="text-slate-400 hover:text-emerald-600 p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer"
-                        title="Edit Weight Record"
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      {onDeleteWeightRecord && (
+                      {hasPermission(currentUser, 'weight_record') && (
+                        <button
+                          onClick={() => {
+                            setEditingWeightRecord({
+                              cowId: log.cowId,
+                              trackingDate: log.trackingDate || '',
+                              currentWeight: log.currentWeight,
+                              healthStatus: log.healthStatus
+                            });
+                          }}
+                          className="text-slate-400 hover:text-emerald-600 p-1 rounded hover:bg-slate-50 transition-colors cursor-pointer"
+                          title="Edit Weight Record"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      {onDeleteWeightRecord && hasPermission(currentUser, 'weight_delete') && (
                         <button
                           onClick={() => {
                             setConfirmModal({

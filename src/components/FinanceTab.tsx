@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/
 import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, ClipboardList, TrendingUp, ShoppingBag, Edit3, Trash2 } from 'lucide-react';
 import { ConfirmModal } from './ui/confirm-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { hasPermission } from '@/lib/utils';
 
 interface FinanceTabProps {
   data: ERPLivestockData;
@@ -19,6 +20,7 @@ interface FinanceTabProps {
   onDeleteSalesRecord?: (cowId: string) => Promise<void>;
   onUpdateSalesRecord?: (cowId: string, updates: Partial<SalesRecord>) => Promise<void>;
   onRecordSaleClick?: () => void;
+  currentUser?: any;
 }
 
 export default function FinanceTab({ 
@@ -28,7 +30,8 @@ export default function FinanceTab({
   onDeleteExpense,
   onDeleteSalesRecord,
   onUpdateSalesRecord,
-  onRecordSaleClick
+  onRecordSaleClick,
+  currentUser
 }: FinanceTabProps) {
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -120,7 +123,7 @@ export default function FinanceTab({
           <h3 className="text-xl font-bold text-slate-900 tracking-tight">Financial Ledger & Revenue Hub</h3>
           <p className="text-xs text-slate-400 font-medium">Manage operation costs, purchase budgets, and track live livestock sales revenue streams.</p>
         </div>
-        {ledgerView === 'expenses' && (
+        {ledgerView === 'expenses' && hasPermission(currentUser, 'expenses_record') && (
           <Button
             onClick={() => {
               if (isLogging) {
@@ -315,22 +318,24 @@ export default function FinanceTab({
                       <td className="py-3.5 px-4 font-mono text-slate-900 font-extrabold text-right">៛ {expense.amount.toLocaleString()}</td>
                       <td className="py-3.5 px-4 text-right pr-6">
                         <div className="flex items-center justify-end gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setCategory(expense.category);
-                              setAmount(expense.amount);
-                              setDate(expense.date);
-                              setDescription(expense.description);
-                              setEditingExpenseId(expense.id);
-                              setIsLogging(true);
-                            }}
-                            className="text-slate-400 hover:text-emerald-600 transition-colors p-1"
-                            title="Edit Expense Record"
-                          >
-                            <Edit3 className="h-3.5 w-3.5" />
-                          </button>
-                          {onDeleteExpense && (
+                          {hasPermission(currentUser, 'expenses_record') && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCategory(expense.category);
+                                setAmount(expense.amount);
+                                setDate(expense.date);
+                                setDescription(expense.description);
+                                setEditingExpenseId(expense.id);
+                                setIsLogging(true);
+                              }}
+                              className="text-slate-400 hover:text-emerald-600 transition-colors p-1 cursor-pointer"
+                              title="Edit Expense Record"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                          {onDeleteExpense && hasPermission(currentUser, 'expenses_delete') && (
                             <button
                               type="button"
                               onClick={() => {
@@ -362,7 +367,7 @@ export default function FinanceTab({
                                   }
                                 });
                               }}
-                              className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                              className="text-slate-400 hover:text-rose-600 transition-colors p-1 cursor-pointer"
                               title="Delete Expense Record"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -443,24 +448,26 @@ export default function FinanceTab({
                             <td className="py-3.5 px-4 font-mono text-emerald-600 font-extrabold text-right">៛ {sale.totalPrice.toLocaleString()}</td>
                             <td className="py-3.5 px-4 text-right pr-6">
                               <div className="flex items-center justify-end gap-2.5">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setEditingSalesRecord({
-                                      cowId: sale.cowId,
-                                      salesDate: sale.salesDate ? sale.salesDate.split('T')[0] : '',
-                                      saleType: deducedSaleType === 'Scale' || deducedSaleType === 'Weight' ? 'Scale' : 'Lumpsum',
-                                      buyer: deducedBuyer,
-                                      weight: sale.weight,
-                                      unitPrice: sale.unitPrice
-                                    });
-                                  }}
-                                  className="text-slate-400 hover:text-emerald-600 transition-colors p-1"
-                                  title="Edit Sales Record"
-                                >
-                                  <Edit3 className="h-3.5 w-3.5" />
-                                </button>
-                                {onDeleteSalesRecord && (
+                                {hasPermission(currentUser, 'sales_record') && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingSalesRecord({
+                                        cowId: sale.cowId,
+                                        salesDate: sale.salesDate ? sale.salesDate.split('T')[0] : '',
+                                        saleType: deducedSaleType === 'Scale' || deducedSaleType === 'Weight' ? 'Scale' : 'Lumpsum',
+                                        buyer: deducedBuyer,
+                                        weight: sale.weight,
+                                        unitPrice: sale.unitPrice
+                                      });
+                                    }}
+                                    className="text-slate-400 hover:text-emerald-600 transition-colors p-1 cursor-pointer"
+                                    title="Edit Sales Record"
+                                  >
+                                    <Edit3 className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                                {onDeleteSalesRecord && hasPermission(currentUser, 'sales_delete') && (
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -492,7 +499,7 @@ export default function FinanceTab({
                                         }
                                       });
                                     }}
-                                    className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                                    className="text-slate-400 hover:text-rose-600 transition-colors p-1 cursor-pointer"
                                     title="Delete Sales Record"
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />

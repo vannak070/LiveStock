@@ -10,6 +10,7 @@ import { Users, UserMinus, UserPlus, Calendar, Info, Layers, Trash2, ShieldAlert
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { ConfirmModal } from './ui/confirm-modal';
 import { BatchModal } from './features/batch/BatchModal';
+import { hasPermission } from '@/lib/utils';
 
 interface BatchTabProps {
   data: ERPLivestockData;
@@ -20,6 +21,7 @@ interface BatchTabProps {
   onRecordBatchWeights?: (records: { cowId: string; currentWeight: number; healthStatus: string; trackingDate?: string }[]) => Promise<void>;
   onRecordBatchHealthLog?: (batchId: string, log: Omit<HealthLogItem, 'id' | 'cowId'>) => Promise<void>;
   onDeleteBatch?: (batchId: string) => Promise<void>;
+  currentUser?: any;
 }
 
 export default function BatchTab({
@@ -29,7 +31,8 @@ export default function BatchTab({
   onRemoveCow,
   onUpdateBatch,
   onRecordBatchWeights,
-  onDeleteBatch
+  onDeleteBatch,
+  currentUser
 }: BatchTabProps) {
   const [selectedBatchId, setSelectedBatchId] = useState<string>('');
   const [isCreateBatchModalOpen, setIsCreateBatchModalOpen] = useState(false);
@@ -441,29 +444,33 @@ export default function BatchTab({
                 </select>
               )}
 
-              <Button
-                onClick={() => {
-                  setEditingBatch(null);
-                  setIsCreateBatchModalOpen(true);
-                }}
-                className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="h-4 w-4" /> ក្រុមថ្មី (New Batch)
-              </Button>
+              {hasPermission(currentUser, 'batch_create') && (
+                <Button
+                  onClick={() => {
+                    setEditingBatch(null);
+                    setIsCreateBatchModalOpen(true);
+                  }}
+                  className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="h-4 w-4" /> ក្រុមថ្មី (New Batch)
+                </Button>
+              )}
 
               {defaultBatch && (
                 <>
-                  <Button
-                    onClick={() => {
-                      setEditingBatch(defaultBatch);
-                      setIsCreateBatchModalOpen(true);
-                    }}
-                    className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
-                  >
-                    ✏️ កែប្រែ (Edit)
-                  </Button>
+                  {hasPermission(currentUser, 'batch_edit') && (
+                    <Button
+                      onClick={() => {
+                        setEditingBatch(defaultBatch);
+                        setIsCreateBatchModalOpen(true);
+                      }}
+                      className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
+                    >
+                      ✏️ កែប្រែ (Edit)
+                    </Button>
+                  )}
 
-                  {onDeleteBatch && (
+                  {onDeleteBatch && hasPermission(currentUser, 'batch_delete') && (
                     <Button
                       onClick={() => handleDeleteBatch(defaultBatch.id)}
                       className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
@@ -481,12 +488,14 @@ export default function BatchTab({
                 <Layers className="h-4 w-4 text-emerald-600" /> 📋 ក្រុមទាំងអស់ ({data.batches.length})
               </Button>
 
-              <Button
-                onClick={openScalingDialog}
-                className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs py-2 px-4 shadow-md flex items-center gap-1.5 cursor-pointer transition-all hover:translate-y-[-1px]"
-              >
-                <Scale className="h-4 w-4" /> ⚖️ កត់គីឡូគោបំប៉ន (Record Weights)
-              </Button>
+              {hasPermission(currentUser, 'weight_record') && (
+                <Button
+                  onClick={openScalingDialog}
+                  className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs py-2 px-4 shadow-md flex items-center gap-1.5 cursor-pointer transition-all hover:translate-y-[-1px]"
+                >
+                  <Scale className="h-4 w-4" /> ⚖️ កត់គីឡូគោបំប៉ន (Record Weights)
+                </Button>
+              )}
             </div>
           </div>
 
@@ -558,9 +567,9 @@ export default function BatchTab({
 
           {/* Sub View Contents */}
           {subView === 'members' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className={`grid grid-cols-1 ${hasPermission(currentUser, 'batch_edit') ? 'lg:grid-cols-3' : 'lg:grid-cols-1'} gap-6`}>
               {/* Herd List (2 cols) */}
-              <div className="lg:col-span-2 space-y-4">
+              <div className={hasPermission(currentUser, 'batch_edit') ? 'lg:col-span-2 space-y-4' : 'space-y-4'}>
                 <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
                   បញ្ជីឈ្មោះគោបំប៉នបច្ចុប្បន្ន (FATTENING HERD MEMBERS)
                 </h4>
@@ -598,14 +607,18 @@ export default function BatchTab({
                                 </span>
                               </td>
                               <td className="py-3.5 px-4 text-right">
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveCowFromProgram(cow.id)}
-                                  className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50/50 transition-colors cursor-pointer"
-                                  title="Remove from Fattening Program"
-                                >
-                                  <UserMinus className="h-4 w-4" />
-                                </button>
+                                {hasPermission(currentUser, 'batch_edit') ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveCowFromProgram(cow.id)}
+                                    className="text-slate-400 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50/50 transition-colors cursor-pointer"
+                                    title="Remove from Fattening Program"
+                                  >
+                                    <UserMinus className="h-4 w-4" />
+                                  </button>
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 font-bold">Locked</span>
+                                )}
                               </td>
                             </tr>
                           ))
@@ -623,106 +636,108 @@ export default function BatchTab({
               </div>
 
               {/* Allocation List (1 col) */}
-              <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-xs space-y-4 max-h-[600px] flex flex-col">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">
-                      បន្ថែមគោចូលកម្មវិធីបំប៉ន (Add to Fattening)
-                    </h4>
-                    <span className="text-[10px] font-black text-emerald-650 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                      {selectedCowIds.length} Selected
-                    </span>
+              {hasPermission(currentUser, 'batch_edit') && (
+                <div className="bg-white border border-slate-100 p-5 rounded-2xl shadow-xs space-y-4 max-h-[600px] flex flex-col">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">
+                        បន្ថែមគោចូលកម្មវិធីបំប៉ន (Add to Fattening)
+                      </h4>
+                      <span className="text-[10px] font-black text-emerald-650 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                        {selectedCowIds.length} Selected
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Select unassigned active stock cows to put on fattening</p>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Select unassigned active stock cows to put on fattening</p>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
-                    <Input
-                      placeholder="ID/Breed..."
-                      value={searchUnassigned}
-                      onChange={e => setSearchUnassigned(e.target.value)}
-                      className="h-8 text-xs pl-8 placeholder:text-slate-400"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                      <Input
+                        placeholder="ID/Breed..."
+                        value={searchUnassigned}
+                        onChange={e => setSearchUnassigned(e.target.value)}
+                        className="h-8 text-xs pl-8 placeholder:text-slate-400"
+                      />
+                    </div>
+                    <select
+                      value={breedFilter}
+                      onChange={e => setBreedFilter(e.target.value)}
+                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                    >
+                      <option value="">All Breeds</option>
+                      {(data.settings.breeds || []).map(b => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
                   </div>
-                  <select
-                    value={breedFilter}
-                    onChange={e => setBreedFilter(e.target.value)}
-                    className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-                  >
-                    <option value="">All Breeds</option>
-                    {(data.settings.breeds || []).map(b => (
-                      <option key={b} value={b}>{b}</option>
-                    ))}
-                  </select>
-                </div>
 
-                <div className="flex items-center justify-between text-[10px] font-bold px-1">
-                  <button
-                    type="button"
-                    onClick={handleSelectAllFiltered}
-                    disabled={filteredUnassignedCows.length === 0}
-                    className="text-emerald-600 hover:text-emerald-700 disabled:opacity-40 cursor-pointer"
-                  >
-                    + Select All ({filteredUnassignedCows.length})
-                  </button>
-                  {selectedCowIds.length > 0 && (
+                  <div className="flex items-center justify-between text-[10px] font-bold px-1">
                     <button
                       type="button"
-                      onClick={handleDeselectAll}
-                      className="text-slate-400 hover:text-rose-500 cursor-pointer"
+                      onClick={handleSelectAllFiltered}
+                      disabled={filteredUnassignedCows.length === 0}
+                      className="text-emerald-600 hover:text-emerald-700 disabled:opacity-40 cursor-pointer"
                     >
-                      Clear Selection
+                      + Select All ({filteredUnassignedCows.length})
                     </button>
-                  )}
-                </div>
+                    {selectedCowIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleDeselectAll}
+                        className="text-slate-400 hover:text-rose-500 cursor-pointer"
+                      >
+                        Clear Selection
+                      </button>
+                    )}
+                  </div>
 
-                <div className="flex-1 overflow-y-auto space-y-2 border border-slate-100 p-2 rounded-xl bg-slate-50/40">
-                  {filteredUnassignedCows.length > 0 ? (
-                    filteredUnassignedCows.map(cow => {
-                      const isSelected = selectedCowIds.includes(cow.id);
-                      return (
-                        <div
-                          key={cow.id}
-                          onClick={() => {
-                            setSelectedCowIds(prev =>
-                              prev.includes(cow.id) ? prev.filter(id => id !== cow.id) : [...prev, cow.id]
-                            );
-                          }}
-                          className={`p-2.5 rounded-lg border text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                            isSelected
-                              ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold shadow-xs'
-                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                          }`}
-                        >
-                          <div className="text-left">
-                            <span className="font-black text-slate-800">{cow.id}</span>
-                            <p className="text-[9px] text-slate-400 mt-0.5">{cow.breed} • {cow.weight} kg</p>
+                  <div className="flex-1 overflow-y-auto space-y-2 border border-slate-100 p-2 rounded-xl bg-slate-50/40">
+                    {filteredUnassignedCows.length > 0 ? (
+                      filteredUnassignedCows.map(cow => {
+                        const isSelected = selectedCowIds.includes(cow.id);
+                        return (
+                          <div
+                            key={cow.id}
+                            onClick={() => {
+                              setSelectedCowIds(prev =>
+                                prev.includes(cow.id) ? prev.filter(id => id !== cow.id) : [...prev, cow.id]
+                              );
+                            }}
+                            className={`p-2.5 rounded-lg border text-xs flex items-center justify-between cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold shadow-xs'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="text-left">
+                              <span className="font-black text-slate-800">{cow.id}</span>
+                              <p className="text-[9px] text-slate-400 mt-0.5">{cow.breed} • {cow.weight} kg</p>
+                            </div>
+                            {isSelected ? (
+                              <UserMinus className="h-4 w-4 text-emerald-600" />
+                            ) : (
+                              <UserPlus className="h-4 w-4 text-slate-400" />
+                            )}
                           </div>
-                          {isSelected ? (
-                            <UserMinus className="h-4 w-4 text-emerald-600" />
-                          ) : (
-                            <UserPlus className="h-4 w-4 text-slate-400" />
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="text-[10px] text-center text-slate-400 py-10 font-bold">
-                      {unassignedCows.length === 0 ? 'All cows allocated.' : 'No stock cows match filter.'}
-                    </p>
-                  )}
-                </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-[10px] text-center text-slate-400 py-10 font-bold">
+                        {unassignedCows.length === 0 ? 'All cows allocated.' : 'No stock cows match filter.'}
+                      </p>
+                    )}
+                  </div>
 
-                <Button
-                  onClick={handleAllocateCows}
-                  disabled={selectedCowIds.length === 0}
-                  className="w-full bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-bold py-2 shadow disabled:opacity-50 cursor-pointer"
-                >
-                  🚀 ដាក់ចូលបំប៉ន ({selectedCowIds.length} ក្បាល)
-                </Button>
-              </div>
+                  <Button
+                    onClick={handleAllocateCows}
+                    disabled={selectedCowIds.length === 0}
+                    className="w-full bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-bold py-2 shadow disabled:opacity-50 cursor-pointer"
+                  >
+                    🚀 ដាក់ចូលបំប៉ន ({selectedCowIds.length} ក្បាល)
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 
