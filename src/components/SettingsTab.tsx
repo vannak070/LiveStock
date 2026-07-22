@@ -128,7 +128,8 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     setUserEmail(user.email);
     setUserPassword(user.password || '');
     setUserRole(user.role);
-    setUserPermissions(user.permissions && user.permissions.length > 0 ? user.permissions : (DEFAULT_ROLE_PERMISSIONS[user.role] || []));
+    const matchedRole = currentRoles.find(r => r.name === user.role);
+    setUserPermissions(user.permissions && user.permissions.length > 0 ? user.permissions : (matchedRole ? matchedRole.permissions : (DEFAULT_ROLE_PERMISSIONS[user.role] || [])));
     setUserFarmLocation(user.farmLocation || '');
     setIsAddingUser(true);
   };
@@ -724,6 +725,11 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
             <DialogDescription className="text-xs text-slate-500">
               Define a new system role name, description, and assign default function permissions.
             </DialogDescription>
+            {editingRole?.isSystem && (
+              <div className="bg-amber-50/70 border border-amber-200 p-2.5 rounded-xl text-[10px] text-amber-800 font-bold leading-normal mt-3">
+                ⚠️ System Role Lock: You cannot rename or delete system roles because the core system scoping rules rely on their names, but you can customize their default function permissions.
+              </div>
+            )}
           </DialogHeader>
 
           <form onSubmit={handleSaveRole} className="space-y-4 pt-4 text-left">
@@ -733,10 +739,11 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
                 <input
                   type="text"
                   required
+                  disabled={editingRole?.isSystem}
                   placeholder="e.g. Veterinarian, Feed Supervisor"
                   value={roleName}
                   onChange={e => setRoleName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold focus:outline-none focus:border-emerald-600"
+                  className="w-full bg-slate-50 border border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 rounded-xl px-3.5 py-2 text-xs font-bold focus:outline-none focus:border-emerald-600"
                 />
               </div>
               <div className="space-y-1">
