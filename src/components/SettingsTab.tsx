@@ -202,8 +202,8 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
     setUserName('');
     setUserEmail('');
     setUserPassword('');
-    setUserRole('Company User');
-    setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Company User']);
+    setUserRole('Company');
+    setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Company']);
     setEditingUserId(null);
     setIsAddingUser(false);
   };
@@ -571,8 +571,8 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                     setUserName('');
                     setUserEmail('');
                     setUserPassword('');
-                    setUserRole('Company User');
-                    setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Company User']);
+                    setUserRole('Company');
+                    setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Company']);
                   }}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
                 >
@@ -770,9 +770,11 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                           <td className="py-3.5">
                             <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
                               user.role === 'Super Admin' ? 'bg-red-50 text-red-700 border-red-200' :
-                              user.role === 'Operation User' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              user.role === 'Company User' ? 'bg-teal-50 text-teal-700 border-teal-200' :
-                              user.role === 'Farm User' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                              user.role === 'Admin' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                              user.role === 'Company' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                              user.role === 'Farm Owner' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                              user.role === 'Farm Staff' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                              user.role === 'Veterinarian' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                               'bg-slate-100 text-slate-650 border-slate-200'
                             }`}>
                               {user.role}
@@ -803,7 +805,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                               onClick={() => handleStartEditUser(user)}
                               className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
                             >
-                              Edit Permissions
+                              Edit Account
                             </button>
                             {user.role !== 'Super Admin' && (
                               <button
