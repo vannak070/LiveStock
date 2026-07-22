@@ -15,7 +15,10 @@ import {
   LayoutDashboard,
   Menu,
   X,
-  Building
+  Building,
+  ChevronRight,
+  Beef,
+  Syringe
 } from 'lucide-react';
 import { StockItem } from '@/lib/xlsx-parser';
 import { UserRoleItem } from '@/lib/types';
@@ -44,6 +47,63 @@ interface SidebarLayoutProps {
   onLogout?: () => void;
 }
 
+interface NavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+  badge?: number | string | null;
+  badgeColor?: 'amber' | 'rose' | 'emerald';
+}
+
+function NavItem({ icon, label, isActive, onClick, badge, badgeColor = 'amber' }: NavItemProps) {
+  const badgeColors = {
+    amber: 'bg-amber-500',
+    rose: 'bg-rose-500',
+    emerald: 'bg-emerald-500'
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
+        isActive
+          ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/10 text-emerald-300 border border-emerald-600/30 shadow-sm'
+          : 'text-slate-400 hover:bg-white/5 hover:text-slate-200 border border-transparent'
+      }`}
+    >
+      <span className="flex items-center gap-3">
+        <span className={`flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
+          {icon}
+        </span>
+        <span className="text-[13px] leading-none">{label}</span>
+      </span>
+      <span className="flex items-center gap-2">
+        {badge ? (
+          <span className={`inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full text-[9px] font-black text-white ${badgeColors[badgeColor]} animate-pulse`}>
+            {badge}
+          </span>
+        ) : isActive ? (
+          <ChevronRight className="h-3 w-3 text-emerald-400/60" />
+        ) : null}
+      </span>
+    </button>
+  );
+}
+
+function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-0.5">
+      <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-600 px-3 py-1.5 flex items-center gap-2">
+        <span className="h-px flex-1 bg-slate-700/50" />
+        {label}
+        <span className="h-px flex-1 bg-slate-700/50" />
+      </p>
+      {children}
+    </div>
+  );
+}
+
 export default function SidebarLayout({
   children,
   stock,
@@ -57,243 +117,231 @@ export default function SidebarLayout({
 }: SidebarLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Compute Stats for ACTIVE stock items (not sold)
   const activeStock = stock.filter(item => item.status.toLowerCase() === 'active');
   const totalHead = activeStock.length;
   const totalWeight = activeStock.reduce((sum, item) => sum + (item.weight || 0), 0);
   const averageWeight = totalHead > 0 ? Math.round(totalWeight / totalHead) : 0;
   const inventoryValue = activeStock.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+  const totalAlerts = healthAlertsCount + vaccineAlertsCount;
 
   const handleTabChange = (tab: ActiveTabType) => {
     setActiveTab(tab);
     setMobileMenuOpen(false);
   };
 
+  // Get user initials for avatar
+  const userInitials = currentUser?.name
+    ? currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+    : 'US';
+
+  // Role color badge
+  const roleColors: Record<string, string> = {
+    'Super Admin': 'bg-red-500/20 text-red-300 border-red-500/30',
+    'Admin': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    'Company': 'bg-teal-500/20 text-teal-300 border-teal-500/30',
+    'Farm Owner': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    'Farm Staff': 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    'Veterinarian': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+  };
+  const roleBadgeClass = roleColors[currentUser?.role || ''] || 'bg-slate-500/20 text-slate-300 border-slate-500/30';
+
   const navContent = (
-    <div className="flex flex-col justify-between h-full text-slate-100">
-      <div className="overflow-y-auto scrollbar-thin">
-        {/* Logo / Title */}
-        <div className="h-20 flex items-center justify-between px-6 border-b border-emerald-950 bg-emerald-950/10 sticky top-0 bg-[#002D26] z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-xl bg-white shadow-xs flex items-center justify-center flex-shrink-0">
-              <img src="/logo.png" alt="SNR Farm Logo" className="h-9 w-auto object-contain" />
-            </div>
-            <div>
-              <h1 className="font-bold text-sm leading-tight tracking-wider uppercase text-white">SNR Fattening</h1>
-              <p className="text-[10px] text-emerald-400 font-bold tracking-widest uppercase">CATTLE FATTENING ERP</p>
-            </div>
-          </div>
-          {/* Close button for mobile menu */}
-          <button 
-            onClick={() => setMobileMenuOpen(false)}
-            className="md:hidden text-slate-400 hover:text-white p-1 rounded-lg"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+    <div className="flex flex-col h-full bg-[#0C1F1A]">
 
-        {/* Navigation Links Grouped by Modules */}
-        <div className="p-4 space-y-5">
-          {/* Core Section */}
+      {/* ─── Logo ─── */}
+      <div className="flex items-center justify-between h-[72px] px-5 border-b border-white/5 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-emerald-600 shadow-lg shadow-emerald-900/50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <img src="/logo.png" alt="SNR Logo" className="h-8 w-auto object-contain" />
+          </div>
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Core</p>
-            <button
-              onClick={() => handleTabChange('dashboard')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                activeTab === 'dashboard'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                  : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-              }`}
-            >
-              <LayoutDashboard className="h-4 w-4 flex-shrink-0" />
-              Dashboard Home
-            </button>
+            <p className="text-white font-black text-sm tracking-wide leading-none">SNR Fattening</p>
+            <p className="text-emerald-500 text-[9px] font-bold tracking-[0.12em] uppercase mt-0.5">Cattle ERP</p>
           </div>
+        </div>
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="md:hidden text-slate-500 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
 
-          {/* Livestock ERP Section */}
-          {(hasPermission(currentUser, 'stock_view') || 
-            hasPermission(currentUser, 'batch_view') || 
-            hasPermission(currentUser, 'health_view')) && (
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Livestock ERP</p>
-              <div className="space-y-1">
-                {hasPermission(currentUser, 'stock_view') && (
-                  <button
-                    onClick={() => handleTabChange('cow-inventory')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                      activeTab === 'cow-inventory'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                    }`}
-                  >
-                    <Database className="h-4 w-4 flex-shrink-0" />
-                    Fattening Cattle Registry
-                  </button>
-                )}
-                {hasPermission(currentUser, 'batch_view') && (
-                  <button
-                    onClick={() => handleTabChange('batch-management')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                      activeTab === 'batch-management'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                    }`}
-                  >
-                    <TrendingUp className="h-4 w-4 flex-shrink-0" />
-                    Fattening Batches & Diet
-                  </button>
-                )}
-                {hasPermission(currentUser, 'health_view') && (
-                  <button
-                    onClick={() => handleTabChange('health-tracking')}
-                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                      activeTab === 'health-tracking'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                    }`}
-                  >
-                    <span className="flex items-center gap-3">
-                      <Heart className="h-4 w-4 flex-shrink-0" />
-                      Medical & Vaccine Ledger
-                    </span>
-                    {(healthAlertsCount > 0 || vaccineAlertsCount > 0) && (
-                      <span className="h-2 w-2 rounded-full bg-amber-500 block animate-ping" />
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Financial Ledger Section */}
-          {(hasPermission(currentUser, 'sales_view') || 
-            hasPermission(currentUser, 'expenses_view')) && (
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Financials</p>
-              <button
-                onClick={() => handleTabChange('sales-finance')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                  activeTab === 'sales-finance'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                }`}
-              >
-                <DollarSign className="h-4 w-4 flex-shrink-0" />
-                Feed Costs & Revenue Ledger
-              </button>
-            </div>
-          )}
-
-          {/* Reports & Analytics */}
-          {hasPermission(currentUser, 'analytics_view') && (
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Reports</p>
-              <button
-                onClick={() => handleTabChange('analytics')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                  activeTab === 'analytics'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                }`}
-              >
-                <PieChart className="h-4 w-4 flex-shrink-0" />
-                Growth & Profit Analytics
-              </button>
-            </div>
-          )}
-
-          {/* Configuration */}
-          {(hasPermission(currentUser, 'settings_manage') || hasPermission(currentUser, 'farms_manage')) && (
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Administration</p>
-              <div className="space-y-1">
-                {hasPermission(currentUser, 'farms_manage') && (
-                  <button
-                    onClick={() => handleTabChange('farms')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                      activeTab === 'farms'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                    }`}
-                  >
-                    <Building className="h-4 w-4 flex-shrink-0" />
-                    Farms & Stall Branches
-                  </button>
-                )}
-                {hasPermission(currentUser, 'settings_manage') && (
-                  <button
-                    onClick={() => handleTabChange('settings')}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                      activeTab === 'settings'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                    }`}
-                  >
-                    <Settings className="h-4 w-4 flex-shrink-0" />
-                    ERP Master Setup
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+      {/* ─── Live Herd Stats Strip ─── */}
+      <div className="mx-4 mt-4 mb-2 rounded-xl bg-emerald-950/60 border border-emerald-900/40 p-3 grid grid-cols-2 gap-y-2.5 gap-x-2">
+        <div>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Active Herd</p>
+          <p className="text-base font-black text-white mt-0.5">{totalHead} <span className="text-[10px] font-semibold text-emerald-500">head</span></p>
+        </div>
+        <div>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Avg Weight</p>
+          <p className="text-base font-black text-white mt-0.5">{averageWeight} <span className="text-[10px] font-semibold text-blue-400">kg</span></p>
+        </div>
+        <div>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Asset Value</p>
+          <p className="text-xs font-black text-white mt-0.5 truncate">៛{(inventoryValue / 1000).toFixed(0)}K</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Health</p>
+          <p className={`text-xs font-black mt-0.5 ${totalAlerts > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+            {totalAlerts > 0 ? `${totalAlerts} Alert${totalAlerts > 1 ? 's' : ''}` : '✓ Stable'}
+          </p>
         </div>
       </div>
 
-      {/* User Profile */}
-      <div className="p-4 space-y-2.5 bg-[#002822]">
-        {currentUser && (
-          <div className="flex items-center gap-3 px-2 pt-2 border-t border-emerald-950/60">
-            <div className="h-8 w-8 rounded-full bg-emerald-800/65 border border-emerald-700 flex items-center justify-center font-bold text-xs text-emerald-100 flex-shrink-0">
-              {currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'US'}
+      {/* ─── Navigation Links ─── */}
+      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4 scrollbar-thin scrollbar-thumb-emerald-900/60">
+
+        {/* Core */}
+        <NavSection label="Overview">
+          <NavItem
+            icon={<LayoutDashboard className="h-4 w-4" />}
+            label="Dashboard"
+            isActive={activeTab === 'dashboard'}
+            onClick={() => handleTabChange('dashboard')}
+          />
+        </NavSection>
+
+        {/* Livestock ERP */}
+        {(hasPermission(currentUser, 'stock_view') ||
+          hasPermission(currentUser, 'batch_view') ||
+          hasPermission(currentUser, 'health_view')) && (
+          <NavSection label="Livestock ERP">
+            {hasPermission(currentUser, 'stock_view') && (
+              <NavItem
+                icon={<Beef className="h-4 w-4" />}
+                label="Cattle Registry"
+                isActive={activeTab === 'cow-inventory'}
+                onClick={() => handleTabChange('cow-inventory')}
+              />
+            )}
+            {hasPermission(currentUser, 'batch_view') && (
+              <NavItem
+                icon={<TrendingUp className="h-4 w-4" />}
+                label="Fattening Batches & Diet"
+                isActive={activeTab === 'batch-management'}
+                onClick={() => handleTabChange('batch-management')}
+              />
+            )}
+            {hasPermission(currentUser, 'health_view') && (
+              <NavItem
+                icon={<Syringe className="h-4 w-4" />}
+                label="Medical & Vaccines"
+                isActive={activeTab === 'health-tracking'}
+                onClick={() => handleTabChange('health-tracking')}
+                badge={totalAlerts > 0 ? totalAlerts : null}
+                badgeColor="rose"
+              />
+            )}
+          </NavSection>
+        )}
+
+        {/* Financials */}
+        {(hasPermission(currentUser, 'sales_view') ||
+          hasPermission(currentUser, 'expenses_view')) && (
+          <NavSection label="Financials">
+            <NavItem
+              icon={<DollarSign className="h-4 w-4" />}
+              label="Feed Costs & Revenue"
+              isActive={activeTab === 'sales-finance'}
+              onClick={() => handleTabChange('sales-finance')}
+            />
+          </NavSection>
+        )}
+
+        {/* Analytics */}
+        {hasPermission(currentUser, 'analytics_view') && (
+          <NavSection label="Insights">
+            <NavItem
+              icon={<PieChart className="h-4 w-4" />}
+              label="Growth & Profit Analytics"
+              isActive={activeTab === 'analytics'}
+              onClick={() => handleTabChange('analytics')}
+            />
+          </NavSection>
+        )}
+
+        {/* Administration */}
+        {(hasPermission(currentUser, 'settings_manage') || hasPermission(currentUser, 'farms_manage')) && (
+          <NavSection label="Administration">
+            {hasPermission(currentUser, 'farms_manage') && (
+              <NavItem
+                icon={<Building className="h-4 w-4" />}
+                label="Farms & Stall Branches"
+                isActive={activeTab === 'farms'}
+                onClick={() => handleTabChange('farms')}
+              />
+            )}
+            {hasPermission(currentUser, 'settings_manage') && (
+              <NavItem
+                icon={<Settings className="h-4 w-4" />}
+                label="ERP Master Setup"
+                isActive={activeTab === 'settings'}
+                onClick={() => handleTabChange('settings')}
+              />
+            )}
+          </NavSection>
+        )}
+      </nav>
+
+      {/* ─── User Profile Footer ─── */}
+      {currentUser && (
+        <div className="flex-shrink-0 mx-3 mb-3 mt-1 border-t border-white/5 pt-3">
+          <div className="flex items-center gap-3 bg-white/5 rounded-xl px-3 py-2.5 hover:bg-white/8 transition-colors">
+            {/* Avatar */}
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center font-black text-xs text-white flex-shrink-0 shadow-md">
+              {userInitials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-emerald-50 truncate">{currentUser.name}</p>
-              <p className="text-[9px] text-emerald-400/80 truncate">{currentUser.role}</p>
+              <p className="text-[12px] font-bold text-white truncate leading-tight">{currentUser.name}</p>
+              <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full border mt-0.5 ${roleBadgeClass}`}>
+                {currentUser.role}
+              </span>
             </div>
             {onLogout && (
-              <button 
+              <button
                 onClick={onLogout}
-                className="text-emerald-400 hover:text-white transition-colors cursor-pointer"
+                className="text-slate-500 hover:text-rose-400 transition-colors cursor-pointer p-1.5 rounded-lg hover:bg-rose-500/10"
                 title="Logout"
               >
                 <LogOut className="h-4 w-4" />
               </button>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-800 font-sans">
-      {/* Desktop Sidebar (hidden on mobile/tablet) */}
-      <aside className="hidden md:flex w-64 bg-[#002D26] shadow-xl flex-shrink-0 flex-col">
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-64 flex-shrink-0 flex-col shadow-2xl shadow-slate-900/20">
         {navContent}
       </aside>
 
       {/* Mobile Backdrop & Drawer */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
-          {/* Backdrop blur overlay */}
-          <div 
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" 
+          <div
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
-          {/* Mobile Navigation Drawer */}
-          <div className="relative w-72 max-w-[80vw] bg-[#002D26] h-full shadow-2xl z-10 flex flex-col">
+          <div className="relative w-72 max-w-[82vw] h-full shadow-2xl z-10 flex flex-col">
             {navContent}
           </div>
         </div>
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col bg-slate-50/70 min-w-0 overflow-y-auto">
-        {/* Top Header */}
-        <header className="border-b border-slate-200/60 bg-white/95 backdrop-blur-md p-4 sm:p-6 sticky top-0 z-20">
+      <main className="flex-1 flex flex-col bg-slate-50 min-w-0 overflow-y-auto">
+
+        {/* Top Header Bar */}
+        <header className="border-b border-slate-200/70 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-20">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
-              {/* Mobile Hamburger Toggle Button */}
+              {/* Mobile Hamburger */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
                 className="md:hidden p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
@@ -302,73 +350,73 @@ export default function SidebarLayout({
                 <Menu className="h-5 w-5" />
               </button>
               <div>
-                <h2 className="text-lg sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
+                <h2 className="text-base sm:text-xl font-black tracking-tight text-slate-900 leading-tight">
                   SNR Cattle Fattening ERP
                 </h2>
-                <p className="text-[11px] sm:text-xs text-slate-450 font-semibold flex items-center gap-2 mt-0.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                  Active Operations Center & Lifecycle Registry.
+                <p className="text-[10px] sm:text-xs text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                  Fattening Livestock Management System
                 </p>
               </div>
             </div>
-            <div className="hidden lg:flex text-xs text-emerald-600 font-bold bg-emerald-50/60 py-1.5 px-3.5 rounded-full border border-emerald-100/60 items-center gap-2">
-              <Calendar className="h-4 w-4" />
+            <div className="hidden lg:flex text-xs text-slate-500 font-semibold bg-slate-50 py-2 px-3.5 rounded-full border border-slate-200 items-center gap-2">
+              <Calendar className="h-3.5 w-3.5 text-emerald-600" />
               {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
           </div>
 
-          {/* Responsive Stats Overview Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <div className="bg-[#F2FAF7] border border-[#D1EBE1] rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between shadow-xs">
+          {/* Responsive Stats Strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center justify-between">
               <div>
-                <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Active</p>
-                <h3 className="text-lg sm:text-2xl font-black text-slate-900 mt-0.5 sm:mt-1">{totalHead} <span className="text-[10px] sm:text-xs text-emerald-600 font-bold">cows</span></h3>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Active Herd</p>
+                <h3 className="text-xl font-black text-slate-900 mt-0.5 leading-none">{totalHead}<span className="text-[10px] text-emerald-600 font-bold ml-1">head</span></h3>
               </div>
-              <div className="h-8 sm:h-10 w-8 sm:w-10 rounded-full bg-[#057A55] text-white flex items-center justify-center shadow-xs flex-shrink-0">
-                <Database className="h-4 sm:h-5 w-4 sm:w-5" />
+              <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                <Database className="h-4 w-4" />
               </div>
             </div>
 
-            <div className="bg-[#F0F9FF] border border-[#E0F2FE] rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between shadow-xs">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center justify-between">
               <div>
-                <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avg Weight</p>
-                <h3 className="text-lg sm:text-2xl font-black text-slate-900 mt-0.5 sm:mt-1">{averageWeight} <span className="text-[10px] sm:text-xs text-blue-600 font-bold">kg</span></h3>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Avg Weight</p>
+                <h3 className="text-xl font-black text-slate-900 mt-0.5 leading-none">{averageWeight}<span className="text-[10px] text-blue-600 font-bold ml-1">kg</span></h3>
               </div>
-              <div className="h-8 sm:h-10 w-8 sm:w-10 rounded-full bg-[#0284C7] text-white flex items-center justify-center shadow-xs flex-shrink-0">
-                <Scale className="h-4 sm:h-5 w-4 sm:w-5" />
+              <div className="h-9 w-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                <Scale className="h-4 w-4" />
               </div>
             </div>
 
-            <div className="bg-[#FFFBEB] border border-[#FEF3C7] rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between shadow-xs">
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
               <div>
-                <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Asset Value</p>
-                <h3 className="text-base sm:text-xl font-black text-slate-900 mt-0.5 sm:mt-1">៛ {inventoryValue.toLocaleString()}</h3>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Asset Value</p>
+                <h3 className="text-sm font-black text-slate-900 mt-0.5 leading-none truncate">៛ {inventoryValue.toLocaleString()}</h3>
               </div>
-              <div className="h-8 sm:h-10 w-8 sm:w-10 rounded-full bg-[#D97706] text-white flex items-center justify-center shadow-xs flex-shrink-0">
-                <DollarSign className="h-4 sm:h-5 w-4 sm:w-5" />
+              <div className="h-9 w-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                <DollarSign className="h-4 w-4" />
               </div>
             </div>
 
-            <div className={`border rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center justify-between shadow-xs ${
-              healthAlertsCount > 0 ? 'bg-red-50/70 border-red-200' : 'bg-[#F2FAF7] border-[#D1EBE1]'
+            <div className={`border rounded-xl p-3 flex items-center justify-between ${
+              healthAlertsCount > 0 ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-100'
             }`}>
               <div>
-                <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">Health Status</p>
-                <h3 className="text-xs sm:text-xl font-black text-slate-900 mt-0.5 sm:mt-1">
-                  {healthAlertsCount > 0 ? `${healthAlertsCount} Alerts` : '100% Stable'}
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Health Status</p>
+                <h3 className={`text-sm font-black mt-0.5 leading-none ${healthAlertsCount > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                  {healthAlertsCount > 0 ? `${healthAlertsCount} Alerts` : '✓ All Stable'}
                 </h3>
               </div>
-              <div className={`h-8 sm:h-10 w-8 sm:w-10 rounded-full flex items-center justify-center shadow-xs flex-shrink-0 ${
-                healthAlertsCount > 0 ? 'bg-red-500 text-white' : 'bg-[#057A55] text-white'
+              <div className={`h-9 w-9 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 text-white ${
+                healthAlertsCount > 0 ? 'bg-rose-500' : 'bg-emerald-600'
               }`}>
-                <Activity className="h-4 sm:h-5 w-4 sm:w-5" />
+                <Activity className="h-4 w-4" />
               </div>
             </div>
           </div>
         </header>
 
-        {/* Content Body */}
-        <div className="p-3 sm:p-6 flex-1 min-w-0">
+        {/* Page Content */}
+        <div className="p-4 sm:p-6 flex-1 min-w-0">
           {children}
         </div>
       </main>
