@@ -98,8 +98,8 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Health & Veterinary Clinic</h3>
-          <p className="text-xs text-slate-400 font-medium">Record biological events, vaccinations, dewormers, and disease treatment history.</p>
+          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Medical & Vaccine Ledger</h3>
+          <p className="text-xs text-slate-400 font-medium">Record fattening herd vaccinations, deworming schedules, disease treatments, and veterinary events.</p>
         </div>
         {hasPermission(currentUser, 'health_record') && (
           <Button 

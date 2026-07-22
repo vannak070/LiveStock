@@ -99,10 +99,10 @@ export default function InventoryTable({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2 text-left">
-            🧑‍🌾 បញ្ជីសារពើភណ្ឌគោ (Cow Inventory Stock)
+            🐄 Fattening Cattle Registry (បញ្ជីសារពើភណ្ឌគោ)
           </h3>
           <p className="text-[11px] text-slate-400 font-semibold text-left">
-            View details, log weights, or delete registered cows from SNR farm database.
+            View fattening progress, log weight gains, or register new cattle into the fattening program.
           </p>
         </div>
         {onAddCowClick && hasPermission(currentUser, 'stock_create') && (
@@ -110,7 +110,7 @@ export default function InventoryTable({
             onClick={onAddCowClick}
             className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs py-2 px-4 shadow-md flex items-center gap-1.5 cursor-pointer"
           >
-            ➕ ចុះឈ្មោះគោថ្មី (Add Cow)
+            ➕ Register Fattening Cattle
           </Button>
         )}
       </div>

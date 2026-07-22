@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Livestock Management Dashboard | SNR Farm",
-  description: "Enterprise grade livestock management, weight history tracking, and sales analytics system.",
+  title: "SNR Cattle Fattening ERP | Fattening Livestock Management System",
+  description: "Enterprise grade cattle fattening management, weight growth history tracking, and sales analytics system.",
 };
 
 export default function RootLayout({

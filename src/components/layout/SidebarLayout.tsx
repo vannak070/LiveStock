@@ -79,8 +79,8 @@ export default function SidebarLayout({
               <img src="/logo.png" alt="SNR Farm Logo" className="h-9 w-auto object-contain" />
             </div>
             <div>
-              <h1 className="font-bold text-sm leading-tight tracking-wider uppercase text-white">SNR Farm</h1>
-              <p className="text-[10px] text-emerald-400 font-bold tracking-widest uppercase">LIVESTOCK ERP</p>
+              <h1 className="font-bold text-sm leading-tight tracking-wider uppercase text-white">SNR Fattening</h1>
+              <p className="text-[10px] text-emerald-400 font-bold tracking-widest uppercase">CATTLE FATTENING ERP</p>
             </div>
           </div>
           {/* Close button for mobile menu */}
@@ -127,7 +127,7 @@ export default function SidebarLayout({
                     }`}
                   >
                     <Database className="h-4 w-4 flex-shrink-0" />
-                    Cow Inventory
+                    Fattening Cattle Registry
                   </button>
                 )}
                 {hasPermission(currentUser, 'batch_view') && (
@@ -140,7 +140,7 @@ export default function SidebarLayout({
                     }`}
                   >
                     <TrendingUp className="h-4 w-4 flex-shrink-0" />
-                    Fattening Program
+                    Fattening Batches & Diet
                   </button>
                 )}
                 {hasPermission(currentUser, 'health_view') && (
@@ -154,7 +154,7 @@ export default function SidebarLayout({
                   >
                     <span className="flex items-center gap-3">
                       <Heart className="h-4 w-4 flex-shrink-0" />
-                      Health & Medical
+                      Medical & Vaccine Ledger
                     </span>
                     {(healthAlertsCount > 0 || vaccineAlertsCount > 0) && (
                       <span className="h-2 w-2 rounded-full bg-amber-500 block animate-ping" />
@@ -179,7 +179,7 @@ export default function SidebarLayout({
                 }`}
               >
                 <DollarSign className="h-4 w-4 flex-shrink-0" />
-                Ledger & Revenue
+                Feed Costs & Revenue Ledger
               </button>
             </div>
           )}
@@ -197,7 +197,7 @@ export default function SidebarLayout({
                 }`}
               >
                 <PieChart className="h-4 w-4 flex-shrink-0" />
-                Analytics BI
+                Growth & Profit Analytics
               </button>
             </div>
           )}
@@ -217,7 +217,7 @@ export default function SidebarLayout({
                     }`}
                   >
                     <Building className="h-4 w-4 flex-shrink-0" />
-                    Farms & Branches
+                    Farms & Stall Branches
                   </button>
                 )}
                 {hasPermission(currentUser, 'settings_manage') && (
@@ -303,7 +303,7 @@ export default function SidebarLayout({
               </button>
               <div>
                 <h2 className="text-lg sm:text-2xl font-black tracking-tight text-slate-900 flex items-center gap-2">
-                  SNR Farm ERP Portal
+                  SNR Cattle Fattening ERP
                 </h2>
                 <p className="text-[11px] sm:text-xs text-slate-450 font-semibold flex items-center gap-2 mt-0.5">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block animate-pulse" />

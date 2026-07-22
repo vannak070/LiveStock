@@ -494,8 +494,8 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
               <div className="p-3.5 rounded-2xl bg-white shadow-md flex items-center justify-center mb-4 transform hover:scale-105 transition-transform duration-250">
                 <img src="/logo.png" alt="SNR Farm Logo" className="h-12 w-auto object-contain" />
               </div>
-              <h1 className="font-black text-lg leading-tight tracking-wider uppercase text-white">SNR Farm Portal</h1>
-              <p className="text-[10px] text-emerald-400 font-extrabold tracking-widest uppercase mt-1">Livestock ERP Authentication</p>
+              <h1 className="font-black text-lg leading-tight tracking-wider uppercase text-white">SNR Cattle Fattening ERP</h1>
+              <p className="text-[10px] text-emerald-400 font-extrabold tracking-widest uppercase mt-1">Fattening Livestock Management System</p>
             </div>
           </div>
 
@@ -545,7 +545,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
             </form>
 
             <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-              <p className="text-[10px] font-bold text-slate-400/80 uppercase tracking-wider">SNR Farm Enterprise Systems</p>
+              <p className="text-[10px] font-bold text-slate-400/80 uppercase tracking-wider">SNR Cattle Fattening Enterprise Systems</p>
               <p className="text-[9px] text-slate-400 mt-1">Authorized personnel only. Sessions are monitored and logged.</p>
             </div>
           </div>

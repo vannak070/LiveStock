@@ -120,8 +120,8 @@ export default function FinanceTab({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Financial Ledger & Revenue Hub</h3>
-          <p className="text-xs text-slate-400 font-medium">Manage operation costs, purchase budgets, and track live livestock sales revenue streams.</p>
+          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Feed Costs & Revenue Ledger</h3>
+          <p className="text-xs text-slate-400 font-medium">Track feed costs, veterinary expenses, cattle acquisition, and fattening sales revenue.</p>
         </div>
         {ledgerView === 'expenses' && hasPermission(currentUser, 'expenses_record') && (
           <Button
@@ -156,7 +156,7 @@ export default function FinanceTab({
 
         <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-center justify-between shadow-sm">
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Livestock Acquisition</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cattle Acquisition Cost</p>
             <h4 className="text-lg font-black text-slate-800 mt-1">៛ {totalPurchases.toLocaleString()}</h4>
           </div>
           <div className="h-9 w-9 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center">
@@ -166,7 +166,7 @@ export default function FinanceTab({
 
         <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-center justify-between shadow-sm cursor-pointer hover:border-rose-250 transition-colors" onClick={() => { setLedgerView('expenses'); }}>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Operational Expense</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Feed & Operational Expense</p>
             <h4 className="text-lg font-black text-rose-500 mt-1">៛ {totalExpenses.toLocaleString()}</h4>
           </div>
           <div className="h-9 w-9 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
@@ -203,7 +203,7 @@ export default function FinanceTab({
                 : 'border-transparent text-slate-400 hover:text-slate-650'
             }`}
           >
-            Expense Ledger
+            Feed & Operations Ledger
           </button>
           <button
             type="button"
