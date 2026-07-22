@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MasterSetup, UserRoleItem, CustomRoleDefinition, PermissionKey, PERMISSION_MODULES, ALL_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Settings, Shield, DollarSign, Plus, Trash2, Edit2, UserPlus, CheckCircle2, ShieldCheck, KeyRound, Sparkles, Award } from 'lucide-react';
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 
 interface SettingsTabProps {
   settings: MasterSetup;
+  currentUser?: any;
 }
 
 const DEFAULT_SYSTEM_ROLES: CustomRoleDefinition[] = [
@@ -22,9 +23,17 @@ const DEFAULT_SYSTEM_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true }
 ];
 
-export default function SettingsTab({ settings }: SettingsTabProps) {
+export default function SettingsTab({ settings, currentUser }: SettingsTabProps) {
   const queryClient = useQueryClient();
   const [subTab, setSubTab] = useState<'livestock' | 'financial' | 'users'>('livestock');
+
+  const isFarmOwner = currentUser?.role === 'Farm Owner';
+
+  useEffect(() => {
+    if (isFarmOwner && subTab !== 'users') {
+      setSubTab('users');
+    }
+  }, [isFarmOwner, subTab]);
 
   // Input states for adding new configurations
   const [newItemText, setNewItemText] = useState<string>('');
@@ -361,41 +370,53 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
   return (
     <div className="space-y-6">
       {/* Tab Navigation header */}
-      <div className="flex border-b border-slate-200">
-        <button
-          onClick={() => { setSubTab('livestock'); setActiveCategory('breeds'); }}
-          className={`flex items-center gap-2 px-6 py-3.5 border-b-2 font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer ${
-            subTab === 'livestock'
-              ? 'border-emerald-600 text-emerald-600'
-              : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <Settings className="h-4 w-4" />
-          Livestock Configs
-        </button>
-        <button
-          onClick={() => { setSubTab('financial'); setActiveCategory('expenseCategories'); }}
-          className={`flex items-center gap-2 px-6 py-3.5 border-b-2 font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer ${
-            subTab === 'financial'
-              ? 'border-emerald-600 text-emerald-600'
-              : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <DollarSign className="h-4 w-4" />
-          Financial Setup
-        </button>
-        <button
-          onClick={() => setSubTab('users')}
-          className={`flex items-center gap-2 px-6 py-3.5 border-b-2 font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer ${
-            subTab === 'users'
-              ? 'border-emerald-600 text-emerald-600'
-              : 'border-transparent text-slate-400 hover:text-slate-600'
-          }`}
-        >
-          <Shield className="h-4 w-4" />
-          User Permissions & Roles
-        </button>
-      </div>
+      {!isFarmOwner ? (
+        <div className="flex border-b border-slate-200">
+          <button
+            onClick={() => { setSubTab('livestock'); setActiveCategory('breeds'); }}
+            className={`flex items-center gap-2 px-6 py-3.5 border-b-2 font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer ${
+              subTab === 'livestock'
+                ? 'border-emerald-600 text-emerald-600'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            Livestock Configs
+          </button>
+          <button
+            onClick={() => { setSubTab('financial'); setActiveCategory('expenseCategories'); }}
+            className={`flex items-center gap-2 px-6 py-3.5 border-b-2 font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer ${
+              subTab === 'financial'
+                ? 'border-emerald-600 text-emerald-600'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <DollarSign className="h-4 w-4" />
+            Financial Setup
+          </button>
+          <button
+            onClick={() => setSubTab('users')}
+            className={`flex items-center gap-2 px-6 py-3.5 border-b-2 font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer ${
+              subTab === 'users'
+                ? 'border-emerald-600 text-emerald-600'
+                : 'border-transparent text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            <Shield className="h-4 w-4" />
+            User Permissions & Roles
+          </button>
+        </div>
+      ) : (
+        <div className="border-b border-slate-200 pb-4">
+          <h2 className="text-base font-extrabold text-slate-800 flex items-center gap-2 uppercase tracking-wide">
+            <ShieldCheck className="h-5 w-5 text-emerald-600 animate-pulse" />
+            Farm Staff & Vet User Management
+          </h2>
+          <p className="text-xs text-slate-400 font-medium mt-1">
+            Create, manage, and configure security permissions for staff and veterinarians scoped to your farm: <strong className="text-emerald-700 font-black">{currentUser.farmLocation}</strong>.
+          </p>
+        </div>
+      )}
 
       {/* Content for Livestock Setup & Financial Setup lists */}
       {(subTab === 'livestock' || subTab === 'financial') && (
@@ -576,8 +597,15 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                     setUserName('');
                     setUserEmail('');
                     setUserPassword('');
-                    setUserRole('Company');
-                    setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Company']);
+                    if (isFarmOwner) {
+                      setUserRole('Farm Staff');
+                      setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Farm Staff']);
+                      setUserFarmLocation(currentUser.farmLocation || '');
+                    } else {
+                      setUserRole('Company');
+                      setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Company']);
+                      setUserFarmLocation('');
+                    }
                   }}
                   className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-[0.98]"
                 >
@@ -643,17 +671,20 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                         onChange={e => handleRoleSelectChange(e.target.value)}
                         className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
                       >
-                        {currentRoles.map(r => (
-                          <option key={r.id} value={r.name}>{r.name}</option>
-                        ))}
+                        {currentRoles
+                          .filter(r => !isFarmOwner || r.name === 'Farm Staff' || r.name === 'Veterinarian')
+                          .map(r => (
+                            <option key={r.id} value={r.name}>{r.name}</option>
+                          ))}
                       </select>
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase text-slate-400">Farm Location Scope</label>
                       <select
                         value={userFarmLocation}
+                        disabled={isFarmOwner}
                         onChange={e => setUserFarmLocation(e.target.value)}
-                        className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                        className="w-full bg-white border border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
                       >
                         <option value="">All Farms (គ្មានដែនកំណត់)</option>
                         {(settings.locations || []).map(loc => (
@@ -669,23 +700,28 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                       <Sparkles className="h-3.5 w-3.5 text-amber-500" /> Apply Quick Permission Preset:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleApplyPreset('all')}
-                        className="px-2.5 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                      >
-                        Select All (Super Admin)
-                      </button>
-                      {currentRoles.slice(1).map(r => (
+                      {!isFarmOwner && (
                         <button
-                          key={r.id}
                           type="button"
-                          onClick={() => handleApplyPreset(r.name)}
-                          className="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                          onClick={() => handleApplyPreset('all')}
+                          className="px-2.5 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
                         >
-                          {r.name}
+                          Select All (Super Admin)
                         </button>
-                      ))}
+                      )}
+                      {currentRoles
+                        .slice(1)
+                        .filter(r => !isFarmOwner || r.name === 'Farm Staff' || r.name === 'Veterinarian')
+                        .map(r => (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => handleApplyPreset(r.name)}
+                            className="px-2.5 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                          >
+                            {r.name}
+                          </button>
+                        ))}
                     </div>
                   </div>
 
@@ -778,8 +814,15 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {(settings.users || []).map(user => {
-                      const enabledCount = user.permissions?.length || (DEFAULT_ROLE_PERMISSIONS[user.role]?.length || 0);
+                    {(settings.users || [])
+                      .filter(u => {
+                        if (isFarmOwner) {
+                          return u.farmLocation === currentUser.farmLocation && (u.role === 'Farm Staff' || u.role === 'Veterinarian');
+                        }
+                        return true;
+                      })
+                      .map(user => {
+                        const enabledCount = user.permissions?.length || (DEFAULT_ROLE_PERMISSIONS[user.role]?.length || 0);
                       return (
                         <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
                           <td className="py-3.5 pl-3">

@@ -115,7 +115,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   'Super Admin': ALL_PERMISSIONS,
   'Admin': ALL_PERMISSIONS,
   'Company': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage'), 'settings_manage'],
-  'Farm Owner': ALL_PERMISSIONS.filter(p => p !== 'settings_manage'),
+  'Farm Owner': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage'), 'settings_manage'],
   'Farm Staff': ['dashboard_view', 'stock_view', 'batch_view', 'weight_view', 'weight_record', 'health_view', 'health_record'],
   'Veterinarian': ['dashboard_view', 'stock_view', 'stock_edit', 'weight_view', 'weight_record', 'health_view', 'health_record', 'health_delete']
 };

@@ -664,6 +664,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       {activeTab === 'settings' && (
         <SettingsTab
           settings={dbData.settings}
+          currentUser={currentUser}
         />
       )}
 
