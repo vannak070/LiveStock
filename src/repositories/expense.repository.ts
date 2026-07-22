@@ -16,7 +16,8 @@ export class ExpenseRepository {
       category: row.category,
       amount: parseFloat(row.amount || 0),
       date: row.date ? new Date(row.date).toISOString() : new Date().toISOString(),
-      description: row.description || ''
+      description: row.description || '',
+      farmLocation: row.farm_location || undefined
     };
   }
 
@@ -31,12 +32,12 @@ export class ExpenseRepository {
     return this.mapRowToExpense(res.rows[0]);
   }
 
-  async create(expense: Omit<ExpenseItem, 'id'> & { id?: string }, client?: PoolClient): Promise<ExpenseItem> {
+  async create(expense: Omit<ExpenseItem, 'id'> & { id?: string; farmLocation?: string }, client?: PoolClient): Promise<ExpenseItem> {
     const id = expense.id || `EXP-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
     const sql = `
-      INSERT INTO expenses (id, category, amount, date, description)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO expenses (id, category, amount, date, description, farm_location)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
     const params = [
@@ -44,7 +45,8 @@ export class ExpenseRepository {
       expense.category,
       expense.amount || 0,
       expense.date ? new Date(expense.date) : new Date(),
-      expense.description || ''
+      expense.description || '',
+      expense.farmLocation || null
     ];
 
     const res = await this.executeQuery(sql, params, client);
@@ -60,6 +62,7 @@ export class ExpenseRepository {
     if (updates.amount !== undefined) { fields.push(`amount = $${idx++}`); params.push(updates.amount); }
     if (updates.date !== undefined) { fields.push(`date = $${idx++}`); params.push(new Date(updates.date)); }
     if (updates.description !== undefined) { fields.push(`description = $${idx++}`); params.push(updates.description); }
+    if (updates.farmLocation !== undefined) { fields.push(`farm_location = $${idx++}`); params.push(updates.farmLocation || null); }
 
     if (fields.length === 0) {
       const existing = await this.findById(id);

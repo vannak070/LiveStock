@@ -19,7 +19,8 @@ export class BatchRepository {
       status: row.status || 'Active',
       cowIds,
       notes: row.notes || '',
-      feedingProgram: row.feeding_program || undefined
+      feedingProgram: row.feeding_program || undefined,
+      farmLocation: row.farm_location || undefined
     };
   }
 
@@ -48,15 +49,16 @@ export class BatchRepository {
 
   async create(batch: Omit<BatchItem, 'cowIds'>, client?: PoolClient): Promise<BatchItem> {
     const sql = `
-      INSERT INTO batches (id, name, type, start_date, status, notes, feeding_program)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO batches (id, name, type, start_date, status, notes, feeding_program, farm_location)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         type = EXCLUDED.type,
         start_date = EXCLUDED.start_date,
         status = EXCLUDED.status,
         notes = EXCLUDED.notes,
-        feeding_program = COALESCE(EXCLUDED.feeding_program, batches.feeding_program)
+        feeding_program = COALESCE(EXCLUDED.feeding_program, batches.feeding_program),
+        farm_location = COALESCE(EXCLUDED.farm_location, batches.farm_location)
       RETURNING *
     `;
     const params = [
@@ -66,7 +68,8 @@ export class BatchRepository {
       batch.startDate ? new Date(batch.startDate) : new Date(),
       batch.status || 'Active',
       batch.notes || '',
-      batch.feedingProgram ? JSON.stringify(batch.feedingProgram) : null
+      batch.feedingProgram ? JSON.stringify(batch.feedingProgram) : null,
+      batch.farmLocation || null
     ];
 
     const res = await this.executeQuery(sql, params, client);
@@ -87,6 +90,7 @@ export class BatchRepository {
     if (updates.status !== undefined) { fields.push(`status = $${idx++}`); params.push(updates.status); }
     if (updates.notes !== undefined) { fields.push(`notes = $${idx++}`); params.push(updates.notes); }
     if (updates.feedingProgram !== undefined) { fields.push(`feeding_program = $${idx++}`); params.push(updates.feedingProgram ? JSON.stringify(updates.feedingProgram) : null); }
+    if (updates.farmLocation !== undefined) { fields.push(`farm_location = $${idx++}`); params.push(updates.farmLocation || null); }
 
     if (fields.length > 0) {
       params.push(id);

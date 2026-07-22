@@ -4,6 +4,7 @@ export interface ExpenseItem {
   amount: number;
   date: string;
   description: string;
+  farmLocation?: string;
 }
 
 export interface FinancialSummary {

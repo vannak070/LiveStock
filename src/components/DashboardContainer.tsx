@@ -89,11 +89,14 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     const scopedStock = rawDbData.stock.filter(item => item.location === farmLoc);
     const scopedStockIds = scopedStock.map(c => c.id);
 
-    // 2. Filter batches that contain cows at this farm location
+    // 2. Filter batches that belong to this location OR contain cows at this location
     const scopedBatches = rawDbData.batches.map(batch => ({
       ...batch,
       cowIds: batch.cowIds.filter(id => scopedStockIds.includes(id))
-    })).filter(batch => batch.cowIds.length > 0 || batch.status === 'Active');
+    })).filter(batch => 
+      batch.farmLocation === farmLoc || 
+      batch.cowIds.length > 0
+    );
 
     // 3. Filter weight records for cows at this farm
     const scopedWeightTracking = rawDbData.weightTracking.filter(item => scopedStockIds.includes(item.cowId));
@@ -104,7 +107,10 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     // 5. Filter sales records for cows at this farm
     const scopedSalesTracking = rawDbData.salesTracking.filter(item => scopedStockIds.includes(item.cowId));
 
-    // 6. Common settings locations list (restrict to user's farm location so they cannot create/edit cows to other farms)
+    // 6. Filter expenses that belong to this farm location
+    const scopedExpenses = rawDbData.expenses.filter(item => item.farmLocation === farmLoc);
+
+    // 7. Common settings locations list (restrict to user's farm location so they cannot create/edit cows to other farms)
     const scopedCommon = {
       ...rawDbData.common,
       locations: [farmLoc]
@@ -117,6 +123,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       weightTracking: scopedWeightTracking,
       healthLogs: scopedHealthLogs,
       salesTracking: scopedSalesTracking,
+      expenses: scopedExpenses,
       common: scopedCommon
     };
   }, [rawDbData, currentUser]);
@@ -584,7 +591,11 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
         <BatchTab
           data={dbData}
           onCreateBatch={async (batch) => {
-            await createBatchMutation.mutateAsync(batch);
+            const batchWithLoc = {
+              ...batch,
+              farmLocation: currentUser?.farmLocation || undefined
+            };
+            await createBatchMutation.mutateAsync(batchWithLoc);
           }}
           onAssignCows={async (batchId, cowIds) => {
             await assignCowsMutation.mutateAsync({ batchId, cowIds });
@@ -642,7 +653,11 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
         <FinanceTab
           data={dbData}
           onAddExpense={async (expense) => {
-            await addExpenseMutation.mutateAsync(expense);
+            const expenseWithLoc = {
+              ...expense,
+              farmLocation: currentUser?.farmLocation || undefined
+            };
+            await addExpenseMutation.mutateAsync(expenseWithLoc);
           }}
           onUpdateExpense={async (id, updates) => {
             await updateExpenseMutation.mutateAsync({ id, updates });

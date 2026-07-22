@@ -22,4 +22,5 @@ export interface BatchItem {
   cowIds: string[]; // List of Cow_IDs in this batch
   notes?: string;
   feedingProgram?: FeedingProgramConfig;
+  farmLocation?: string;
 }
