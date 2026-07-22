@@ -40,6 +40,8 @@ import CowDetails from './CowDetails';
 import QuickEntryModal from './QuickEntryModal';
 import { ERPLivestockData } from '@/lib/types';
 import { SalesRecord } from '@/lib/xlsx-parser';
+import { hasPermission } from '@/lib/utils';
+import { PermissionKey } from '@/types/settings.types';
 
 interface DashboardContainerProps {
   initialData: ERPLivestockData;
@@ -395,6 +397,24 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     localStorage.removeItem('snr_farm_user');
   };
 
+  React.useEffect(() => {
+    if (!currentUser) return;
+    if (activeTab === 'dashboard') return;
+
+    let permissionKey: PermissionKey | null = null;
+    if (activeTab === 'cow-inventory') permissionKey = 'stock_view';
+    else if (activeTab === 'batch-management') permissionKey = 'batch_view';
+    else if (activeTab === 'health-tracking') permissionKey = 'health_view';
+    else if (activeTab === 'weight-tracking') permissionKey = 'weight_view';
+    else if (activeTab === 'sales-finance') permissionKey = 'sales_view';
+    else if (activeTab === 'analytics') permissionKey = 'analytics_view';
+    else if (activeTab === 'settings') permissionKey = 'settings_manage';
+
+    if (permissionKey && !hasPermission(currentUser, permissionKey)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, currentUser]);
+
   // If authorization status is not loaded yet, display loading layout
   if (!isAuthLoaded) {
     return (
@@ -510,6 +530,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
             await deleteStockItemMutation.mutateAsync(cowId);
           }}
           onAddCowClick={() => handleOpenQuickEntry('add', null)}
+          currentUser={currentUser}
         />
       )}
 

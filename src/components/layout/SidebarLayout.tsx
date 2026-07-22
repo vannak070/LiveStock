@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { StockItem } from '@/lib/xlsx-parser';
 import { UserRoleItem } from '@/lib/types';
+import { hasPermission } from '@/lib/utils';
 
 export type ActiveTabType = 
   | 'dashboard' 
@@ -108,97 +109,114 @@ export default function SidebarLayout({
           </div>
 
           {/* Livestock ERP Section */}
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Livestock ERP</p>
-            <div className="space-y-1">
-              <button
-                onClick={() => handleTabChange('cow-inventory')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                  activeTab === 'cow-inventory'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                }`}
-              >
-                <Database className="h-4 w-4 flex-shrink-0" />
-                Cow Inventory
-              </button>
-              <button
-                onClick={() => handleTabChange('batch-management')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                  activeTab === 'batch-management'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                }`}
-              >
-                <TrendingUp className="h-4 w-4 flex-shrink-0" />
-                Fattening Program
-              </button>
-              <button
-                onClick={() => handleTabChange('health-tracking')}
-                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                  activeTab === 'health-tracking'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  <Heart className="h-4 w-4 flex-shrink-0" />
-                  Health & Medical
-                </span>
-                {(healthAlertsCount > 0 || vaccineAlertsCount > 0) && (
-                  <span className="h-2 w-2 rounded-full bg-amber-500 block animate-ping" />
+          {(hasPermission(currentUser, 'stock_view') || 
+            hasPermission(currentUser, 'batch_view') || 
+            hasPermission(currentUser, 'health_view')) && (
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Livestock ERP</p>
+              <div className="space-y-1">
+                {hasPermission(currentUser, 'stock_view') && (
+                  <button
+                    onClick={() => handleTabChange('cow-inventory')}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                      activeTab === 'cow-inventory'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
+                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
+                    }`}
+                  >
+                    <Database className="h-4 w-4 flex-shrink-0" />
+                    Cow Inventory
+                  </button>
                 )}
-              </button>
+                {hasPermission(currentUser, 'batch_view') && (
+                  <button
+                    onClick={() => handleTabChange('batch-management')}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                      activeTab === 'batch-management'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
+                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
+                    }`}
+                  >
+                    <TrendingUp className="h-4 w-4 flex-shrink-0" />
+                    Fattening Program
+                  </button>
+                )}
+                {hasPermission(currentUser, 'health_view') && (
+                  <button
+                    onClick={() => handleTabChange('health-tracking')}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                      activeTab === 'health-tracking'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
+                        : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="flex items-center gap-3">
+                      <Heart className="h-4 w-4 flex-shrink-0" />
+                      Health & Medical
+                    </span>
+                    {(healthAlertsCount > 0 || vaccineAlertsCount > 0) && (
+                      <span className="h-2 w-2 rounded-full bg-amber-500 block animate-ping" />
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Financial Ledger Section */}
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Financials</p>
-            <button
-              onClick={() => handleTabChange('sales-finance')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                activeTab === 'sales-finance'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                  : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-              }`}
-            >
-              <DollarSign className="h-4 w-4 flex-shrink-0" />
-              Ledger & Revenue
-            </button>
-          </div>
+          {(hasPermission(currentUser, 'sales_view') || 
+            hasPermission(currentUser, 'expenses_view')) && (
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Financials</p>
+              <button
+                onClick={() => handleTabChange('sales-finance')}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                  activeTab === 'sales-finance'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
+                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
+                }`}
+              >
+                <DollarSign className="h-4 w-4 flex-shrink-0" />
+                Ledger & Revenue
+              </button>
+            </div>
+          )}
 
           {/* Reports & Analytics */}
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Reports</p>
-            <button
-              onClick={() => handleTabChange('analytics')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                activeTab === 'analytics'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                  : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-              }`}
-            >
-              <PieChart className="h-4 w-4 flex-shrink-0" />
-              Analytics BI
-            </button>
-          </div>
+          {hasPermission(currentUser, 'analytics_view') && (
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Reports</p>
+              <button
+                onClick={() => handleTabChange('analytics')}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                  activeTab === 'analytics'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
+                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
+                }`}
+              >
+                <PieChart className="h-4 w-4 flex-shrink-0" />
+                Analytics BI
+              </button>
+            </div>
+          )}
 
           {/* Configuration */}
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Administration</p>
-            <button
-              onClick={() => handleTabChange('settings')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                activeTab === 'settings'
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
-                  : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
-              }`}
-            >
-              <Settings className="h-4 w-4 flex-shrink-0" />
-              ERP Master Setup
-            </button>
-          </div>
+          {hasPermission(currentUser, 'settings_manage') && (
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-400/40 px-3 mb-1.5">Administration</p>
+              <button
+                onClick={() => handleTabChange('settings')}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                  activeTab === 'settings'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xs'
+                    : 'text-slate-400 hover:bg-emerald-950/40 hover:text-slate-200'
+                }`}
+              >
+                <Settings className="h-4 w-4 flex-shrink-0" />
+                ERP Master Setup
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

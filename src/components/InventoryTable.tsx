@@ -5,6 +5,7 @@ import { Search, Eye, Edit3, DollarSign, RefreshCcw, ChevronLeft, ChevronRight, 
 import { StockItem } from '@/lib/xlsx-parser';
 import { Button } from './ui/button';
 import { ConfirmModal } from './ui/confirm-modal';
+import { hasPermission } from '@/lib/utils';
 
 interface InventoryTableProps {
   stock: StockItem[];
@@ -13,6 +14,7 @@ interface InventoryTableProps {
   onRecordSale: (cowId: string) => void;
   onDeleteCow?: (cowId: string) => Promise<void>;
   onAddCowClick?: () => void;
+  currentUser?: any;
 }
 
 export default function InventoryTable({
@@ -21,7 +23,8 @@ export default function InventoryTable({
   onEditCow,
   onRecordSale,
   onDeleteCow,
-  onAddCowClick
+  onAddCowClick,
+  currentUser
 }: InventoryTableProps) {
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -102,7 +105,7 @@ export default function InventoryTable({
             View details, log weights, or delete registered cows from SNR farm database.
           </p>
         </div>
-        {onAddCowClick && (
+        {onAddCowClick && hasPermission(currentUser, 'stock_create') && (
           <Button
             onClick={onAddCowClick}
             className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs py-2 px-4 shadow-md flex items-center gap-1.5 cursor-pointer"
@@ -275,65 +278,71 @@ export default function InventoryTable({
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEditCow(cow.id)}
-                        className="h-8 w-8 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/50 rounded-xl"
-                        title="Log Weight / Edit"
-                        disabled={cow.status.toLowerCase() === 'sold'}
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onRecordSale(cow.id)}
-                        className="h-8 w-8 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/50 rounded-xl"
-                        title="Record Sale"
-                        disabled={cow.status.toLowerCase() === 'sold'}
-                      >
-                        <DollarSign className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setConfirmModal({
-                            isOpen: true,
-                            title: 'Delete Cattle Record',
-                            description: `Are you sure you want to permanently delete cow ${cow.id}? This will remove all its weight history and medical logs.`,
-                            type: 'danger',
-                            confirmText: 'Delete',
-                            onConfirm: async () => {
-                              if (onDeleteCow) {
-                                try {
-                                  await onDeleteCow(cow.id);
-                                  setConfirmModal({
-                                    isOpen: true,
-                                    title: 'Cattle Deleted',
-                                    description: `Cow ${cow.id} record has been successfully deleted.`,
-                                    type: 'success',
-                                    confirmText: 'OK'
-                                  });
-                                } catch (err: any) {
-                                  setConfirmModal({
-                                    isOpen: true,
-                                    title: 'Deletion Failed',
-                                    description: err.message || 'Error occurred while deleting cow.',
-                                    type: 'danger',
-                                    confirmText: 'Dismiss'
-                                  });
+                      {hasPermission(currentUser, 'stock_edit') || hasPermission(currentUser, 'weight_record') ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEditCow(cow.id)}
+                          className="h-8 w-8 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/50 rounded-xl"
+                          title="Log Weight / Edit"
+                          disabled={cow.status.toLowerCase() === 'sold'}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                      ) : null}
+                      {hasPermission(currentUser, 'sales_record') ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onRecordSale(cow.id)}
+                          className="h-8 w-8 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50/50 rounded-xl"
+                          title="Record Sale"
+                          disabled={cow.status.toLowerCase() === 'sold'}
+                        >
+                          <DollarSign className="h-4 w-4" />
+                        </Button>
+                      ) : null}
+                      {onDeleteCow && hasPermission(currentUser, 'stock_delete') ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setConfirmModal({
+                              isOpen: true,
+                              title: 'Delete Cattle Record',
+                              description: `Are you sure you want to permanently delete cow ${cow.id}? This will remove all its weight history and medical logs.`,
+                              type: 'danger',
+                              confirmText: 'Delete',
+                              onConfirm: async () => {
+                                if (onDeleteCow) {
+                                  try {
+                                    await onDeleteCow(cow.id);
+                                    setConfirmModal({
+                                      isOpen: true,
+                                      title: 'Cattle Deleted',
+                                      description: `Cow ${cow.id} record has been successfully deleted.`,
+                                      type: 'success',
+                                      confirmText: 'OK'
+                                    });
+                                  } catch (err: any) {
+                                    setConfirmModal({
+                                      isOpen: true,
+                                      title: 'Deletion Failed',
+                                      description: err.message || 'Error occurred while deleting cow.',
+                                      type: 'danger',
+                                      confirmText: 'Dismiss'
+                                    });
+                                  }
                                 }
                               }
-                            }
-                          });
-                        }}
-                        className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl"
-                        title="Delete Permanently"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                            });
+                          }}
+                          className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl"
+                          title="Delete Permanently"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>
