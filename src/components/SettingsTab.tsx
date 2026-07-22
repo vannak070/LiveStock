@@ -275,15 +275,15 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
 
   const handleDeleteRole = (roleId: string) => {
     const target = currentRoles.find(r => r.id === roleId);
-    if (target?.isSystem) {
-      alert('System roles cannot be deleted.');
+    if (target?.name === 'Super Admin') {
+      alert('Super Admin role cannot be deleted to prevent system lockout.');
       return;
     }
 
     setConfirmModal({
       isOpen: true,
-      title: 'Delete Custom Role?',
-      description: `Are you sure you want to delete the role "${target?.name}"? Users with this role will default back to Company User.`,
+      title: 'Delete System/Custom Role?',
+      description: `Are you sure you want to delete the role "${target?.name}"? Users with this role will default back to Company.`,
       type: 'danger',
       confirmText: 'Delete Role',
       onConfirm: () => {
@@ -562,7 +562,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
                           >
                             Edit
                           </button>
-                          {!role.isSystem && (
+                          {role.name !== 'Super Admin' && (
                             <button
                               type="button"
                               onClick={() => handleDeleteRole(role.id)}
