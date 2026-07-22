@@ -41,6 +41,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
   const [userRole, setUserRole] = useState<string>('Company');
   const [userPermissions, setUserPermissions] = useState<PermissionKey[]>(DEFAULT_ROLE_PERMISSIONS['Company'] || []);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [userFarmLocation, setUserFarmLocation] = useState<string>('');
 
   // Custom Role Modal States
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
@@ -119,6 +120,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
     setUserPassword(user.password || '');
     setUserRole(user.role);
     setUserPermissions(user.permissions && user.permissions.length > 0 ? user.permissions : (DEFAULT_ROLE_PERMISSIONS[user.role] || []));
+    setUserFarmLocation(user.farmLocation || '');
     setIsAddingUser(true);
   };
 
@@ -175,7 +177,8 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
             email: userEmail.trim(),
             role: userRole,
             password: userPassword.trim() || u.password || 'password123',
-            permissions: userPermissions
+            permissions: userPermissions,
+            farmLocation: userFarmLocation.trim() || undefined
           };
         }
         return u;
@@ -188,7 +191,8 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
         role: userRole,
         status: 'Active',
         password: userPassword.trim() || 'password123',
-        permissions: userPermissions
+        permissions: userPermissions,
+        farmLocation: userFarmLocation.trim() || undefined
       };
       updatedUsers.push(newUser);
     }
@@ -204,6 +208,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
     setUserPassword('');
     setUserRole('Company');
     setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Company']);
+    setUserFarmLocation('');
     setEditingUserId(null);
     setIsAddingUser(false);
   };
@@ -596,7 +601,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                   </div>
 
                   {/* Core Account Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase text-slate-400">Employee Name</label>
                       <input
@@ -640,6 +645,19 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                       >
                         {currentRoles.map(r => (
                           <option key={r.id} value={r.name}>{r.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase text-slate-400">Farm Location Scope</label>
+                      <select
+                        value={userFarmLocation}
+                        onChange={e => setUserFarmLocation(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-emerald-600 cursor-pointer"
+                      >
+                        <option value="">All Farms (គ្មានដែនកំណត់)</option>
+                        {(settings.locations || []).map(loc => (
+                          <option key={loc} value={loc}>{loc}</option>
                         ))}
                       </select>
                     </div>
@@ -753,6 +771,7 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                     <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
                       <th className="py-3 pl-3">Employee Profile</th>
                       <th className="py-3">System Role</th>
+                      <th className="py-3">Location Scope</th>
                       <th className="py-3">Function Access</th>
                       <th className="py-3">Account Status</th>
                       <th className="py-3 text-right pr-3">Actions</th>
@@ -778,6 +797,13 @@ export default function SettingsTab({ settings }: SettingsTabProps) {
                               'bg-slate-100 text-slate-650 border-slate-200'
                             }`}>
                               {user.role}
+                            </span>
+                          </td>
+                          <td className="py-3.5">
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                              user.farmLocation ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-slate-50 text-slate-400 border-slate-100'
+                            }`}>
+                              {user.farmLocation || 'Global (All Farms)'}
                             </span>
                           </td>
                           <td className="py-3.5">

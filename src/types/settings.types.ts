@@ -136,6 +136,7 @@ export interface UserRoleItem {
   status: 'Active' | 'Inactive';
   password?: string;
   permissions?: PermissionKey[];
+  farmLocation?: string;
 }
 
 export interface MasterSetup {

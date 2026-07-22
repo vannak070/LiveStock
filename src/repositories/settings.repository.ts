@@ -15,9 +15,9 @@ const DEFAULT_USERS: UserRoleItem[] = [
   { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'] },
   { id: '2', name: 'Sokha Manager', email: 'sokha.m@snrfarm.com', role: 'Admin', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Admin'] },
   { id: '3', name: 'Chay Pang', email: 'pang@snrfarm.com', role: 'Company', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Company'] },
-  { id: '4', name: 'Bona Owner', email: 'bona.v@snrfarm.com', role: 'Farm Owner', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'] },
-  { id: '5', name: 'Dara Staff', email: 'dara.s@snrfarm.com', role: 'Farm Staff', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'] },
-  { id: '6', name: 'Dara Rath', email: 'rath@snrfarm.com', role: 'Veterinarian', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'] }
+  { id: '4', name: 'Bona Owner', email: 'bona.v@snrfarm.com', role: 'Farm Owner', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'], farmLocation: 'រទាំង' },
+  { id: '5', name: 'Dara Staff', email: 'dara.s@snrfarm.com', role: 'Farm Staff', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], farmLocation: 'រទាំង' },
+  { id: '6', name: 'Dara Rath', email: 'rath@snrfarm.com', role: 'Veterinarian', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], farmLocation: 'ព្រៃវែង' }
 ];
 
 export class SettingsRepository {
@@ -62,10 +62,10 @@ export class SettingsRepository {
     if (usersRes.rows.length === 0) {
       for (const u of DEFAULT_USERS) {
         await query(
-          `INSERT INTO users (id, name, email, role, status, password, permissions)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7`,
-          [u.id, u.name, u.email, u.role, u.status, u.password, JSON.stringify(u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || [])]
+          `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7, farm_location=$8`,
+          [u.id, u.name, u.email, u.role, u.status, u.password, JSON.stringify(u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || []), u.farmLocation || null]
         );
       }
       settings.users = DEFAULT_USERS;
@@ -86,7 +86,8 @@ export class SettingsRepository {
           role: row.role,
           status: row.status,
           password: row.password,
-          permissions: perms
+          permissions: perms,
+          farmLocation: row.farm_location || undefined
         };
       });
     }
@@ -106,10 +107,10 @@ export class SettingsRepository {
       for (const u of settings.users) {
         const permsToSave = u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || [];
         await this.executeQuery(
-          `INSERT INTO users (id, name, email, role, status, password, permissions)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
-           ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7`,
-          [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || 'password123', JSON.stringify(permsToSave)],
+          `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7, farm_location=$8`,
+          [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || 'password123', JSON.stringify(permsToSave), u.farmLocation || null],
           client
         );
       }

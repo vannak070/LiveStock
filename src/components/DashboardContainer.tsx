@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getLivestockDataAction, 
@@ -51,6 +51,10 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<ActiveTabType>('dashboard');
 
+  // Authentication Management
+  const [currentUser, setCurrentUser] = React.useState<any | null>(null);
+  const [isAuthLoaded, setIsAuthLoaded] = React.useState(false);
+
   // Modal States
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
   const [quickEntryTab, setQuickEntryTab] = useState<'add' | 'weight' | 'sale'>('add');
@@ -60,7 +64,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   // TanStack Query for dynamic data fetching
-  const { data: dbData } = useQuery<ERPLivestockData>({
+  const { data: rawDbData } = useQuery<ERPLivestockData>({
     queryKey: ['livestock'],
     queryFn: async () => {
       const res = await getLivestockDataAction();
@@ -72,6 +76,49 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     initialData: initialData,
     refetchOnWindowFocus: true,
   });
+
+  // Scoped Data based on Current User's farmLocation
+  const dbData = useMemo(() => {
+    if (!rawDbData) return rawDbData;
+    if (!currentUser || !currentUser.farmLocation) return rawDbData;
+
+    const farmLoc = currentUser.farmLocation;
+
+    // 1. Filter stock items to only those at this farm location
+    const scopedStock = rawDbData.stock.filter(item => item.location === farmLoc);
+    const scopedStockIds = scopedStock.map(c => c.id);
+
+    // 2. Filter batches that contain cows at this farm location
+    const scopedBatches = rawDbData.batches.map(batch => ({
+      ...batch,
+      cowIds: batch.cowIds.filter(id => scopedStockIds.includes(id))
+    })).filter(batch => batch.cowIds.length > 0 || batch.status === 'Active');
+
+    // 3. Filter weight records for cows at this farm
+    const scopedWeightTracking = rawDbData.weightTracking.filter(item => scopedStockIds.includes(item.cowId));
+
+    // 4. Filter health logs for cows at this farm
+    const scopedHealthLogs = rawDbData.healthLogs.filter(item => scopedStockIds.includes(item.cowId));
+
+    // 5. Filter sales records for cows at this farm
+    const scopedSalesTracking = rawDbData.salesTracking.filter(item => scopedStockIds.includes(item.cowId));
+
+    // 6. Common settings locations list (restrict to user's farm location so they cannot create/edit cows to other farms)
+    const scopedCommon = {
+      ...rawDbData.common,
+      locations: [farmLoc]
+    };
+
+    return {
+      ...rawDbData,
+      stock: scopedStock,
+      batches: scopedBatches,
+      weightTracking: scopedWeightTracking,
+      healthLogs: scopedHealthLogs,
+      salesTracking: scopedSalesTracking,
+      common: scopedCommon
+    };
+  }, [rawDbData, currentUser]);
 
   // Mutations
   const addCowMutation = useMutation({
@@ -333,9 +380,6 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     setIsDetailsOpen(true);
   };
 
-  // Authentication Management
-  const [currentUser, setCurrentUser] = React.useState<any | null>(null);
-  const [isAuthLoaded, setIsAuthLoaded] = React.useState(false);
   const [emailInput, setEmailInput] = React.useState('');
   const [passwordInput, setPasswordInput] = React.useState('');
   const [loginError, setLoginError] = React.useState('');
