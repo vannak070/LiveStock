@@ -167,27 +167,7 @@ export default function SidebarLayout({
         </button>
       </div>
 
-      {/* ─── Live Herd Stats Strip ─── */}
-      <div className="mx-4 mt-4 mb-2 rounded-xl bg-emerald-950/60 border border-emerald-900/40 p-3 grid grid-cols-2 gap-y-2.5 gap-x-2">
-        <div>
-          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Active Herd</p>
-          <p className="text-base font-black text-white mt-0.5">{totalHead} <span className="text-[10px] font-semibold text-emerald-500">head</span></p>
-        </div>
-        <div>
-          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Avg Weight</p>
-          <p className="text-base font-black text-white mt-0.5">{averageWeight} <span className="text-[10px] font-semibold text-blue-400">kg</span></p>
-        </div>
-        <div>
-          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Asset Value</p>
-          <p className="text-xs font-black text-white mt-0.5 truncate">៛{(inventoryValue / 1000).toFixed(0)}K</p>
-        </div>
-        <div>
-          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Health</p>
-          <p className={`text-xs font-black mt-0.5 ${totalAlerts > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-            {totalAlerts > 0 ? `${totalAlerts} Alert${totalAlerts > 1 ? 's' : ''}` : '✓ Stable'}
-          </p>
-        </div>
-      </div>
+
 
 
       {/* ─── Navigation Links ─── */}
