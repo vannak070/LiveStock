@@ -18,8 +18,18 @@ const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'
 
 export default function AnalyticsTab({ data, currentUser, farms = [] }: AnalyticsTabProps) {
   const { t } = useLanguage();
-  const [subTab, setSubTab] = useState<'overview' | 'demographics' | 'batches' | 'health' | 'financial'>('overview');
+  const [subTab, setSubTab] = useState<'overview' | 'demographics' | 'batches' | 'health' | 'financial' | 'prediction'>('overview');
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
+
+  // Revenue & Profit Prediction Engine States
+  const [predictionBatchId, setPredictionBatchId] = useState<string>('all');
+  const [targetHarvestDate, setTargetHarvestDate] = useState<string>(() => {
+    const future = new Date();
+    future.setDate(future.getDate() + 60);
+    return future.toISOString().split('T')[0];
+  });
+  const [expectedSellingPricePerKg, setExpectedSellingPricePerKg] = useState<string>('18000');
+  const [customAdgOverride, setCustomAdgOverride] = useState<string>('');
 
   // Farm-scoped data — all memos below use this instead of raw `data`
   const farmScopedData = useMemo(() => {
@@ -48,6 +58,136 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
   const activeCows = useMemo(() => {
     return farmScopedData.stock.filter(c => c.status.toLowerCase() === 'active');
   }, [farmScopedData.stock]);
+
+  // Predictive Calculations Memo
+  const predictionData = useMemo(() => {
+    let cohortCows = activeCows;
+    let selectedBatch: any = null;
+
+    if (predictionBatchId !== 'all') {
+      selectedBatch = data.batches.find(b => b.id === predictionBatchId);
+      if (selectedBatch) {
+        cohortCows = activeCows.filter(c => selectedBatch.cowIds?.includes(c.id));
+      }
+    }
+
+    const headcount = cohortCows.length;
+    const currentTotalWeight = cohortCows.reduce((sum, c) => sum + c.weight, 0);
+    const currentAvgWeight = headcount > 0 ? currentTotalWeight / headcount : 0;
+    const initialAssetCost = cohortCows.reduce((sum, c) => sum + (c.totalPrice || (c.weight * c.unitPrice) || 0), 0);
+
+    // ADG Calculation
+    let calculatedAdg = 1.10;
+    if (customAdgOverride && !isNaN(parseFloat(customAdgOverride))) {
+      calculatedAdg = parseFloat(customAdgOverride);
+    } else if (selectedBatch) {
+      const batchStart = new Date(selectedBatch.startDate);
+      const today = new Date();
+      const daysElapsed = Math.max(1, Math.ceil((today.getTime() - batchStart.getTime()) / (1000 * 60 * 60 * 24)));
+
+      let totalGains = 0;
+      let cowsRecorded = 0;
+      cohortCows.forEach(cow => {
+        const cowRecords = data.weightTracking.filter(w => w.cowId === cow.id);
+        if (cowRecords.length > 0) {
+          const sorted = [...cowRecords].sort((a, b) => new Date(a.trackingDate || '').getTime() - new Date(b.trackingDate || '').getTime());
+          const initW = sorted[0].oldWeight || sorted[0].currentWeight;
+          const gain = cow.weight - initW;
+          totalGains += gain;
+          cowsRecorded++;
+        }
+      });
+
+      if (cowsRecorded > 0 && daysElapsed > 0) {
+        calculatedAdg = Math.max(0.5, (totalGains / cowsRecorded) / daysElapsed);
+      }
+    }
+
+    // Daily Feed Ration Cost per Head (៛ / head / day)
+    let dailyFeedCostPerHead = 14000;
+    if (selectedBatch && selectedBatch.feedingProgram?.ingredients) {
+      dailyFeedCostPerHead = selectedBatch.feedingProgram.ingredients.reduce((sum: number, ing: any) => {
+        return sum + ((ing.portionPerHead || 0) * (ing.unitCost || 0));
+      }, 0);
+    }
+
+    // Days Remaining to Target Harvest Date
+    const today = new Date();
+    const targetDateObj = new Date(targetHarvestDate);
+    const diffMs = targetDateObj.getTime() - today.getTime();
+    const daysToHarvest = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+    // Predictive Output Metrics
+    const pricePerKg = parseFloat(expectedSellingPricePerKg) || 18000;
+    const predictedGainPerHead = daysToHarvest * calculatedAdg;
+    const predictedFinalAvgWeight = currentAvgWeight + predictedGainPerHead;
+    const predictedTotalBiomassKg = currentTotalWeight + (headcount * predictedGainPerHead);
+    const predictedGrossRevenue = predictedTotalBiomassKg * pricePerKg;
+
+    const projectedFeedExpenses = headcount * daysToHarvest * dailyFeedCostPerHead;
+    const totalProjectedCost = initialAssetCost + projectedFeedExpenses;
+    const projectedNetProfit = predictedGrossRevenue - totalProjectedCost;
+    const projectedRoi = totalProjectedCost > 0 ? (projectedNetProfit / totalProjectedCost) * 100 : 0;
+
+    // Projection Trajectory Points
+    const trajectoryPoints = [];
+    const stepInterval = Math.max(1, Math.floor(daysToHarvest / 5));
+
+    for (let i = 0; i <= 5; i++) {
+      const stepDays = Math.min(daysToHarvest, i * stepInterval);
+      const stepDate = new Date(today);
+      stepDate.setDate(stepDate.getDate() + stepDays);
+      const stepAvgWt = currentAvgWeight + (stepDays * calculatedAdg);
+      const stepTotalKg = headcount * stepAvgWt;
+      const stepRev = stepTotalKg * pricePerKg;
+      const stepFeedCost = headcount * stepDays * dailyFeedCostPerHead;
+      const stepProfit = stepRev - (initialAssetCost + stepFeedCost);
+
+      trajectoryPoints.push({
+        dayLabel: i === 0 ? 'Today' : `+${stepDays}d`,
+        dateStr: stepDate.toISOString().split('T')[0],
+        'Avg Weight (kg)': Math.round(stepAvgWt),
+        'Total Biomass (kg)': Math.round(stepTotalKg),
+        'Projected Revenue (៛)': Math.round(stepRev),
+        'Projected Net Profit (៛)': Math.round(stepProfit)
+      });
+    }
+
+    // Cattle Predictive Ledger
+    const cowLedger = cohortCows.map(cow => {
+      const predFinalWeight = cow.weight + predictedGainPerHead;
+      const predValue = predFinalWeight * pricePerKg;
+      return {
+        cowId: cow.id,
+        breed: cow.breed,
+        currentWeight: cow.weight,
+        predictedGain: predictedGainPerHead,
+        predictedFinalWeight: predFinalWeight,
+        predictedValue: predValue
+      };
+    });
+
+    return {
+      headcount,
+      currentAvgWeight,
+      currentTotalWeight,
+      calculatedAdg,
+      dailyFeedCostPerHead,
+      daysToHarvest,
+      pricePerKg,
+      predictedGainPerHead,
+      predictedFinalAvgWeight,
+      predictedTotalBiomassKg,
+      predictedGrossRevenue,
+      projectedFeedExpenses,
+      initialAssetCost,
+      totalProjectedCost,
+      projectedNetProfit,
+      projectedRoi,
+      trajectoryPoints,
+      cowLedger
+    };
+  }, [activeCows, data.batches, data.weightTracking, predictionBatchId, targetHarvestDate, expectedSellingPricePerKg, customAdgOverride]);
 
   // Executive BI KPI Summary Metrics
   const biKpis = useMemo(() => {
@@ -301,6 +441,17 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
         >
           <DollarSign className="h-4 w-4" />
           {t('analytics.financialPerformance')}
+        </button>
+        <button
+          onClick={() => setSubTab('prediction')}
+          className={`flex items-center gap-2 px-6 py-3 border-b-2 font-black text-xs uppercase tracking-wider transition-colors cursor-pointer whitespace-nowrap ${
+            subTab === 'prediction'
+              ? 'border-emerald-600 text-emerald-600'
+              : 'border-transparent text-slate-400 hover:text-slate-700'
+          }`}
+        >
+          <TrendingUp className="h-4 w-4" />
+          🎯 Revenue Prediction
         </button>
       </div>
 
@@ -710,6 +861,237 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SubTab 6: Revenue & Profitability Prediction Engine */}
+      {subTab === 'prediction' && (
+        <div className="space-y-6">
+          {/* Predictive Controls Bar */}
+          <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-xs space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <TrendingUp className="h-6 w-6 text-emerald-600 animate-pulse" />
+                  Batch Revenue & Profitability Prediction Engine
+                </h3>
+                <p className="text-xs text-slate-400 font-semibold mt-1">
+                  Predict future harvest weights, gross sales revenue, feed expenses, net profit, and ROI based on ADG growth, daily feed rations, and market price.
+                </p>
+              </div>
+
+              {/* Date Preset Horizon Buttons */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold w-fit">
+                {[30, 60, 90, 120].map(days => (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => {
+                      const future = new Date();
+                      future.setDate(future.getDate() + days);
+                      setTargetHarvestDate(future.toISOString().split('T')[0]);
+                    }}
+                    className="px-3 py-1 rounded-lg hover:bg-white text-slate-600 hover:text-slate-900 transition-all cursor-pointer"
+                  >
+                    +{days} Days
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Batch Selector */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Select Batch cohort</label>
+                <select
+                  value={predictionBatchId}
+                  onChange={e => setPredictionBatchId(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+                >
+                  <option value="all">🐄 All Fattening Herds ({activeCows.length} Head)</option>
+                  {(data.batches || []).map(b => (
+                    <option key={b.id} value={b.id}>{b.name} ({b.cowIds?.length || 0} Head)</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Target Harvest Date */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Target Harvest / Sale Date</label>
+                <input
+                  type="date"
+                  value={targetHarvestDate}
+                  onChange={e => setTargetHarvestDate(e.target.value)}
+                  className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 focus:outline-none"
+                />
+              </div>
+
+              {/* Expected Selling Price Input */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">Expected Selling Price (៛ / kg)</label>
+                <input
+                  type="number"
+                  value={expectedSellingPricePerKg}
+                  onChange={e => setExpectedSellingPricePerKg(e.target.value)}
+                  placeholder="18000"
+                  className="w-full h-9 rounded-xl border border-emerald-300 bg-emerald-50/20 px-3 text-xs font-mono font-bold text-emerald-900 focus:outline-none ring-2 ring-emerald-500/10"
+                />
+              </div>
+
+              {/* ADG Growth Rate Override */}
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">
+                  ADG (kg/head/day) <span className="text-slate-400 font-normal">(Auto: {predictionData.calculatedAdg.toFixed(2)})</span>
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={customAdgOverride}
+                  onChange={e => setCustomAdgOverride(e.target.value)}
+                  placeholder={`Auto: ${predictionData.calculatedAdg.toFixed(2)}`}
+                  className="w-full h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-mono font-bold text-slate-800 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Predictive Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="bg-emerald-600 text-white p-5 rounded-3xl shadow-sm space-y-1">
+              <p className="text-[9.5px] font-black uppercase tracking-wider opacity-80">Predicted Gross Revenue</p>
+              <p className="text-2xl font-black font-mono">៛ {Math.round(predictionData.predictedGrossRevenue).toLocaleString()}</p>
+              <p className="text-[10.5px] text-emerald-100 font-semibold pt-1 border-t border-emerald-500/60">
+                {predictionData.headcount} Head @ ៛ {predictionData.pricePerKg.toLocaleString()}/kg
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-xs space-y-1">
+              <p className="text-[9.5px] font-black uppercase text-slate-400 tracking-wider">Projected Feed Expenses</p>
+              <p className="text-2xl font-black font-mono text-rose-600">៛ {Math.round(predictionData.projectedFeedExpenses).toLocaleString()}</p>
+              <p className="text-[10.5px] text-slate-400 font-semibold pt-1 border-t border-slate-100">
+                {predictionData.daysToHarvest} days @ ៛ {predictionData.dailyFeedCostPerHead.toLocaleString()}/head/day
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-xs space-y-1">
+              <p className="text-[9.5px] font-black uppercase text-slate-400 tracking-wider">Projected Net Profit</p>
+              <p className={`text-2xl font-black font-mono ${predictionData.projectedNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
+                ៛ {Math.round(predictionData.projectedNetProfit).toLocaleString()}
+              </p>
+              <p className="text-[10.5px] text-slate-400 font-semibold pt-1 border-t border-slate-100">
+                After Feed & Initial Asset Costs
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-xs space-y-1">
+              <p className="text-[9.5px] font-black uppercase text-slate-400 tracking-wider">Projected ROI (%)</p>
+              <p className="text-2xl font-black font-mono text-blue-700">
+                {predictionData.projectedRoi.toFixed(1)}%
+              </p>
+              <p className="text-[10.5px] text-slate-400 font-semibold pt-1 border-t border-slate-100">
+                Return on Total Investment
+              </p>
+            </div>
+
+            <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-xs space-y-1">
+              <p className="text-[9.5px] font-black uppercase text-slate-400 tracking-wider">Predicted Final Avg Weight</p>
+              <p className="text-2xl font-black font-mono text-slate-900">
+                {predictionData.predictedFinalAvgWeight.toFixed(1)}{' '}
+                <span className="text-xs text-slate-400 font-bold">kg/head</span>
+              </p>
+              <p className="text-[10.5px] text-slate-400 font-semibold pt-1 border-t border-slate-100">
+                +{predictionData.predictedGainPerHead.toFixed(1)} kg gain ({predictionData.daysToHarvest}d)
+              </p>
+            </div>
+          </div>
+
+          {/* Growth & Financial Projection Chart */}
+          <Card className="bg-white border border-slate-100 shadow-xs p-6">
+            <CardHeader className="px-0 pt-0">
+              <CardTitle className="text-base font-black text-slate-900 flex items-center justify-between">
+                <span>📈 Projected Biomass & Net Profit Trajectory ({predictionData.daysToHarvest} Days Horizon)</span>
+                <span className="text-xs font-bold text-slate-400">Target Date: {targetHarvestDate}</span>
+              </CardTitle>
+              <CardDescription className="text-xs text-slate-400">
+                Predicted total herd biomass and net profit growth curve leading up to target sale date.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0 h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={predictionData.trajectoryPoints}>
+                  <defs>
+                    <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.0}/>
+                    </linearGradient>
+                    <linearGradient id="colorBiomass" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                  <XAxis dataKey="dayLabel" stroke="#64748B" fontSize={11} tickLine={false} />
+                  <YAxis yAxisId="left" stroke="#10B981" fontSize={11} tickLine={false} tickFormatter={val => `៛${(val / 1000000).toFixed(1)}M`} />
+                  <YAxis yAxisId="right" orientation="right" stroke="#3B82F6" fontSize={11} tickLine={false} tickFormatter={val => `${(val / 1000).toFixed(1)}t`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0F172A', color: '#FFF', borderRadius: '12px', border: 'none' }}
+                    formatter={(value: any, name: any) => [
+                      typeof value === 'number' ? (name.includes('៛') ? `៛ ${value.toLocaleString()}` : `${value.toLocaleString()} kg`) : value,
+                      name
+                    ]}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                  <Area yAxisId="left" type="monotone" dataKey="Projected Net Profit (៛)" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" />
+                  <Area yAxisId="right" type="monotone" dataKey="Total Biomass (kg)" stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#colorBiomass)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Cattle Predictive Ledger Table */}
+          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-black text-slate-900">Individual Cattle Harvest Prediction Ledger ({predictionData.headcount} Head)</h4>
+                <p className="text-xs text-slate-400">Predicted final harvest weight and market value for each enrolled cow at target harvest date.</p>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-black text-[9.5px] uppercase tracking-wider">
+                    <th className="py-3.5 px-5">Cow ID</th>
+                    <th className="py-3.5 px-5">Breed</th>
+                    <th className="py-3.5 px-5">Current Weight</th>
+                    <th className="py-3.5 px-5">Predicted Gain (+{predictionData.daysToHarvest}d)</th>
+                    <th className="py-3.5 px-5">Predicted Final Weight</th>
+                    <th className="py-3.5 px-5 text-right">Predicted Market Value</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                  {predictionData.cowLedger.map(cow => (
+                    <tr key={cow.cowId} className="hover:bg-slate-50/40 transition-colors">
+                      <td className="py-3.5 px-5 font-black text-slate-900">{cow.cowId}</td>
+                      <td className="py-3.5 px-5 text-slate-500">{cow.breed}</td>
+                      <td className="py-3.5 px-5 font-mono">{cow.currentWeight.toFixed(1)} kg</td>
+                      <td className="py-3.5 px-5 font-mono text-emerald-600 font-bold">+{cow.predictedGain.toFixed(1)} kg</td>
+                      <td className="py-3.5 px-5 font-mono font-black text-slate-900 text-sm">{cow.predictedFinalWeight.toFixed(1)} kg</td>
+                      <td className="py-3.5 px-5 text-right font-mono font-black text-emerald-700">
+                        ៛ {Math.round(cow.predictedValue).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                  {predictionData.cowLedger.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-12 text-center text-slate-400 font-bold">
+                        No active cattle found for prediction.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
