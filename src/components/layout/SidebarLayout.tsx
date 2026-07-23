@@ -151,8 +151,8 @@ export default function SidebarLayout({
       {/* ─── Logo ─── */}
       <div className="flex items-center justify-between h-[72px] px-5 border-b border-white/5 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-white p-0.5 shadow-md flex items-center justify-center flex-shrink-0 overflow-hidden">
-            <img src="/logo.png" alt="LiveStock Fattening ERP Logo" className="h-full w-full object-contain" />
+          <div className="h-10 w-10 flex items-center justify-center flex-shrink-0">
+            <img src="/logo.png" alt="LiveStock Fattening ERP Logo" className="h-full w-full object-contain filter drop-shadow-md" />
           </div>
           <div>
             <p className="text-white font-black text-sm tracking-wide leading-none">LiveStock Fattening</p>

@@ -16,6 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LiveStock Fattening ERP | Fattening Livestock Management System",
   description: "Enterprise multi-farm livestock fattening ERP platform for tracking weight performance, ADG, feed rations, health logs, and financial P&L.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
