@@ -82,6 +82,17 @@ export default function BatchTab({
     || activeBatches[0]
     || visibleBatches[0];
 
+  // Auto-sync selected batch when farm changes
+  useEffect(() => {
+    if (visibleBatches.length > 0) {
+      if (!visibleBatches.some(b => b.id === selectedBatchId)) {
+        setSelectedBatchId(visibleBatches[0].id);
+      }
+    } else {
+      setSelectedBatchId('');
+    }
+  }, [selectedFarm, visibleBatches]);
+
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -764,36 +775,11 @@ export default function BatchTab({
                 </Button>
               )}
 
-              {defaultBatch && (
-                <>
-                  {hasPermission(currentUser, 'batch_edit') && (
-                    <Button
-                      onClick={() => {
-                        setEditingBatch(defaultBatch);
-                        setIsCreateBatchModalOpen(true);
-                      }}
-                      className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
-                    >
-                      ✏️ {t('common.edit')}
-                    </Button>
-                  )}
-
-                  {onDeleteBatch && hasPermission(currentUser, 'batch_delete') && (
-                    <Button
-                      onClick={() => handleDeleteBatch(defaultBatch.id)}
-                      className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" /> {t('common.delete')}
-                    </Button>
-                  )}
-                </>
-              )}
-
               <Button
                 onClick={() => setIsAllBatchesOpen(true)}
                 className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
               >
-                <Layers className="h-4 w-4 text-emerald-600" /> 📋 {t('common.allFarms')} ({data.batches.length})
+                <Layers className="h-4 w-4 text-emerald-600" /> 📋 All Batches ({visibleBatches.length})
               </Button>
 
               {hasPermission(currentUser, 'weight_record') && (
@@ -1754,11 +1740,11 @@ export default function BatchTab({
             <DialogTitle className="text-lg font-black text-slate-900 flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-emerald-600" />
-                បញ្ជីក្រុមទាំងស្រុង (All Batches Ledger - {data.batches.length})
+                All Batches Ledger ({visibleBatches.length})
               </span>
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
-              គ្រប់គ្រងក្រុមគោទាំងអស់ កែប្រែព័ត៌មាន ឬលុបក្រុមចេញពីប្រព័ន្ធ។
+              Manage and select cohort batches across assigned farm operations.
             </DialogDescription>
           </DialogHeader>
 
@@ -1767,7 +1753,7 @@ export default function BatchTab({
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 uppercase font-black text-[9.5px] tracking-wider">
                   <th className="py-3 px-4">Batch ID</th>
-                  <th className="py-3 px-4">Name (ឈ្មោះក្រុម)</th>
+                  <th className="py-3 px-4">Batch Name</th>
                   <th className="py-3 px-4">Program Type</th>
                   <th className="py-3 px-4">Headcount</th>
                   <th className="py-3 px-4">Status</th>
@@ -1775,8 +1761,8 @@ export default function BatchTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {data.batches.length > 0 ? (
-                  data.batches.map(b => (
+                {visibleBatches.length > 0 ? (
+                  visibleBatches.map(b => (
                     <tr key={b.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3 px-4 font-mono font-bold text-slate-800">{b.id}</td>
                       <td className="py-3 px-4 font-bold text-slate-800">{b.name}</td>
