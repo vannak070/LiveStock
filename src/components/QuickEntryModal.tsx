@@ -59,6 +59,7 @@ const newCowSchema = z.object({
   remark: z.string(),
   purchaseType: z.string().min(1, "Purchase Type is required"),
   paymentMethod: z.string().min(1, "Payment Method is required"),
+  imageUrl: z.string().optional(),
 });
 
 const weightSchema = z.object({
@@ -132,6 +133,22 @@ export default function QuickEntryModal({
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
   const [saleBuyer, setSaleBuyer] = useState('');
   const [cowSearchQuery, setCowSearchQuery] = useState('');
+  const [uploadedCowImage, setUploadedCowImage] = useState<string | null>(null);
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setUploadedCowImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const selectedBatchObj = activeBatches.find(b => b.id === saleBatchId);
   const cohortCows = selectedBatchObj 
@@ -322,7 +339,10 @@ export default function QuickEntryModal({
 
   // Form Submit Handlers
   const onSubmitAdd = async (data: z.infer<typeof newCowSchema>) => {
-    await onAddCow(data);
+    await onAddCow({
+      ...data,
+      imageUrl: uploadedCowImage || undefined
+    });
     setConfirmModal({
       isOpen: true,
       title: 'Livestock Registered',
@@ -331,6 +351,7 @@ export default function QuickEntryModal({
       confirmText: 'OK',
       onConfirm: () => {
         resetAdd();
+        setUploadedCowImage(null);
         onClose();
       }
     });
@@ -516,13 +537,48 @@ export default function QuickEntryModal({
             {/* STEP 1: SPECIFICATIONS */}
             {step === 1 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-250">
-                {/* Visual Image Upload Dropzone */}
-                <div className="border-2 border-dashed border-slate-200 hover:border-emerald-500/60 bg-slate-50/50 hover:bg-emerald-50/10 rounded-2xl p-4.5 transition-all duration-150 flex flex-col items-center justify-center cursor-pointer text-center group">
-                  <div className="h-10 w-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                    <Upload className="h-5 w-5 text-slate-400 group-hover:text-emerald-600" />
-                  </div>
-                  <p className="text-xs font-bold text-slate-700">Upload Cattle Image</p>
-                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Drag and drop, or click to select (PNG, JPG up to 5MB)</p>
+                {/* Optional Image Upload Dropzone */}
+                <div>
+                  <input
+                    id="cow_image_input"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageFileChange}
+                  />
+                  {uploadedCowImage ? (
+                    <div className="relative border border-emerald-200 bg-emerald-50/30 rounded-2xl p-3 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img src={uploadedCowImage} alt="Cattle Preview" className="h-14 w-14 object-cover rounded-xl border border-emerald-300/80 shadow-xs" />
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">Cattle Photo Attached</p>
+                          <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">Ready for registration • មិនបង្ខំ (Optional)</p>
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setUploadedCowImage(null)}
+                        className="text-xs text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl px-2.5"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor="cow_image_input"
+                      className="border-2 border-dashed border-slate-200 hover:border-emerald-500/60 bg-slate-50/50 hover:bg-emerald-50/10 rounded-2xl p-4.5 transition-all duration-150 flex flex-col items-center justify-center cursor-pointer text-center group"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-2 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                        <Upload className="h-5 w-5 text-slate-400 group-hover:text-emerald-600" />
+                      </div>
+                      <p className="text-xs font-bold text-slate-700">
+                        Upload Cattle Image <span className="text-[10px] font-normal text-slate-400 font-sans">(Optional • មិនបង្ខំ)</span>
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Click to select or drag photo (PNG, JPG up to 5MB)</p>
+                    </label>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
