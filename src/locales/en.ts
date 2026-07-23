@@ -4,6 +4,7 @@ export const en = {
     dashboard: 'Dashboard',
     cattleRegistry: 'Cattle Registry',
     batchManagement: 'Batch Management',
+    feedStock: 'Cattle Feed Stock',
     healthVaccines: 'Medical & Vaccines',
     financeLedger: 'Feed Costs & Revenue',
     analytics: 'Growth & Profit Analytics',

@@ -57,19 +57,24 @@ function writeJsonDbData(data: ERPLivestockData): void {
   fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
 }
 
+import { feedRepository } from '../repositories/feed.repository';
+import { FeedProductItem, FeedStockTransaction } from './types';
+
 /**
  * Aggregates all ERP domain data from PostgreSQL (or instant JSON fallback if PostgreSQL is unreachable)
  */
 export async function getDbData(): Promise<ERPLivestockData> {
   try {
-    const [stock, weightTracking, salesTracking, batches, healthLogs, expenses, settings] = await Promise.all([
+    const [stock, weightTracking, salesTracking, batches, healthLogs, expenses, settings, feedProducts, feedTransactions] = await Promise.all([
       stockService.getAllStock(),
       weightService.getAllWeightRecords(),
       salesService.getAllSales(),
       batchService.getAllBatches(),
       healthService.getAllHealthLogs(),
       expenseService.getAllExpenses(),
-      settingsService.getSettings()
+      settingsService.getSettings(),
+      feedRepository.getProducts().catch(() => []),
+      feedRepository.getTransactions().catch(() => [])
     ]);
 
     const jsonDb = getJsonDbData();
@@ -80,7 +85,6 @@ export async function getDbData(): Promise<ERPLivestockData> {
     for (const b of batches || []) {
       batchMap.set(b.id, b);
     }
-    const mergedBatches = Array.from(batchMap.values());
 
     const common = {
       breeds: settings.breeds || [],
@@ -98,12 +102,58 @@ export async function getDbData(): Promise<ERPLivestockData> {
       batches,
       healthLogs,
       expenses,
-      settings
+      settings,
+      feedProducts: feedProducts && feedProducts.length > 0 ? feedProducts : (jsonDb.feedProducts || []),
+      feedTransactions: feedTransactions && feedTransactions.length > 0 ? feedTransactions : (jsonDb.feedTransactions || [])
     };
-  } catch (error) {
-    console.warn('[Db Warning] PostgreSQL connection timed out or offline. Falling back to local db.json instant cache.');
+  } catch (err) {
+    console.warn('[getDbData] PostgreSQL read error, falling back to db.json:', err);
     return getJsonDbData();
   }
+}
+
+export async function saveFeedProduct(product: FeedProductItem): Promise<FeedProductItem> {
+  try {
+    await feedRepository.saveProduct(product);
+  } catch (err) {
+    console.warn('[saveFeedProduct] DB error, writing to JSON:', err);
+  }
+  const jsonDb = getJsonDbData();
+  if (!jsonDb.feedProducts) jsonDb.feedProducts = [];
+  const idx = jsonDb.feedProducts.findIndex(p => p.id === product.id);
+  if (idx >= 0) {
+    jsonDb.feedProducts[idx] = product;
+  } else {
+    jsonDb.feedProducts.push(product);
+  }
+  writeJsonDbData(jsonDb);
+  return product;
+}
+
+export async function deleteFeedProduct(productId: string): Promise<void> {
+  try {
+    await feedRepository.deleteProduct(productId);
+  } catch (err) {
+    console.warn('[deleteFeedProduct] DB error, removing from JSON:', err);
+  }
+  const jsonDb = getJsonDbData();
+  if (jsonDb.feedProducts) {
+    jsonDb.feedProducts = jsonDb.feedProducts.filter(p => p.id !== productId);
+    writeJsonDbData(jsonDb);
+  }
+}
+
+export async function addFeedTransaction(tx: FeedStockTransaction): Promise<FeedStockTransaction> {
+  try {
+    await feedRepository.addTransaction(tx);
+  } catch (err) {
+    console.warn('[addFeedTransaction] DB error, writing to JSON:', err);
+  }
+  const jsonDb = getJsonDbData();
+  if (!jsonDb.feedTransactions) jsonDb.feedTransactions = [];
+  jsonDb.feedTransactions.unshift(tx);
+  writeJsonDbData(jsonDb);
+  return tx;
 }
 
 // 1. Stock / Inventory Functions

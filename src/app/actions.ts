@@ -26,10 +26,13 @@ import {
   updateWeightRecord,
   deleteSalesRecord,
   updateSalesRecord,
-  updateStockLocation
+  updateStockLocation,
+  saveFeedProduct,
+  deleteFeedProduct,
+  addFeedTransaction
 } from '@/lib/db';
 import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
-import { MasterSetup, BatchItem, HealthLogItem, ExpenseItem } from '@/lib/types';
+import { MasterSetup, BatchItem, HealthLogItem, ExpenseItem, FeedProductItem, FeedStockTransaction } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
 export async function getLivestockDataAction() {
@@ -288,5 +291,35 @@ export async function updateSalesRecordAction(cowId: string, updates: Partial<Sa
     return { success: true, data: res };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to update sales record' };
+  }
+}
+
+export async function saveFeedProductAction(product: FeedProductItem) {
+  try {
+    const res = await saveFeedProduct(product);
+    revalidatePath('/');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to save feed product' };
+  }
+}
+
+export async function deleteFeedProductAction(productId: string) {
+  try {
+    await deleteFeedProduct(productId);
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to delete feed product' };
+  }
+}
+
+export async function addFeedTransactionAction(tx: FeedStockTransaction) {
+  try {
+    const res = await addFeedTransaction(tx);
+    revalidatePath('/');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to add feed transaction' };
   }
 }

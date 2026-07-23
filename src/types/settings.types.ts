@@ -22,7 +22,9 @@ export type PermissionKey =
   | 'expenses_delete'
   | 'analytics_view'
   | 'settings_manage'
-  | 'farms_manage';
+  | 'farms_manage'
+  | 'feed_view'
+  | 'feed_manage';
 
 export interface PermissionCategory {
   id: string;

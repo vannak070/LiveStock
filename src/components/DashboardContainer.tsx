@@ -26,12 +26,16 @@ import {
   deleteWeightRecordAction,
   updateWeightRecordAction,
   deleteSalesRecordAction,
-  updateSalesRecordAction
+  updateSalesRecordAction,
+  saveFeedProductAction,
+  deleteFeedProductAction,
+  addFeedTransactionAction
 } from '@/app/actions';
 import SidebarLayout, { ActiveTabType } from './layout/SidebarLayout';
 import DashboardHome from './DashboardHome';
 import InventoryTable from './InventoryTable';
 import BatchTab from './BatchTab';
+import FeedInventoryTab from './FeedInventoryTab';
 import HealthTab from './HealthTab';
 import WeightTab from './WeightTab';
 import FinanceTab from './FinanceTab';
@@ -40,7 +44,7 @@ import SettingsTab from './SettingsTab';
 import FarmsTab from './FarmsTab';
 import CowDetails from './CowDetails';
 import QuickEntryModal from './QuickEntryModal';
-import { ERPLivestockData } from '@/lib/types';
+import { ERPLivestockData, FeedProductItem, FeedStockTransaction } from '@/lib/types';
 import { SalesRecord } from '@/lib/xlsx-parser';
 import { hasPermission } from '@/lib/utils';
 import { PermissionKey } from '@/types/settings.types';
@@ -371,6 +375,49 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     }
   });
 
+  const saveFeedProductMutation = useMutation({
+    mutationFn: async (product: FeedProductItem) => {
+      const res = await saveFeedProductAction(product);
+      if (!res.success) throw new Error(res.error);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['livestock'] });
+    }
+  });
+
+  const deleteFeedProductMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      const res = await deleteFeedProductAction(productId);
+      if (!res.success) throw new Error(res.error);
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['livestock'] });
+    }
+  });
+
+  const addFeedTransactionMutation = useMutation({
+    mutationFn: async ({ tx, postToExpenses }: { tx: FeedStockTransaction; postToExpenses?: boolean }) => {
+      const res = await addFeedTransactionAction(tx);
+      if (!res.success) throw new Error(res.error);
+
+      if (postToExpenses && tx.totalCost > 0) {
+        await addExpenseAction({
+          category: 'Feed',
+          amount: tx.totalCost,
+          date: tx.date ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0],
+          description: `Feed Procurement: ${tx.productName} (${tx.quantityBags} bags / ${tx.quantityKg} kg)${tx.referenceNo ? ` - Ref: ${tx.referenceNo}` : ''}`,
+          farmLocation: tx.targetFarm || currentUser?.farmLocation || undefined
+        });
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['livestock'] });
+    }
+  });
+
   // Active cows list & health alert counters (strictly scoped to current user's farm)
   const activeCows = dbData.stock.filter(c => c.status.toLowerCase() === 'active');
   const healthAlertsCount = activeCows.filter(c =>
@@ -620,6 +667,23 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           }}
           onDeleteBatch={async (batchId) => {
             await deleteBatchMutation.mutateAsync(batchId);
+          }}
+          currentUser={currentUser}
+          farms={dbData.settings?.farms ?? []}
+        />
+      )}
+
+      {activeTab === 'feed-inventory' && (
+        <FeedInventoryTab
+          data={dbData}
+          onSaveProduct={async (product) => {
+            await saveFeedProductMutation.mutateAsync(product);
+          }}
+          onDeleteProduct={async (productId) => {
+            await deleteFeedProductMutation.mutateAsync(productId);
+          }}
+          onAddTransaction={async (tx, postToExpenses) => {
+            await addFeedTransactionMutation.mutateAsync({ tx, postToExpenses });
           }}
           currentUser={currentUser}
           farms={dbData.settings?.farms ?? []}

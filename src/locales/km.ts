@@ -6,6 +6,7 @@ export const km: TranslationKeys = {
     dashboard: 'ផ្ទាំងគ្រប់គ្រង',
     cattleRegistry: 'បញ្ជីសារពើភណ្ឌគោ',
     batchManagement: 'គ្រប់គ្រងក្រុមគោ និង ចំណី',
+    feedStock: 'ស្តុកចំណីគោ',
     healthVaccines: 'ព្យាបាល និង វ៉ាក់សាំង',
     financeLedger: 'ចំណាយចំណី និង ចំណូល',
     analytics: 'របាយការណ៍ និង វិភាគ',

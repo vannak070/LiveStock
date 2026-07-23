@@ -18,7 +18,8 @@ import {
   Building,
   ChevronRight,
   Beef,
-  Syringe
+  Syringe,
+  Package
 } from 'lucide-react';
 import { StockItem } from '@/lib/xlsx-parser';
 import { UserRoleItem } from '@/lib/types';
@@ -30,6 +31,7 @@ export type ActiveTabType =
   | 'dashboard' 
   | 'cow-inventory' 
   | 'batch-management' 
+  | 'feed-inventory'
   | 'health-tracking' 
   | 'weight-tracking' 
   | 'sales-finance' 
@@ -207,6 +209,12 @@ export default function SidebarLayout({
                 onClick={() => handleTabChange('batch-management')}
               />
             )}
+            <NavItem
+              icon={<Package className="h-4 w-4" />}
+              label={t('nav.feedStock')}
+              isActive={activeTab === 'feed-inventory'}
+              onClick={() => handleTabChange('feed-inventory')}
+            />
             {hasPermission(currentUser, 'health_view') && (
               <NavItem
                 icon={<Syringe className="h-4 w-4" />}
