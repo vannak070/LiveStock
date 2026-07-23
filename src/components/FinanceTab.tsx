@@ -10,7 +10,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/
 import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, ClipboardList, TrendingUp, ShoppingBag, Edit3, Trash2 } from 'lucide-react';
 import { ConfirmModal } from './ui/confirm-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { hasPermission } from '@/lib/utils';
+import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 
@@ -196,7 +196,7 @@ export default function FinanceTab({
         <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-center justify-between shadow-sm cursor-pointer hover:border-emerald-200 transition-colors" onClick={() => { setLedgerView('revenue'); setIsLogging(false); }}>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gross Sales Revenue</p>
-            <h4 className="text-lg font-black text-emerald-600 mt-1">៛ {totalSales.toLocaleString()}</h4>
+            <h4 className="text-lg font-black text-emerald-600 mt-1">៛ {format2DecimalsWithCommas(totalSales)}</h4>
           </div>
           <div className="h-9 w-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <ArrowUpRight className="h-4.5 w-4.5" />
@@ -206,7 +206,7 @@ export default function FinanceTab({
         <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-center justify-between shadow-sm">
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cattle Acquisition Cost</p>
-            <h4 className="text-lg font-black text-slate-800 mt-1">៛ {totalPurchases.toLocaleString()}</h4>
+            <h4 className="text-lg font-black text-slate-800 mt-1">៛ {format2DecimalsWithCommas(totalPurchases)}</h4>
           </div>
           <div className="h-9 w-9 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center">
             <FileText className="h-4.5 w-4.5" />
@@ -216,7 +216,7 @@ export default function FinanceTab({
         <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-center justify-between shadow-sm cursor-pointer hover:border-rose-250 transition-colors" onClick={() => { setLedgerView('expenses'); }}>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Feed & Operational Expense</p>
-            <h4 className="text-lg font-black text-rose-500 mt-1">៛ {totalExpenses.toLocaleString()}</h4>
+            <h4 className="text-lg font-black text-rose-500 mt-1">៛ {format2DecimalsWithCommas(totalExpenses)}</h4>
           </div>
           <div className="h-9 w-9 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
             <ArrowDownRight className="h-4.5 w-4.5" />
@@ -229,7 +229,7 @@ export default function FinanceTab({
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Net P&L Margin</p>
             <h4 className={`text-lg font-black mt-1 ${netEarnings >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
-              ៛ {netEarnings.toLocaleString()}
+              ៛ {format2DecimalsWithCommas(netEarnings)}
             </h4>
           </div>
           <div className={`h-9 w-9 rounded-full flex items-center justify-center ${

@@ -6,7 +6,7 @@ import { StockItem, WeightRecord } from '@/lib/xlsx-parser';
 import { FarmItem } from '@/lib/types';
 import { Button } from './ui/button';
 import { ConfirmModal } from './ui/confirm-modal';
-import { hasPermission } from '@/lib/utils';
+import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 
@@ -326,22 +326,22 @@ export default function InventoryTable({
                       </span>
                     </td>
                     <td className="py-3.5 px-5 text-slate-800">
-                      <span className="font-semibold">{initialWeight}</span>{' '}
+                      <span className="font-semibold">{format2Decimals(initialWeight)}</span>{' '}
                       <span className="text-slate-400 text-xs">kg</span>
                     </td>
                     <td className="py-3.5 px-5 text-slate-800">
-                      <span className="font-black text-emerald-700">{currentWeight}</span>{' '}
+                      <span className="font-black text-emerald-700">{format2Decimals(currentWeight)}</span>{' '}
                       <span className="text-slate-400 text-xs font-normal">kg</span>
                       {weightGain !== 0 && (
                         <span className={`ml-1.5 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md inline-block ${
                           weightGain > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-rose-50 text-rose-700 border border-rose-200/80'
                         }`}>
-                          {weightGain > 0 ? `+${weightGain}` : weightGain} kg
+                          {weightGain > 0 ? `+${format2Decimals(weightGain)}` : format2Decimals(weightGain)} kg
                         </span>
                       )}
                     </td>
                     <td className="py-3.5 px-5 text-slate-800 font-semibold">
-                      {cow.totalPrice > 0 ? `៛ ${cow.totalPrice.toLocaleString()}` : 'N/A'}
+                      {cow.totalPrice > 0 ? `៛ ${format2DecimalsWithCommas(cow.totalPrice)}` : 'N/A'}
                     </td>
                   <td className="py-3.5 px-5">
                     <span className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide border flex items-center gap-1.5 w-max ${

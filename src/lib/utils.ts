@@ -22,3 +22,15 @@ export function hasPermission(currentUser: any, key: PermissionKey): boolean {
   const defaultPerms = DEFAULT_ROLE_PERMISSIONS[currentUser.role] || [];
   return defaultPerms.includes(key);
 }
+
+export function format2Decimals(val: number | string | null | undefined): string {
+  const n = Number(val);
+  if (isNaN(n)) return '0.00';
+  return n.toFixed(2);
+}
+
+export function format2DecimalsWithCommas(val: number | string | null | undefined): string {
+  const n = Number(val);
+  if (isNaN(n)) return '0.00';
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}

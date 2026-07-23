@@ -6,6 +6,7 @@ import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
 import { HealthLogItem } from '@/lib/types';
 import { User, MapPin, Phone, Scale, Activity, DollarSign, Syringe, Heart, Calendar } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 
 interface CowDetailsProps {
   cowId: string | null;
@@ -143,7 +144,7 @@ export default function CowDetails({
                   </div>
                   <div>
                     <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">{t('inventory.initialWeight')}</p>
-                    <p className="text-sm font-black text-slate-900">{initialWeight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                    <p className="text-sm font-black text-slate-900">{format2Decimals(initialWeight)} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                   </div>
                 </div>
 
@@ -154,10 +155,10 @@ export default function CowDetails({
                   <div>
                     <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">{t('inventory.currentWeight')}</p>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-black text-emerald-700">{currentWeight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                      <p className="text-sm font-black text-emerald-700">{format2Decimals(currentWeight)} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                       {weightGain > 0 && (
                         <span className="text-[10px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-md">
-                          +{weightGain} kg
+                          +{format2Decimals(weightGain)} kg
                         </span>
                       )}
                     </div>
@@ -218,13 +219,13 @@ export default function CowDetails({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-slate-50/80 border border-slate-200/60 p-4 rounded-2xl shadow-xs">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Purchase Price</p>
-                  <p className="text-base font-black text-slate-900 mt-1">៛ {purchaseCost.toLocaleString()}</p>
+                  <p className="text-base font-black text-slate-900 mt-1">៛ {format2DecimalsWithCommas(purchaseCost)}</p>
                   <span className="text-[9px] text-slate-400 uppercase font-black">{cow.buyType || 'Lumpsum'} basis</span>
                 </div>
 
                 <div className="bg-rose-50/30 border border-rose-100/60 p-4 rounded-2xl shadow-xs">
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Medical Expenses</p>
-                  <p className="text-base font-black text-rose-600 mt-1">៛ {medicalExpenses.toLocaleString()}</p>
+                  <p className="text-base font-black text-rose-600 mt-1">៛ {format2DecimalsWithCommas(medicalExpenses)}</p>
                   <span className="text-[9px] text-rose-400 uppercase font-black">{cowMedicalLogs.length} clinical logs</span>
                 </div>
 
@@ -233,7 +234,7 @@ export default function CowDetails({
                 }`}>
                   <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Net Profit / Loss</p>
                   <p className={`text-base font-black mt-1 ${netProfitLoss >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
-                    ៛ {netProfitLoss.toLocaleString()}
+                    ៛ {format2DecimalsWithCommas(netProfitLoss)}
                   </p>
                   <span className={`text-[9px] uppercase font-black ${netProfitLoss >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
                     {cow.status === 'Sold' ? 'Realized P&L' : 'Unrealized asset'}

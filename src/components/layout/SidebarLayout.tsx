@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { StockItem } from '@/lib/xlsx-parser';
 import { UserRoleItem } from '@/lib/types';
-import { hasPermission } from '@/lib/utils';
+import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import LanguageSwitcher from '../LanguageSwitcher';
 
@@ -123,7 +123,7 @@ export default function SidebarLayout({
   const activeStock = stock.filter(item => item.status.toLowerCase() === 'active');
   const totalHead = activeStock.length;
   const totalWeight = activeStock.reduce((sum, item) => sum + (item.weight || 0), 0);
-  const averageWeight = totalHead > 0 ? Math.round(totalWeight / totalHead) : 0;
+  const averageWeight = totalHead > 0 ? format2Decimals(totalWeight / totalHead) : '0.00';
   const inventoryValue = activeStock.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
   const totalAlerts = healthAlertsCount + vaccineAlertsCount;
 
@@ -377,7 +377,7 @@ export default function SidebarLayout({
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
               <div>
                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.assetValue')}</p>
-                <h3 className="text-sm font-black text-slate-900 mt-0.5 leading-none truncate">៛ {inventoryValue.toLocaleString()}</h3>
+                <h3 className="text-sm font-black text-slate-900 mt-0.5 leading-none truncate">៛ {format2DecimalsWithCommas(inventoryValue)}</h3>
               </div>
               <div className="h-9 w-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
                 <DollarSign className="h-4 w-4" />

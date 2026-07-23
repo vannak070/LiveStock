@@ -10,7 +10,7 @@ import { Users, UserMinus, UserPlus, Calendar, Info, Layers, Trash2, ShieldAlert
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { ConfirmModal } from './ui/confirm-modal';
 import { BatchModal } from './features/batch/BatchModal';
-import { hasPermission } from '@/lib/utils';
+import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface BatchTabProps {
@@ -784,21 +784,21 @@ export default function BatchTab({
             <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
               <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Total Herd Biomass</p>
               <p className="text-2xl font-black text-slate-800 mt-1">
-                {totalBiomass.toLocaleString()}{' '}
+                {format2DecimalsWithCommas(totalBiomass)}{' '}
                 <span className="text-xs font-bold text-blue-600">kg</span>
               </p>
             </div>
             <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
               <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Avg Weight per Head</p>
               <p className="text-2xl font-black text-slate-800 mt-1">
-                {avgBiomass}{' '}
+                {format2Decimals(avgBiomass)}{' '}
                 <span className="text-xs font-bold text-slate-500">kg</span>
               </p>
             </div>
             <div className="bg-gradient-to-br from-emerald-50/20 to-teal-50/25 border border-emerald-100/50 p-4.5 rounded-2xl shadow-xs animate-pulse">
               <p className="text-[9px] font-black uppercase text-emerald-700 tracking-wider">Daily Feed Cost (Total)</p>
               <p className="text-2xl font-black text-emerald-700 mt-1">
-                ៛ {totalHerdDailyFeedCost.toLocaleString()}{' '}
+                ៛ {format2DecimalsWithCommas(totalHerdDailyFeedCost)}{' '}
                 <span className="text-[10px] font-bold opacity-85">/ day</span>
               </p>
             </div>
