@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
 import { HealthLogItem } from '@/lib/types';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { User, MapPin, Phone, Scale, Activity, DollarSign, TrendingUp } from 'lucide-react';
+import { User, MapPin, Phone, Scale, Activity, DollarSign, Syringe, Heart, Calendar } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface CowDetailsProps {
@@ -46,29 +45,21 @@ export default function CowDetails({
 
   if (!cowId || !cow) return null;
 
-  // Filter weight records for growth chart
+  // Filter weight records
   const history = weightTracking
     .filter(w => w.cowId === cowId)
-    .map((w, idx) => ({
-      date: w.trackingDate ? new Date(w.trackingDate).toLocaleDateString() : `Log #${idx + 1}`,
-      weight: w.currentWeight,
-      rawDate: w.trackingDate ? new Date(w.trackingDate).getTime() : 0,
-      health: w.healthStatus
-    }))
-    .sort((a, b) => a.rawDate - b.rawDate);
+    .sort((a, b) => {
+      const timeA = a.trackingDate ? new Date(a.trackingDate).getTime() : 0;
+      const timeB = b.trackingDate ? new Date(b.trackingDate).getTime() : 0;
+      if (timeA !== timeB) return timeA - timeB;
+      if (a.oldWeight === 0 && b.oldWeight !== 0) return -1;
+      if (a.oldWeight !== 0 && b.oldWeight === 0) return 1;
+      return a.currentWeight - b.currentWeight;
+    });
 
-  // If no weight tracking records exist yet, create a baseline point from initial weight
-  const chartData = history.length > 0 ? history : [
-    {
-      date: cow.purchaseDate ? new Date(cow.purchaseDate).toLocaleDateString() : 'Initial',
-      weight: cow.weight,
-      rawDate: 0,
-      health: cow.healthStatus
-    }
-  ];
-
-  const initialWeight = history.length > 0 ? history[0].weight : cow.weight;
-  const currentWeight = history.length > 0 ? history[history.length - 1].weight : cow.weight;
+  const initialWeight = history.length > 0 ? (history[0].oldWeight > 0 ? history[0].oldWeight : history[0].currentWeight) : cow.weight;
+  const currentWeight = history.length > 0 ? Math.max(history[history.length - 1].currentWeight, cow.weight || 0) : cow.weight;
+  const weightGain = Math.round((currentWeight - initialWeight) * 10) / 10;
 
   // Filter sales details
   const sale = salesTracking.find(s => s.cowId === cowId);
@@ -84,11 +75,6 @@ export default function CowDetails({
   const netProfitLoss = cow.status === 'Sold' 
     ? salesRevenue - totalInvestment 
     : (cow.status.toLowerCase() === 'dead' ? -totalInvestment : -medicalExpenses);
-
-  // Dynamic Feed Program recommendation based on weight
-  const dailyFeedIntake = Math.round(cow.weight * 0.025); // 2.5% of body weight
-  const silageRatio = Math.round(dailyFeedIntake * 0.7);
-  const concentrateRatio = Math.round(dailyFeedIntake * 0.3);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -132,7 +118,7 @@ export default function CowDetails({
 
         {/* Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Left Column: Image & Biological Profile */}
+          {/* Left Column: Photo & Biological Profile */}
           <div className="lg:col-span-1 space-y-6">
             {/* Display Cattle Photo */}
             <div className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-md bg-slate-100 group">
@@ -167,7 +153,14 @@ export default function CowDetails({
                   </div>
                   <div>
                     <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">{t('inventory.currentWeight')}</p>
-                    <p className="text-sm font-black text-emerald-700">{currentWeight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-black text-emerald-700">{currentWeight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                      {weightGain > 0 && (
+                        <span className="text-[10px] font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded-md">
+                          +{weightGain} kg
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -214,7 +207,7 @@ export default function CowDetails({
             </div>
           </div>
 
-          {/* Right Column: Financial Ledger, Weight Chart & Nutrition */}
+          {/* Right Column: Financial Ledger & Health History */}
           <div className="lg:col-span-2 space-y-6">
             {/* Financial Ledger P&L */}
             <div>
@@ -249,61 +242,49 @@ export default function CowDetails({
               </div>
             </div>
 
-            {/* Herd Weight Growth Chart */}
+            {/* Medical & Vaccination History Logs */}
             <div>
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
-                Herd Weight Growth Chart
+                <Syringe className="h-3.5 w-3.5 text-emerald-600" />
+                Medical Treatments & Vaccine Logs
               </h4>
-              <div className="h-[200px] bg-slate-50/80 border border-slate-200/60 rounded-2xl p-4 shadow-inner">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                      labelStyle={{ fontSize: '11px', fontWeight: 'bold' }}
-                      itemStyle={{ color: '#059669', fontSize: '13px', fontWeight: 'bold' }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="weight"
-                      stroke="#10b981"
-                      strokeWidth={2.5}
-                      activeDot={{ r: 6 }}
-                      name="Weight (kg)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              {cowMedicalLogs.length > 0 ? (
+                <div className="bg-slate-50/80 border border-slate-200/60 rounded-2xl overflow-hidden shadow-xs">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100/70 text-slate-400 font-extrabold uppercase text-[9px] tracking-wider border-b border-slate-200/60">
+                      <tr>
+                        <th className="py-2.5 px-3.5">Type</th>
+                        <th className="py-2.5 px-3.5">Treatment / Vaccine</th>
+                        <th className="py-2.5 px-3.5">Date</th>
+                        <th className="py-2.5 px-3.5 text-right">Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200/50 font-medium text-slate-700">
+                      {cowMedicalLogs.map(log => (
+                        <tr key={log.id} className="hover:bg-white/60">
+                          <td className="py-2.5 px-3.5 font-bold text-emerald-700">{log.type}</td>
+                          <td className="py-2.5 px-3.5 font-semibold text-slate-900">{log.name}</td>
+                          <td className="py-2.5 px-3.5 text-slate-500">{log.date}</td>
+                          <td className="py-2.5 px-3.5 text-right font-black text-slate-900">៛ {(log.cost || 0).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="bg-slate-50/60 border border-slate-200/50 p-6 rounded-2xl text-center text-xs text-slate-400 font-bold">
+                  No medical or vaccination records registered for this cow.
+                </div>
+              )}
             </div>
 
-            {/* Nutrition Program */}
-            <div>
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Nutrition & Feeding Intake</h4>
-              <div className="bg-emerald-50/30 border border-emerald-100/70 p-4 rounded-2xl space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 font-semibold">Recommended Daily Intake:</span>
-                  <span className="font-black text-emerald-800 text-sm">{dailyFeedIntake} kg / day</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-700 pt-1">
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/60 shadow-2xs">
-                    <p className="text-slate-400 text-[9px] uppercase font-black tracking-wider">Silage Feed Target</p>
-                    <p className="text-base font-black text-slate-900 mt-1">{silageRatio} <span className="text-xs text-slate-400 font-bold">kg</span></p>
-                  </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/60 shadow-2xs">
-                    <p className="text-slate-400 text-[9px] uppercase font-black tracking-wider">Concentrate Ratio</p>
-                    <p className="text-base font-black text-slate-900 mt-1">{concentrateRatio} <span className="text-xs text-slate-400 font-bold">kg</span></p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Breeding Status Panel (for female cows) */}
+            {/* Breeding / Reproductive Profile (for female cows) */}
             {(cow.sex === 'Female' || cow.sex === 'F') && (
               <div>
-                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Reproductive Profile</h4>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <Heart className="h-3.5 w-3.5 text-rose-500" />
+                  Reproductive & Breeding State
+                </h4>
                 <div className="bg-rose-50/30 border border-rose-100/60 p-4 rounded-2xl space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-600 font-semibold">Reproductive Status:</span>
