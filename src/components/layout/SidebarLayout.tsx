@@ -23,6 +23,8 @@ import {
 import { StockItem } from '@/lib/xlsx-parser';
 import { UserRoleItem } from '@/lib/types';
 import { hasPermission } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 export type ActiveTabType = 
   | 'dashboard' 
@@ -115,6 +117,7 @@ export default function SidebarLayout({
   currentUser,
   onLogout
 }: SidebarLayoutProps) {
+  const { t } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const activeStock = stock.filter(item => item.status.toLowerCase() === 'active');
@@ -177,7 +180,7 @@ export default function SidebarLayout({
         <NavSection label="Overview">
           <NavItem
             icon={<LayoutDashboard className="h-4 w-4" />}
-            label="Dashboard"
+            label={t('nav.dashboard')}
             isActive={activeTab === 'dashboard'}
             onClick={() => handleTabChange('dashboard')}
           />
@@ -191,7 +194,7 @@ export default function SidebarLayout({
             {hasPermission(currentUser, 'stock_view') && (
               <NavItem
                 icon={<Beef className="h-4 w-4" />}
-                label="Cattle Registry"
+                label={t('nav.cattleRegistry')}
                 isActive={activeTab === 'cow-inventory'}
                 onClick={() => handleTabChange('cow-inventory')}
               />
@@ -199,7 +202,7 @@ export default function SidebarLayout({
             {hasPermission(currentUser, 'batch_view') && (
               <NavItem
                 icon={<TrendingUp className="h-4 w-4" />}
-                label="Fattening Batches & Diet"
+                label={t('nav.batchManagement')}
                 isActive={activeTab === 'batch-management'}
                 onClick={() => handleTabChange('batch-management')}
               />
@@ -207,7 +210,7 @@ export default function SidebarLayout({
             {hasPermission(currentUser, 'health_view') && (
               <NavItem
                 icon={<Syringe className="h-4 w-4" />}
-                label="Medical & Vaccines"
+                label={t('nav.healthVaccines')}
                 isActive={activeTab === 'health-tracking'}
                 onClick={() => handleTabChange('health-tracking')}
                 badge={totalAlerts > 0 ? totalAlerts : null}
@@ -223,7 +226,7 @@ export default function SidebarLayout({
           <NavSection label="Financials">
             <NavItem
               icon={<DollarSign className="h-4 w-4" />}
-              label="Feed Costs & Revenue"
+              label={t('nav.financeLedger')}
               isActive={activeTab === 'sales-finance'}
               onClick={() => handleTabChange('sales-finance')}
             />
@@ -235,7 +238,7 @@ export default function SidebarLayout({
           <NavSection label="Insights">
             <NavItem
               icon={<PieChart className="h-4 w-4" />}
-              label="Growth & Profit Analytics"
+              label={t('nav.analytics')}
               isActive={activeTab === 'analytics'}
               onClick={() => handleTabChange('analytics')}
             />
@@ -248,7 +251,7 @@ export default function SidebarLayout({
             {hasPermission(currentUser, 'farms_manage') && (
               <NavItem
                 icon={<Building className="h-4 w-4" />}
-                label="Farms & Stall Branches"
+                label={t('nav.farmsBranches')}
                 isActive={activeTab === 'farms'}
                 onClick={() => handleTabChange('farms')}
               />
@@ -256,7 +259,7 @@ export default function SidebarLayout({
             {hasPermission(currentUser, 'settings_manage') && (
               <NavItem
                 icon={<Settings className="h-4 w-4" />}
-                label="ERP Master Setup"
+                label={t('nav.masterSettings')}
                 isActive={activeTab === 'settings'}
                 onClick={() => handleTabChange('settings')}
               />
@@ -340,9 +343,12 @@ export default function SidebarLayout({
                 </p>
               </div>
             </div>
-            <div className="hidden lg:flex text-xs text-slate-500 font-semibold bg-slate-50 py-2 px-3.5 rounded-full border border-slate-200 items-center gap-2">
-              <Calendar className="h-3.5 w-3.5 text-emerald-600" />
-              {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher />
+              <div className="hidden lg:flex text-xs text-slate-500 font-semibold bg-slate-50 py-2 px-3.5 rounded-full border border-slate-200 items-center gap-2">
+                <Calendar className="h-3.5 w-3.5 text-emerald-600" />
+                {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
             </div>
           </div>
 

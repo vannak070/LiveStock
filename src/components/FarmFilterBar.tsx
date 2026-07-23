@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Building2, ChevronDown, X, Check, Search } from 'lucide-react';
 import { FarmItem } from '@/lib/types';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface FarmFilterBarProps {
   farms: FarmItem[];
@@ -23,6 +24,7 @@ export default function FarmFilterBar({
   label = 'records',
   currentUser
 }: FarmFilterBarProps) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -79,7 +81,7 @@ export default function FarmFilterBar({
 
           {/* Label */}
           <span className="flex-1 text-left truncate">
-            {selectedFarm ?? 'All Farms & Branches'}
+            {selectedFarm ?? t('common.allFarms')}
           </span>
 
           {/* Count badge */}

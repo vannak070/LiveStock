@@ -7,6 +7,7 @@ import { FarmItem } from '@/lib/types';
 import { Button } from './ui/button';
 import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 
 interface InventoryTableProps {
@@ -32,6 +33,7 @@ export default function InventoryTable({
   currentUser,
   farms = []
 }: InventoryTableProps) {
+  const { t } = useLanguage();
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -153,10 +155,10 @@ export default function InventoryTable({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2 text-left">
-            🐄 Fattening Cattle Registry (បញ្ជីសារពើភណ្ឌគោ)
+            🐄 {t('inventory.title')}
           </h3>
           <p className="text-[11px] text-slate-400 font-semibold text-left">
-            View fattening progress, log weight gains, or register new cattle into the fattening program.
+            {t('inventory.subtitle')}
           </p>
         </div>
         {onAddCowClick && hasPermission(currentUser, 'stock_create') && (
@@ -164,7 +166,7 @@ export default function InventoryTable({
             onClick={onAddCowClick}
             className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs py-2 px-4 shadow-md flex items-center gap-1.5 cursor-pointer"
           >
-            ➕ Register Fattening Cattle
+            ➕ {t('inventory.registerCow')}
           </Button>
         )}
       </div>
@@ -270,29 +272,29 @@ export default function InventoryTable({
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/20 text-[#003B33] text-xs font-black uppercase tracking-wider">
               <th className="py-4 px-5">
-                COW ID <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+                {t('inventory.cowId')} <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
               <th className="py-4 px-5">
-                FARM <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+                {t('inventory.farm')} <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
               <th className="py-4 px-5">
-                BREED <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+                {t('inventory.breed')} <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
               <th className="py-4 px-5">
-                SEX <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+                {t('inventory.sex')} <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
               <th className="py-4 px-5">
-                INITIAL WEIGHT <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+                {t('inventory.initialWeight')} <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
               <th className="py-4 px-5">
-                CURRENT WEIGHT <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />
+                {t('inventory.currentWeight')} <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />
               </th>
               <th className="py-4 px-5">
-                PURCHASE PRICE <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+                {t('inventory.purchasePrice')} <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
-              <th className="py-4 px-5">HEALTH STATUS</th>
-              <th className="py-4 px-5">STATUS</th>
-              <th className="py-4 px-5 text-right">ACTIONS</th>
+              <th className="py-4 px-5">{t('inventory.healthStatus')}</th>
+              <th className="py-4 px-5">{t('inventory.status')}</th>
+              <th className="py-4 px-5 text-right">{t('common.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
