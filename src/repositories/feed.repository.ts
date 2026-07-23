@@ -15,49 +15,12 @@ const DEFAULT_FEED_PRODUCTS: FeedProductItem[] = [
     description: 'High-protein commercial fattening concentrate ration (30kg/bag).',
     supplier: 'CP Cambodia',
     status: 'Active'
-  },
-  {
-    id: 'PROD-F02',
-    name: 'Corn & Grass Silage',
-    category: 'Silage',
-    unit: 'kg',
-    weightPerUnit: 1,
-    unitCost: 350,
-    minThresholdBags: 50,
-    minThresholdKg: 1500,
-    description: 'Fermented whole-plant corn & Napier grass silage feed.',
-    supplier: 'Central Farm Feed Depot',
-    status: 'Active'
-  },
-  {
-    id: 'PROD-F03',
-    name: 'Rice Straw Roughage',
-    category: 'Roughage',
-    unit: 'kg',
-    weightPerUnit: 1,
-    unitCost: 150,
-    minThresholdBags: 50,
-    minThresholdKg: 1500,
-    description: 'Dry rice straw fiber roughage bales.',
-    supplier: 'Local Rice Mill Co.',
-    status: 'Active'
-  },
-  {
-    id: 'PROD-F04',
-    name: 'Molasses & Mineral Mix',
-    category: 'Supplement',
-    unit: 'kg',
-    weightPerUnit: 1,
-    unitCost: 1200,
-    minThresholdBags: 50,
-    minThresholdKg: 1500,
-    description: 'Liquid cane molasses energy & mineral lick block.',
-    supplier: 'AgriFeed Supplier',
-    status: 'Active'
   }
 ];
 
 export class FeedRepository {
+  private schemaEnsured = false;
+
   private async executeQuery(sql: string, params?: unknown[], client?: PoolClient) {
     if (client) {
       return client.query(sql, params);
@@ -66,6 +29,8 @@ export class FeedRepository {
   }
 
   async ensureSchema(): Promise<void> {
+    if (this.schemaEnsured) return;
+    this.schemaEnsured = true;
     await query(`
       CREATE TABLE IF NOT EXISTS feed_products (
         id VARCHAR(100) PRIMARY KEY,

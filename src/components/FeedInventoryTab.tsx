@@ -62,7 +62,7 @@ export default function FeedInventoryTab({
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<FeedProductItem | null>(null);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
-  const [txType, setTxType] = useState<'STOCK_IN' | 'STOCK_OUT' | 'TRANSFER'>('STOCK_IN');
+  const [txType, setTxType] = useState<'STOCK_IN' | 'STOCK_OUT'>('STOCK_IN');
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -107,22 +107,6 @@ export default function FeedInventoryTab({
         if (!balanceMap[key]) balanceMap[key] = { bags: 0, kg: 0 };
         balanceMap[key].bags -= tx.quantityBags || 0;
         balanceMap[key].kg -= tx.quantityKg || (tx.quantityBags * wtPerUnit);
-      }
-
-      // Handle Transfers
-      if (tx.type === 'TRANSFER') {
-        if (tx.sourceFarm) {
-          const sourceKey = `${tx.productId}___${tx.sourceFarm}`;
-          if (!balanceMap[sourceKey]) balanceMap[sourceKey] = { bags: 0, kg: 0 };
-          balanceMap[sourceKey].bags -= tx.quantityBags || 0;
-          balanceMap[sourceKey].kg -= tx.quantityKg || (tx.quantityBags * wtPerUnit);
-        }
-        if (tx.targetFarm) {
-          const targetKey = `${tx.productId}___${tx.targetFarm}`;
-          if (!balanceMap[targetKey]) balanceMap[targetKey] = { bags: 0, kg: 0 };
-          balanceMap[targetKey].bags += tx.quantityBags || 0;
-          balanceMap[targetKey].kg += tx.quantityKg || (tx.quantityBags * wtPerUnit);
-        }
       }
     });
 
@@ -210,7 +194,7 @@ export default function FeedInventoryTab({
   const totalOnsiteKg = balances.reduce((sum, b) => sum + b.balanceKg, 0);
   const totalValuation = balances.reduce((sum, b) => sum + b.totalValuation, 0);
 
-  const openTxModal = (type: 'STOCK_IN' | 'STOCK_OUT' | 'TRANSFER') => {
+  const openTxModal = (type: 'STOCK_IN' | 'STOCK_OUT') => {
     setTxType(type);
     setIsTransactionModalOpen(true);
   };
@@ -234,10 +218,10 @@ export default function FeedInventoryTab({
           <div>
             <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
               <Package className="h-6 w-6 text-emerald-600 animate-pulse" />
-              Cattle Feed Inventory & Stock Management
+              DSR-16 Concentrate Feed Stock Management
             </h3>
             <p className="text-xs text-slate-400 font-semibold mt-1">
-              Central feed procurement, stock transfers to farm branches, daily feed usage, and low-stock warning alerts.
+              DSR-16 feed procurement (Stock In), daily feed consumption (Stock Out), and low-stock warning alerts (50 bags / 1,500 kg threshold).
             </p>
           </div>
 
@@ -256,13 +240,6 @@ export default function FeedInventoryTab({
               className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold py-2 px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <ArrowDownLeft className="h-4 w-4" /> 📥 Stock In
-            </Button>
-
-            <Button
-              onClick={() => openTxModal('TRANSFER')}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold py-2 px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowRightLeft className="h-4 w-4" /> 🔄 Transfer
             </Button>
 
             <Button
@@ -567,8 +544,6 @@ export default function FeedInventoryTab({
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border ${
                           tx.type === 'STOCK_IN'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : tx.type === 'TRANSFER'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
                             : 'bg-rose-50 text-rose-700 border-rose-200'
                         }`}>
                           {tx.type}
@@ -580,7 +555,7 @@ export default function FeedInventoryTab({
                         <span className="text-slate-400 text-xs">({format2DecimalsWithCommas(tx.quantityKg)} kg)</span>
                       </td>
                       <td className="py-3.5 px-5 text-slate-600 font-medium">
-                        {tx.sourceFarm || 'Supplier'} ➔ <span className="font-bold text-slate-900">{tx.targetFarm || 'Central'}</span>
+                        <span className="font-bold text-slate-900">{tx.targetFarm || 'Farm Warehouse'}</span>
                       </td>
                       <td className="py-3.5 px-5 text-right font-mono font-black text-slate-900">
                         ៛ {format2DecimalsWithCommas(tx.totalCost)}
@@ -590,7 +565,7 @@ export default function FeedInventoryTab({
                 ) : (
                   <tr>
                     <td colSpan={7} className="py-12 text-center text-slate-400 font-bold">
-                      No stock transactions logged yet. Use "Stock In", "Transfer", or "Stock Out" buttons to create entries.
+                      No stock transactions logged yet. Use "Stock In" or "Stock Out" buttons to create entries.
                     </td>
                   </tr>
                 )}

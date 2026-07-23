@@ -1,4 +1,4 @@
-export type FeedTransactionType = 'STOCK_IN' | 'STOCK_OUT' | 'TRANSFER';
+export type FeedTransactionType = 'STOCK_IN' | 'STOCK_OUT';
 
 export interface FeedProductItem {
   id: string;

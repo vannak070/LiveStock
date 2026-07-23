@@ -46,8 +46,7 @@ export const FeedTransactionModal: React.FC<FeedTransactionModalProps> = ({
       if (products.length > 0) {
         setProductId(products[0].id);
       }
-      setQuantityBags('50');
-      setSourceFarm(defaultType === 'TRANSFER' ? 'Central Warehouse' : (currentUser?.farmLocation || 'Central Warehouse'));
+      setSourceFarm(currentUser?.farmLocation || 'Central Warehouse');
       setTargetFarm(currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : 'Central Warehouse'));
       setReferenceNo(`TX-${Date.now().toString().slice(-6)}`);
       setNotes('');
@@ -103,15 +102,12 @@ export const FeedTransactionModal: React.FC<FeedTransactionModalProps> = ({
           <DialogTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
             {type === 'STOCK_IN' && <ArrowDownLeft className="h-5 w-5 text-emerald-600" />}
             {type === 'STOCK_OUT' && <ArrowUpRight className="h-5 w-5 text-rose-600" />}
-            {type === 'TRANSFER' && <ArrowRightLeft className="h-5 w-5 text-blue-600" />}
             {type === 'STOCK_IN' && 'Stock In (Procurement / Delivery)'}
             {type === 'STOCK_OUT' && 'Stock Out (Daily Feed Usage)'}
-            {type === 'TRANSFER' && 'Stock Transfer (Central ➔ Farm Branch)'}
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            {type === 'STOCK_IN' && 'Log inbound feed purchases into Central Warehouse or Farm Stock.'}
+            {type === 'STOCK_IN' && 'Log inbound feed purchases into Farm Stock.'}
             {type === 'STOCK_OUT' && 'Log daily feeding consumption or issue feed to cattle cohorts.'}
-            {type === 'TRANSFER' && 'Distribute central feed inventory to specific farm owner warehouses.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -124,13 +120,6 @@ export const FeedTransactionModal: React.FC<FeedTransactionModalProps> = ({
               className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${type === 'STOCK_IN' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
             >
               📥 Stock In
-            </button>
-            <button
-              type="button"
-              onClick={() => setType('TRANSFER')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${type === 'TRANSFER' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              🔄 Transfer
             </button>
             <button
               type="button"
@@ -201,26 +190,9 @@ export const FeedTransactionModal: React.FC<FeedTransactionModalProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {type === 'TRANSFER' && (
+            {type === 'STOCK_IN' && (
               <div className="space-y-1">
-                <Label htmlFor="tx_source" className="text-xs font-bold text-slate-700">Source Warehouse</Label>
-                <select
-                  id="tx_source"
-                  value={sourceFarm}
-                  onChange={e => setSourceFarm(e.target.value)}
-                  className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-                >
-                  <option value="Central Warehouse">Central Warehouse</option>
-                  {farms.map(f => (
-                    <option key={f.id} value={f.name}>{f.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {(type === 'STOCK_IN' || type === 'TRANSFER') && (
-              <div className="space-y-1">
-                <Label htmlFor="tx_target" className="text-xs font-bold text-slate-700">Destination Farm Warehouse</Label>
+                <Label htmlFor="tx_target" className="text-xs font-bold text-slate-700">Target Farm Warehouse</Label>
                 <select
                   id="tx_target"
                   value={targetFarm}
