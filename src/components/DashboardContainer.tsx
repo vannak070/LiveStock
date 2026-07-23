@@ -495,7 +495,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
             <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/20 to-teal-500/10 opacity-70" />
             <div className="relative z-10 flex flex-col items-center">
               <div className="p-3.5 rounded-2xl bg-white shadow-md flex items-center justify-center mb-4 transform hover:scale-105 transition-transform duration-250">
-                <img src="/logo.png" alt="SNR Farm Logo" className="h-12 w-auto object-contain" />
+                <img src="/logo.png" alt="LiveStock Fattening ERP Logo" className="h-12 w-auto object-contain" />
               </div>
               <h1 className="font-black text-lg leading-tight tracking-wider uppercase text-white">LiveStock Fattening ERP</h1>
               <p className="text-[10px] text-emerald-400 font-extrabold tracking-widest uppercase mt-1">Fattening Livestock Management System</p>
