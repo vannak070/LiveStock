@@ -1736,6 +1736,7 @@ export default function BatchTab({
         batchTypes={data.settings?.batchTypes}
         initialBatch={editingBatch}
         currentUser={currentUser}
+        farms={farms}
       />
 
       {/* All Batches Table Modal (Read & Manage All Batches) */}

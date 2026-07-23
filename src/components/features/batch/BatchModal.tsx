@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Layers, CheckCircle2, UserPlus, Edit2 } from 'lucide-react';
 
+import { FarmItem } from '@/lib/types';
+
 interface BatchModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -14,6 +16,7 @@ interface BatchModalProps {
   batchTypes?: string[];
   initialBatch?: BatchItem | null;
   currentUser?: any;
+  farms?: FarmItem[];
 }
 
 export const BatchModal: React.FC<BatchModalProps> = ({
@@ -23,7 +26,8 @@ export const BatchModal: React.FC<BatchModalProps> = ({
   unassignedCows,
   batchTypes = ['Fattening Program', 'Quanrantin & Vet Card', 'Selling Pool', 'Breeding Program'],
   initialBatch = null,
-  currentUser
+  currentUser,
+  farms = []
 }) => {
   const isEditMode = !!initialBatch;
 
@@ -32,6 +36,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
   const [type, setType] = useState('Fattening Program');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [status, setStatus] = useState<'Active' | 'Closed'>('Active');
+  const [farmLocation, setFarmLocation] = useState(currentUser?.farmLocation || '');
   const [notes, setNotes] = useState('');
   const [selectedCowIds, setSelectedCowIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,6 +49,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         setType(initialBatch.type || 'Fattening Program');
         setStartDate(initialBatch.startDate ? initialBatch.startDate.split('T')[0] : new Date().toISOString().split('T')[0]);
         setStatus(initialBatch.status || 'Active');
+        setFarmLocation(initialBatch.farmLocation || currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : ''));
         setNotes(initialBatch.notes || '');
         setSelectedCowIds([]);
       } else {
@@ -53,11 +59,12 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         setType('Fattening Program');
         setStartDate(new Date().toISOString().split('T')[0]);
         setStatus('Active');
+        setFarmLocation(currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : ''));
         setNotes('');
         setSelectedCowIds([]);
       }
     }
-  }, [isOpen, initialBatch]);
+  }, [isOpen, initialBatch, currentUser, farms]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,7 +92,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         startDate,
         status,
         notes,
-        farmLocation: initialBatch?.farmLocation || currentUser?.farmLocation || undefined,
+        farmLocation: farmLocation || initialBatch?.farmLocation || currentUser?.farmLocation || undefined,
         feedingProgram: initialBatch?.feedingProgram || (type === 'Fattening Program' ? defaultFeeding : undefined)
       }, selectedCowIds);
 
@@ -111,26 +118,26 @@ export const BatchModal: React.FC<BatchModalProps> = ({
             {isEditMode ? (
               <>
                 <Edit2 className="h-5 w-5 text-emerald-600" />
-                កែប្រែព័ត៌មានក្រុម (Edit Batch Details)
+                Edit Batch Details
               </>
             ) : (
               <>
                 <Layers className="h-5 w-5 text-emerald-600" />
-                បង្កើតក្រុមបំប៉នគោថ្មី (Create New Batch)
+                Create New Batch
               </>
             )}
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
             {isEditMode
-              ? `កែប្រែឈ្មោះ ស្ថានភាព ឬព័ត៌មានលម្អិតរបស់ក្រុម ${initialBatch.id}`
-              : 'កំណត់ឈ្មោះក្រុម ថ្ងៃចាប់ផ្តើម និងរើសគោដែលមិនទាន់មានក្រុមបញ្ចូលភ្លាមៗ។'}
+              ? `Edit batch details and farm location for ${initialBatch.id}`
+              : 'Specify batch details, farm location, start date, and enroll cattle immediately.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-4 text-left">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="batch_id" className="text-xs font-bold text-slate-700">Batch Code (កូដក្រុម)</Label>
+              <Label htmlFor="batch_id" className="text-xs font-bold text-slate-700">Batch Code</Label>
               <Input
                 id="batch_id"
                 value={id}
@@ -143,19 +150,35 @@ export const BatchModal: React.FC<BatchModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="batch_name" className="text-xs font-bold text-slate-700">Batch Name (ឈ្មោះក្រុម)</Label>
+              <Label htmlFor="batch_name" className="text-xs font-bold text-slate-700">Batch Name</Label>
               <Input
                 id="batch_name"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="e.g. ហ្វូងបំប៉ន ក្រោល A"
+                placeholder="e.g. Fattening Batch A"
                 required
                 className="text-xs font-bold"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="batch_farm" className="text-xs font-bold text-slate-700">Farm Location</Label>
+              <select
+                id="batch_farm"
+                value={farmLocation}
+                onChange={e => setFarmLocation(e.target.value)}
+                className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                required
+              >
+                <option value="">-- Select Farm --</option>
+                {farms.map(f => (
+                  <option key={f.id} value={f.name}>{f.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="space-y-1">
               <Label htmlFor="batch_type" className="text-xs font-bold text-slate-700">Program Type</Label>
               <select
@@ -190,8 +213,8 @@ export const BatchModal: React.FC<BatchModalProps> = ({
                 onChange={e => setStatus(e.target.value as 'Active' | 'Closed')}
                 className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
               >
-                <option value="Active">Active (ដំណើការ)</option>
-                <option value="Closed">Closed (បញ្ចប់)</option>
+                <option value="Active">Active</option>
+                <option value="Closed">Closed</option>
               </select>
             </div>
           </div>
