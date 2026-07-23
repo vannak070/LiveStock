@@ -610,7 +610,7 @@ export default function FinanceTab({
       )}
       {editingSalesRecord && (
         <Dialog open={!!editingSalesRecord} onOpenChange={(open) => !open && setEditingSalesRecord(null)}>
-          <DialogContent className="max-w-md bg-white border border-slate-100 text-slate-800 rounded-2xl shadow-xl p-6">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white border border-slate-100 text-slate-800 rounded-2xl shadow-xl p-6">
             <DialogHeader className="border-b border-slate-100 pb-3">
               <DialogTitle className="text-base font-bold text-slate-800">Edit Sales Record</DialogTitle>
               <DialogDescription className="text-xs text-slate-405 font-mono mt-0.5">

@@ -391,7 +391,7 @@ export default function QuickEntryModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-[540px] bg-white border border-slate-100 text-slate-800 p-6 rounded-2xl shadow-xl">
+      <DialogContent className="max-w-[540px] max-h-[90vh] overflow-y-auto bg-white border border-slate-100 text-slate-800 p-6 rounded-2xl shadow-xl">
         <DialogHeader className="border-b border-slate-100 pb-3">
           <DialogTitle className="text-lg font-black text-slate-800 text-left">{currentMeta.title}</DialogTitle>
           <DialogDescription className="text-xs text-slate-400 font-medium text-left">
