@@ -18,6 +18,7 @@ interface CowDetailsProps {
   onUpdateCowImage?: (cowId: string, imageUrl: string) => Promise<void>;
 }
 
+const REALISTIC_CATTLE_FALLBACK = 'https://images.unsplash.com/photo-1546445317-29f4545f9d52?auto=format&fit=crop&w=800&q=80';
 const DEFAULT_CATTLE_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none"><rect width="800" height="500" rx="30" fill="%230f172a"/><path d="M0 350 Q 200 280 400 350 T 800 320 L 800 500 L 0 500 Z" fill="%23047857" opacity="0.4"/><g transform="translate(250, 100) scale(1.4)"><ellipse cx="140" cy="130" rx="90" ry="55" fill="%23334155"/><ellipse cx="50" cy="90" rx="35" ry="25" fill="%23475569"/><ellipse cx="30" cy="95" rx="15" ry="12" fill="%2364748b"/><path d="M 60 70 Q 75 50 65 75 Z" fill="%23334155"/><path d="M 50 65 Q 45 40 35 50" stroke="%23f8fafc" stroke-width="4" stroke-linecap="round"/><rect x="75" y="170" width="16" height="60" rx="6" fill="%231e293b"/><rect x="115" y="170" width="16" height="60" rx="6" fill="%23334155"/><rect x="175" y="170" width="16" height="60" rx="6" fill="%231e293b"/><rect x="205" y="170" width="16" height="60" rx="6" fill="%23334155"/><path d="M 225 125 Q 245 150 240 180" stroke="%231e293b" stroke-width="4" stroke-linecap="round"/></g><text x="400" y="440" text-anchor="middle" fill="%2394a3b8" font-family="sans-serif" font-size="18" font-weight="800" letter-spacing="2">LIVESTOCK HERD REGISTRY</text></svg>`;
 
 export default function CowDetails({
@@ -29,15 +30,15 @@ export default function CowDetails({
   salesTracking,
   healthLogs
 }: CowDetailsProps) {
-  const [currentImg, setCurrentImg] = useState<string>(DEFAULT_CATTLE_SVG);
+  const [currentImg, setCurrentImg] = useState<string>(REALISTIC_CATTLE_FALLBACK);
 
-  const cow = stock.find(c => c.id === cowId);
+  const cow = stock.find(c => c.id?.trim().toLowerCase() === cowId?.trim().toLowerCase());
 
   React.useEffect(() => {
     if (cow?.imageUrl && cow.imageUrl.trim().length > 0) {
       setCurrentImg(cow.imageUrl);
     } else {
-      setCurrentImg(DEFAULT_CATTLE_SVG);
+      setCurrentImg(REALISTIC_CATTLE_FALLBACK);
     }
   }, [cowId, cow?.imageUrl]);
 
