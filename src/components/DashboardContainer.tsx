@@ -580,6 +580,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       {activeTab === 'cow-inventory' && (
         <InventoryTable
           stock={dbData.stock}
+          weightTracking={dbData.weightTracking}
           onViewDetails={handleViewDetails}
           onEditCow={(cowId) => handleOpenQuickEntry('weight', cowId)}
           onRecordSale={(cowId) => handleOpenQuickEntry('sale', cowId)}

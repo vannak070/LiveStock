@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Edit3, DollarSign, RefreshCcw, ChevronLeft, ChevronRight, Activity, Trash2 } from 'lucide-react';
-import { StockItem } from '@/lib/xlsx-parser';
+import { StockItem, WeightRecord } from '@/lib/xlsx-parser';
 import { FarmItem } from '@/lib/types';
 import { Button } from './ui/button';
 import { ConfirmModal } from './ui/confirm-modal';
@@ -11,6 +11,7 @@ import FarmFilterBar from './FarmFilterBar';
 
 interface InventoryTableProps {
   stock: StockItem[];
+  weightTracking?: WeightRecord[];
   onViewDetails: (cowId: string) => void;
   onEditCow: (cowId: string) => void;
   onRecordSale: (cowId: string) => void;
@@ -22,6 +23,7 @@ interface InventoryTableProps {
 
 export default function InventoryTable({
   stock,
+  weightTracking = [],
   onViewDetails,
   onEditCow,
   onRecordSale,
@@ -121,6 +123,28 @@ export default function InventoryTable({
       f.name?.toLowerCase() === loc.toLowerCase()
     );
     return farm ? farm.name : loc;
+  };
+
+  const getCowWeights = (cow: StockItem) => {
+    const cowLogs = (weightTracking || [])
+      .filter(w => w.cowId === cow.id)
+      .sort((a, b) => {
+        const timeA = a.trackingDate ? new Date(a.trackingDate).getTime() : 0;
+        const timeB = b.trackingDate ? new Date(b.trackingDate).getTime() : 0;
+        return timeA - timeB;
+      });
+
+    let initialWeight = cow.weight || 0;
+    let currentWeight = cow.weight || 0;
+
+    if (cowLogs.length > 0) {
+      initialWeight = cowLogs[0].oldWeight > 0 ? cowLogs[0].oldWeight : cowLogs[0].currentWeight;
+      currentWeight = cowLogs[cowLogs.length - 1].currentWeight;
+    }
+
+    const weightGain = Math.round((currentWeight - initialWeight) * 10) / 10;
+
+    return { initialWeight, currentWeight, weightGain };
   };
 
   return (
@@ -258,7 +282,10 @@ export default function InventoryTable({
                 SEX <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
               <th className="py-4 px-5">
-                WEIGHT <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+                INITIAL WEIGHT <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+              </th>
+              <th className="py-4 px-5">
+                CURRENT WEIGHT <span className="w-1 h-1 rounded-full bg-emerald-500 inline-block" />
               </th>
               <th className="py-4 px-5">
                 PURCHASE PRICE <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
@@ -270,31 +297,44 @@ export default function InventoryTable({
           </thead>
           <tbody className="divide-y divide-slate-100 text-slate-700 font-medium">
             {paginatedStock.length > 0 ? (
-              paginatedStock.map((cow, index) => (
-                <tr key={cow.id} className="hover:bg-slate-50/40 transition-colors">
-                  <td className="py-3.5 px-5 font-bold text-slate-900">{cow.id}</td>
-                  <td className="py-3.5 px-5 text-slate-800 font-semibold">
-                    <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-700">
-                      🏢 {getFarmName(cow.location)}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-5 text-slate-800">{cow.breed}</td>
-                  <td className="py-3.5 px-5">
-                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold border ${
-                      cow.sex === 'M'
-                        ? 'bg-blue-50/50 text-blue-500 border-blue-150'
-                        : 'bg-rose-50/50 text-rose-500 border-rose-150'
-                    }`}>
-                      {cow.sex}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-5 text-slate-800">
-                    <span className="font-semibold">{cow.weight}</span>{' '}
-                    <span className="text-slate-400 text-xs">kg</span>
-                  </td>
-                  <td className="py-3.5 px-5 text-slate-800 font-semibold">
-                    {cow.totalPrice > 0 ? `៛ ${cow.totalPrice.toLocaleString()}` : 'N/A'}
-                  </td>
+              paginatedStock.map((cow, index) => {
+                const { initialWeight, currentWeight, weightGain } = getCowWeights(cow);
+                return (
+                  <tr key={cow.id} className="hover:bg-slate-50/40 transition-colors">
+                    <td className="py-3.5 px-5 font-bold text-slate-900">{cow.id}</td>
+                    <td className="py-3.5 px-5 text-slate-800 font-semibold">
+                      <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-700">
+                        🏢 {getFarmName(cow.location)}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-800">{cow.breed}</td>
+                    <td className="py-3.5 px-5">
+                      <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold border ${
+                        cow.sex === 'M'
+                          ? 'bg-blue-50/50 text-blue-500 border-blue-150'
+                          : 'bg-rose-50/50 text-rose-500 border-rose-150'
+                      }`}>
+                        {cow.sex}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-800">
+                      <span className="font-semibold">{initialWeight}</span>{' '}
+                      <span className="text-slate-400 text-xs">kg</span>
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-800">
+                      <span className="font-black text-emerald-700">{currentWeight}</span>{' '}
+                      <span className="text-slate-400 text-xs font-normal">kg</span>
+                      {weightGain !== 0 && (
+                        <span className={`ml-1.5 text-[10px] font-extrabold px-1.5 py-0.5 rounded-md inline-block ${
+                          weightGain > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' : 'bg-rose-50 text-rose-700 border border-rose-200/80'
+                        }`}>
+                          {weightGain > 0 ? `+${weightGain}` : weightGain} kg
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-800 font-semibold">
+                      {cow.totalPrice > 0 ? `៛ ${cow.totalPrice.toLocaleString()}` : 'N/A'}
+                    </td>
                   <td className="py-3.5 px-5">
                     <span className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide border flex items-center gap-1.5 w-max ${
                       cow.healthStatus.toLowerCase().trim() === 'good'
@@ -395,8 +435,9 @@ export default function InventoryTable({
                     </div>
                   </td>
                 </tr>
-              ))
-            ) : (
+              );
+            })
+          ) : (
               <tr>
                 <td colSpan={9} className="py-8 text-center text-slate-400 font-semibold">
                   No stock items match the active filters.

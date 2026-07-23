@@ -65,6 +65,9 @@ export default function CowDetails({
     }
   ];
 
+  const initialWeight = history.length > 0 ? history[0].weight : cow.weight;
+  const currentWeight = history.length > 0 ? history[history.length - 1].weight : cow.weight;
+
   // Filter sales details
   const sale = salesTracking.find(s => s.cowId === cowId);
 
@@ -147,12 +150,22 @@ export default function CowDetails({
               </h4>
               <div className="bg-slate-50/80 border border-slate-200/60 p-4 rounded-2xl space-y-3.5 shadow-xs">
                 <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0">
+                    <Scale className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">Initial Weight</p>
+                    <p className="text-sm font-black text-slate-900">{initialWeight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
                     <Scale className="h-4.5 w-4.5" />
                   </div>
                   <div>
                     <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">Current Weight</p>
-                    <p className="text-sm font-black text-slate-900">{cow.weight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
+                    <p className="text-sm font-black text-emerald-700">{currentWeight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                   </div>
                 </div>
 
