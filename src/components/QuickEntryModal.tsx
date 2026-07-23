@@ -222,12 +222,19 @@ export default function QuickEntryModal({
     }
   });
 
-  // Auto-set location whenever modal opens for farm owners
+  const isAdminUser = Boolean(
+    currentUser?.role === 'Super Admin' || 
+    currentUser?.role === 'Admin' || 
+    currentUser?.role === 'Company' || 
+    !currentUser?.farmLocation
+  );
+
+  // Auto-set location whenever modal opens for non-admin farm users
   React.useEffect(() => {
-    if (isOpen && currentUser?.farmLocation) {
+    if (isOpen && currentUser?.farmLocation && !isAdminUser) {
       setAddValue('location', currentUser.farmLocation);
     }
-  }, [isOpen, currentUser, setAddValue]);
+  }, [isOpen, currentUser, isAdminUser, setAddValue]);
 
   const buyTypeVal = watchAdd('buyType');
   const weightVal = watchAdd('weight');
@@ -669,28 +676,31 @@ export default function QuickEntryModal({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  {/* Barn / Location — hidden for farm owners (auto-set) */}
-                  {!currentUser?.farmLocation ? (
+                  {/* Barn / Location — editable for Admin/Super Admin, locked for assigned farm users */}
+                  {isAdminUser ? (
                     <div className="space-y-1.5">
-                      <Label htmlFor="location" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Barn / Location (ក្រោលគោ)</Label>
+                      <Label htmlFor="location" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Farm / Location (កសិដ្ឋាន)</Label>
                       <select
                         id="location"
                         {...regAdd('location')}
                         className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-semibold cursor-pointer"
                       >
-                        <option value="">— Select barn —</option>
-                        {common.locations.map(l => (
-                          <option key={l} value={l}>{l}</option>
+                        <option value="">— Select Farm —</option>
+                        {(common.farms && common.farms.length > 0
+                          ? common.farms.map(f => f.name)
+                          : common.locations || []
+                        ).map(farmName => (
+                          <option key={farmName} value={farmName}>{farmName}</option>
                         ))}
                       </select>
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Barn / Location (ក្រោលគោ)</Label>
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Farm / Location (កសិដ្ឋាន)</Label>
                       <div className="flex items-center gap-2 h-9 bg-emerald-50 border border-emerald-200 rounded-xl px-3">
                         <MapPin className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
-                        <span className="text-sm font-bold text-emerald-800 truncate">{currentUser.farmLocation}</span>
-                        <span className="ml-auto text-[9px] font-black text-emerald-600 uppercase tracking-wide">Auto</span>
+                        <span className="text-sm font-bold text-emerald-800 truncate">{currentUser?.farmLocation}</span>
+                        <span className="ml-auto text-[9px] font-black text-emerald-600 uppercase tracking-wide">Assigned Farm</span>
                       </div>
                     </div>
                   )}
