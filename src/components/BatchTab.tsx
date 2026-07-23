@@ -69,9 +69,9 @@ export default function BatchTab({
 
   // Dynamic Feeding Program Form States
   const DEFAULT_INGREDIENTS = [
-    { id: '1', name: 'ចំណីសំរេច (DSR-16 Concentrate)', portionPerHead: '3.5', unitCost: '2000' },
-    { id: '2', name: 'ស្មៅ ឬ ពោត ផ្អាប់ (Silage)', portionPerHead: '15.0', unitCost: '350' },
-    { id: '3', name: 'ចំបើង (Rice Straw / Roughage)', portionPerHead: '2.0', unitCost: '150' },
+    { id: '1', name: 'DSR-16 Concentrate Feed', portionPerHead: '3.5', unitCost: '2000' },
+    { id: '2', name: 'Corn / Grass Silage', portionPerHead: '15.0', unitCost: '350' },
+    { id: '3', name: 'Rice Straw Roughage', portionPerHead: '2.0', unitCost: '150' },
   ];
   const [feedIngredients, setFeedIngredients] = useState<Array<{ id: string; name: string; portionPerHead: string; unitCost: string }>>(DEFAULT_INGREDIENTS);
   const [feedProgFrequency, setFeedProgFrequency] = useState('Twice Daily');
@@ -192,9 +192,9 @@ export default function BatchTab({
     try {
       const defaultFeeding = {
         ingredients: [
-          { name: "ចំណីសំរេច (DSR-16)", portionPerHead: 3.5, unitCost: 2000 },
-          { name: "ស្មៅ ឬ ពោត ផ្អាប់", portionPerHead: 15.0, unitCost: 350 },
-          { name: "ចំបើង", portionPerHead: 2.0, unitCost: 150 }
+          { name: "DSR-16 Concentrate Feed", portionPerHead: 3.5, unitCost: 2000 },
+          { name: "Corn / Grass Silage", portionPerHead: 15.0, unitCost: 350 },
+          { name: "Rice Straw Roughage", portionPerHead: 2.0, unitCost: 150 }
         ],
         frequency: 'Twice Daily',
         startDate: new Date().toISOString().split('T')[0],
@@ -205,7 +205,7 @@ export default function BatchTab({
       const newBatchId = `FAT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`;
       await onCreateBatch({
         id: newBatchId,
-        name: 'Fattening Herd (ហ្វូងគោបំប៉ន)',
+        name: 'Fattening Herd',
         type: 'Fattening Program',
         startDate: new Date().toISOString().split('T')[0],
         status: 'Active',
@@ -283,9 +283,9 @@ export default function BatchTab({
     try {
       const defaultFeeding = {
         ingredients: [
-          { name: "ចំណីសំរេច (DSR-16)", portionPerHead: 3.5, unitCost: 2000 },
-          { name: "ស្មៅ ឬ ពោត ផ្អាប់", portionPerHead: 15.0, unitCost: 350 },
-          { name: "ចំបើង", portionPerHead: 2.0, unitCost: 150 }
+          { name: "DSR-16 Concentrate Feed", portionPerHead: 3.5, unitCost: 2000 },
+          { name: "Corn / Grass Silage", portionPerHead: 15.0, unitCost: 350 },
+          { name: "Rice Straw Roughage", portionPerHead: 2.0, unitCost: 150 }
         ],
         frequency: 'Twice Daily',
         startDate: launchStartDate,
@@ -332,10 +332,10 @@ export default function BatchTab({
     const targetBatch = data.batches.find(b => b.id === batchId);
     setConfirmModal({
       isOpen: true,
-      title: 'លុបក្រុមគោ (Delete Batch)?',
-      description: `តើលោកអ្នកប្រាកដជាចង់លុបក្រុម "${targetBatch?.name || batchId}" ដែរឬទេ? គោនៅក្នុងក្រុមនេះនឹងត្រូវបកត្រឡប់ទៅជាគោទំនេរវិញ។`,
+      title: t('batches.deleteConfirmTitle'),
+      description: t('batches.deleteConfirmDesc'),
       type: 'danger',
-      confirmText: 'លុបក្រុម',
+      confirmText: t('common.delete'),
       onConfirm: async () => {
         try {
           await onDeleteBatch(batchId);
@@ -696,10 +696,10 @@ export default function BatchTab({
             <div>
               <h3 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
                 <TrendingUp className="h-6 w-6 text-emerald-600 animate-pulse" />
-                កម្មវិធីបំប៉នគោសាច់ (Fattening Management)
+                {t('batches.title')}
               </h3>
               <p className="text-[11px] text-slate-400 font-semibold">
-                Manage rations, weights, and average daily gain (ADG) for the entire fattening herd.
+                {t('batches.subtitle')}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -914,7 +914,7 @@ export default function BatchTab({
                   <div>
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-black uppercase tracking-widest text-slate-800">
-                        បន្ថែមគោចូលកម្មវិធីបំប៉ន (Add to Fattening)
+                        {t('batches.addCattleToBatch')}
                       </h4>
                       <span className="text-[10px] font-black text-emerald-650 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                         {selectedCowIds.length} Selected

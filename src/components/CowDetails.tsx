@@ -6,6 +6,7 @@ import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
 import { HealthLogItem } from '@/lib/types';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { User, MapPin, Phone, Scale, Activity, DollarSign, TrendingUp } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface CowDetailsProps {
   cowId: string | null;
@@ -30,6 +31,7 @@ export default function CowDetails({
   salesTracking,
   healthLogs
 }: CowDetailsProps) {
+  const { t } = useLanguage();
   const [currentImg, setCurrentImg] = useState<string>(REALISTIC_CATTLE_FALLBACK);
 
   const cow = stock.find(c => c.id?.trim().toLowerCase() === cowId?.trim().toLowerCase());
@@ -154,7 +156,7 @@ export default function CowDetails({
                     <Scale className="h-4.5 w-4.5" />
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">Initial Weight</p>
+                    <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">{t('inventory.initialWeight')}</p>
                     <p className="text-sm font-black text-slate-900">{initialWeight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                   </div>
                 </div>
@@ -164,7 +166,7 @@ export default function CowDetails({
                     <Scale className="h-4.5 w-4.5" />
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">Current Weight</p>
+                    <p className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider">{t('inventory.currentWeight')}</p>
                     <p className="text-sm font-black text-emerald-700">{currentWeight} <span className="text-xs text-slate-500 font-bold">kg</span></p>
                   </div>
                 </div>
