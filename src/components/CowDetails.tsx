@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
 import { HealthLogItem } from '@/lib/types';
-import { User, MapPin, Phone, Scale, Activity, DollarSign } from 'lucide-react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { User, MapPin, Phone, Scale, Activity, DollarSign, TrendingUp } from 'lucide-react';
 
 interface CowDetailsProps {
   cowId: string | null;
@@ -37,7 +38,32 @@ export default function CowDetails({
   const cow = stock.find(c => c.id === cowId);
   if (!cow) return null;
 
-  const hasValidImage = Boolean(cow.imageUrl && cow.imageUrl.trim().length > 0 && !imageLoadError);
+  // Realistic fallback image if custom image is missing or errors
+  const fallbackImage = 'https://images.unsplash.com/photo-1546445317-29f4545f9d52?auto=format&fit=crop&w=800&q=80';
+  const displayImage = (!imageLoadError && cow.imageUrl && cow.imageUrl.trim().length > 0)
+    ? cow.imageUrl
+    : fallbackImage;
+
+  // Filter weight records for growth chart
+  const history = weightTracking
+    .filter(w => w.cowId === cowId)
+    .map((w, idx) => ({
+      date: w.trackingDate ? new Date(w.trackingDate).toLocaleDateString() : `Log #${idx + 1}`,
+      weight: w.currentWeight,
+      rawDate: w.trackingDate ? new Date(w.trackingDate).getTime() : 0,
+      health: w.healthStatus
+    }))
+    .sort((a, b) => a.rawDate - b.rawDate);
+
+  // If no weight tracking records exist yet, create a baseline point from initial weight
+  const chartData = history.length > 0 ? history : [
+    {
+      date: cow.purchaseDate ? new Date(cow.purchaseDate).toLocaleDateString() : 'Initial',
+      weight: cow.weight,
+      rawDate: 0,
+      health: cow.healthStatus
+    }
+  ];
 
   // Filter sales details
   const sale = salesTracking.find(s => s.cowId === cowId);
@@ -103,17 +129,15 @@ export default function CowDetails({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
           {/* Left Column: Image & Biological Profile */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Display Uploaded Image cleanly if valid */}
-            {hasValidImage && (
-              <div className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-md bg-slate-900 group">
-                <img
-                  src={cow.imageUrl!}
-                  alt={`Cattle ${cow.id}`}
-                  onError={() => setImageLoadError(true)}
-                  className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-            )}
+            {/* Display Cattle Photo */}
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-md bg-slate-100 group">
+              <img
+                src={displayImage}
+                alt={`Cattle ${cow.id}`}
+                onError={() => setImageLoadError(true)}
+                className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
 
             {/* Biological Profile */}
             <div>
@@ -175,7 +199,7 @@ export default function CowDetails({
             </div>
           </div>
 
-          {/* Right Column: Financial Ledger & Feeding Program */}
+          {/* Right Column: Financial Ledger, Weight Chart & Nutrition */}
           <div className="lg:col-span-2 space-y-6">
             {/* Financial Ledger P&L */}
             <div>
@@ -207,6 +231,36 @@ export default function CowDetails({
                     {cow.status === 'Sold' ? 'Realized P&L' : 'Unrealized asset'}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Herd Weight Growth Chart */}
+            <div>
+              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-600" />
+                Herd Weight Growth Chart
+              </h4>
+              <div className="h-[200px] bg-slate-50/80 border border-slate-200/60 rounded-2xl p-4 shadow-inner">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                      labelStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+                      itemStyle={{ color: '#059669', fontSize: '13px', fontWeight: 'bold' }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="weight"
+                      stroke="#10b981"
+                      strokeWidth={2.5}
+                      activeDot={{ r: 6 }}
+                      name="Weight (kg)"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
