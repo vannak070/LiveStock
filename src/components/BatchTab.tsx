@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ERPLivestockData, BatchItem, HealthLogItem } from '@/lib/types';
+import { ERPLivestockData, BatchItem, HealthLogItem, FarmItem } from '@/lib/types';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -12,6 +12,7 @@ import { ConfirmModal } from './ui/confirm-modal';
 import { BatchModal } from './features/batch/BatchModal';
 import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
+import FarmFilterBar from './FarmFilterBar';
 
 interface BatchTabProps {
   data: ERPLivestockData;
@@ -23,6 +24,7 @@ interface BatchTabProps {
   onRecordBatchHealthLog?: (batchId: string, log: Omit<HealthLogItem, 'id' | 'cowId'>) => Promise<void>;
   onDeleteBatch?: (batchId: string) => Promise<void>;
   currentUser?: any;
+  farms?: FarmItem[];
 }
 
 export default function BatchTab({
@@ -33,19 +35,52 @@ export default function BatchTab({
   onUpdateBatch,
   onRecordBatchWeights,
   onDeleteBatch,
-  currentUser
+  currentUser,
+  farms = []
 }: BatchTabProps) {
   const [selectedBatchId, setSelectedBatchId] = useState<string>('');
+  const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
   const [isCreateBatchModalOpen, setIsCreateBatchModalOpen] = useState(false);
   const [editingBatch, setEditingBatch] = useState<BatchItem | null>(null);
   const [isAllBatchesOpen, setIsAllBatchesOpen] = useState(false);
 
+  // Scope batches by farm selection or assigned user farm
+  const userFarm = currentUser?.farmLocation;
+  const effectiveFarm = userFarm || selectedFarm;
+
+  const visibleBatches = React.useMemo(() => {
+    if (effectiveFarm) {
+      return data.batches.filter(b => 
+        b.farmLocation === effectiveFarm || 
+        data.stock.some(s => s.location === effectiveFarm && b.cowIds?.includes(s.id))
+      );
+    }
+    return data.batches;
+  }, [data.batches, data.stock, effectiveFarm]);
+
+  // Count batches per farm for FarmFilterBar
+  const countByFarm = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    data.batches.forEach(b => {
+      if (b.farmLocation) {
+        map[b.farmLocation] = (map[b.farmLocation] || 0) + 1;
+      } else {
+        // If farmLocation isn't directly on batch, check member cow locations
+        const memberCow = data.stock.find(s => b.cowIds?.includes(s.id) && s.location);
+        if (memberCow?.location) {
+          map[memberCow.location] = (map[memberCow.location] || 0) + 1;
+        }
+      }
+    });
+    return map;
+  }, [data.batches, data.stock]);
+
   // Active or selected batch lookup
-  const activeBatches = data.batches.filter(b => b.status === 'Active');
-  const defaultBatch = data.batches.find(b => b.id === selectedBatchId)
-    || data.batches.find(b => b.status === 'Active' && (b.type === 'Fattening Program' || b.type.includes('Fattening')))
+  const activeBatches = visibleBatches.filter(b => b.status === 'Active');
+  const defaultBatch = visibleBatches.find(b => b.id === selectedBatchId)
+    || visibleBatches.find(b => b.status === 'Active' && (b.type === 'Fattening Program' || b.type.includes('Fattening')))
     || activeBatches[0]
-    || data.batches[0];
+    || visibleBatches[0];
 
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -703,13 +738,13 @@ export default function BatchTab({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              {data.batches.length > 0 && (
+              {visibleBatches.length > 0 && (
                 <select
                   value={defaultBatch?.id || ''}
                   onChange={e => setSelectedBatchId(e.target.value)}
                   className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-800 shadow-xs focus:outline-none cursor-pointer"
                 >
-                  {data.batches.map(b => (
+                  {visibleBatches.map(b => (
                     <option key={b.id} value={b.id}>
                       {b.name} ({b.id}) - {b.status}
                     </option>
@@ -771,6 +806,17 @@ export default function BatchTab({
               )}
             </div>
           </div>
+
+          {/* Farm Filter Bar */}
+          <FarmFilterBar
+            farms={farms}
+            selectedFarm={selectedFarm}
+            onFarmChange={setSelectedFarm}
+            countByFarm={countByFarm}
+            totalCount={data.batches.length}
+            label="batches"
+            currentUser={currentUser}
+          />
 
           {/* KPI Dashboard Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-left">

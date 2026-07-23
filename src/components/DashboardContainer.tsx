@@ -622,6 +622,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
             await deleteBatchMutation.mutateAsync(batchId);
           }}
           currentUser={currentUser}
+          farms={dbData.settings?.farms ?? []}
         />
       )}
 
