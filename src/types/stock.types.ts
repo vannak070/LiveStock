@@ -17,6 +17,7 @@ export interface StockItem {
   remark: string;
   purchaseType?: string;
   paymentMethod?: string;
+  imageUrl?: string;
 }
 
 export interface WeightRecord {

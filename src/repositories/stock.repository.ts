@@ -29,7 +29,8 @@ export class StockRepository {
       purchaseDate: row.purchase_date ? new Date(String(row.purchase_date)).toISOString() : null,
       remark: String(row.remark || ''),
       purchaseType: String(row.purchase_type || ''),
-      paymentMethod: String(row.payment_method || '')
+      paymentMethod: String(row.payment_method || ''),
+      imageUrl: row.image_url ? String(row.image_url) : undefined
     };
   }
 
@@ -60,8 +61,8 @@ export class StockRepository {
     const sql = `
       INSERT INTO stock (
         id, no, breed, sex, age, weight, owner_name, location, phone, buy_type,
-        unit_price, total_price, health_status, status, purchase_date, remark, purchase_type, payment_method
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        unit_price, total_price, health_status, status, purchase_date, remark, purchase_type, payment_method, image_url
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *
     `;
 
@@ -83,7 +84,8 @@ export class StockRepository {
       item.purchaseDate ? new Date(item.purchaseDate) : null,
       item.remark || '',
       item.purchaseType || '',
-      item.paymentMethod || ''
+      item.paymentMethod || '',
+      item.imageUrl || null
     ];
 
     const res = await this.executeQuery(sql, params, client);
@@ -111,6 +113,7 @@ export class StockRepository {
     if (updates.remark !== undefined) { fields.push(`remark = $${paramIndex++}`); params.push(updates.remark); }
     if (updates.purchaseType !== undefined) { fields.push(`purchase_type = $${paramIndex++}`); params.push(updates.purchaseType); }
     if (updates.paymentMethod !== undefined) { fields.push(`payment_method = $${paramIndex++}`); params.push(updates.paymentMethod); }
+    if (updates.imageUrl !== undefined) { fields.push(`image_url = $${paramIndex++}`); params.push(updates.imageUrl); }
 
     if (fields.length === 0) {
       const existing = await this.findById(id);

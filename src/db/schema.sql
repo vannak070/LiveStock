@@ -51,6 +51,7 @@ CREATE TABLE stock (
     remark TEXT,
     purchase_type VARCHAR(50),
     payment_method VARCHAR(50),
+    image_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
