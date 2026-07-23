@@ -112,7 +112,7 @@ export default function QuickEntryModal({
   const [saleCowId, setSaleCowId] = useState('');
   const [saleBatchId, setSaleBatchId] = useState('');
   const [saleType, setSaleType] = useState<'Weight' | 'Lumpsum'>('Weight');
-  const [saleUnitPrice, setSaleUnitPrice] = useState('9700');
+  const [saleUnitPrice, setSaleUnitPrice] = useState('');
   const [saleWeight, setSaleWeight] = useState('250');
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
@@ -353,6 +353,8 @@ export default function QuickEntryModal({
         onConfirm: () => {
           setSaleCowId('');
           setSaleBatchId('');
+          setSaleUnitPrice('');
+          setSaleBuyer('');
           onClose();
         }
       });
@@ -1079,6 +1081,7 @@ export default function QuickEntryModal({
                         type="number"
                         required
                         min={1}
+                        placeholder="e.g. 12000"
                         value={saleUnitPrice}
                         onChange={e => setSaleUnitPrice(e.target.value)}
                         className="text-slate-800 pl-8 font-mono font-bold"
@@ -1096,6 +1099,7 @@ export default function QuickEntryModal({
                       type="number"
                       required
                       min={1}
+                      placeholder="e.g. 3500000"
                       value={saleUnitPrice}
                       onChange={e => setSaleUnitPrice(e.target.value)}
                       className="text-slate-800 pl-8 font-mono font-bold"
