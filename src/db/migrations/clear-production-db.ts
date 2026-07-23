@@ -1,7 +1,9 @@
+import fs from 'fs';
+import path from 'path';
 import { pool, connectWithRetry } from '../../config/database';
 
 async function clearProductionDatabase() {
-  console.log("=== 🧹 Clearing Production Database ===");
+  console.log("=== 🧹 Clearing Production Database & JSON DB ===");
 
   await connectWithRetry(5, 1000);
   const client = await pool.connect();
@@ -9,7 +11,7 @@ async function clearProductionDatabase() {
   try {
     await client.query('BEGIN');
 
-    console.log('[Clear DB] Truncating operational data tables...');
+    console.log('[Clear DB] Truncating PostgreSQL operational data tables...');
     await client.query(`
       TRUNCATE TABLE 
         batch_cows,
@@ -22,11 +24,28 @@ async function clearProductionDatabase() {
       RESTART IDENTITY CASCADE;
     `);
 
-    console.log('[Clear DB] Operational data cleared successfully.');
-
     await client.query('COMMIT');
-    console.log('=== ✅ Production Database Reset Completed! ===');
-    console.log('All cattle inventory, weight logs, sales, health logs, batches, and expenses have been cleared.');
+    console.log('[Clear DB] PostgreSQL operational data cleared successfully.');
+
+    const jsonPath = path.resolve(process.cwd(), 'src/data/db.json');
+    if (fs.existsSync(jsonPath)) {
+      try {
+        const raw = fs.readFileSync(jsonPath, 'utf8');
+        const data = JSON.parse(raw);
+        data.stock = [];
+        data.weightTracking = [];
+        data.salesTracking = [];
+        data.batches = [];
+        data.healthLogs = [];
+        data.expenses = [];
+        fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2), 'utf8');
+        console.log('[Clear DB] JSON DB reset successfully.');
+      } catch (e) {
+        console.warn('JSON DB clear notice:', e);
+      }
+    }
+
+    console.log('=== ✅ Production Database & JSON DB Reset Completed! ===');
   } catch (error: unknown) {
     await client.query('ROLLBACK');
     const msg = error instanceof Error ? error.message : String(error);
