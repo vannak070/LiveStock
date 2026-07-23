@@ -71,7 +71,7 @@ export default function CowDetails({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-black tracking-tight text-slate-900">{cow.id}</span>
+                <DialogTitle className="text-2xl font-black tracking-tight text-slate-900">{cow.id}</DialogTitle>
                 <span className={`px-3 py-0.5 rounded-full text-xs font-black uppercase ${
                   cow.status.toLowerCase() === 'active'
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
