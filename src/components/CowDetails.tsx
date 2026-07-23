@@ -4,8 +4,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
 import { HealthLogItem } from '@/lib/types';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { Calendar, User, MapPin, Phone, DollarSign, Scale, Activity, FileText, Heart, ShieldAlert, Zap, Layers, Camera } from 'lucide-react';
+import { User, MapPin, Phone, Scale, Activity } from 'lucide-react';
 
 interface CowDetailsProps {
   cowId: string | null;
@@ -25,48 +24,19 @@ export default function CowDetails({
   stock,
   weightTracking,
   salesTracking,
-  healthLogs,
-  onUpdateCowImage
+  healthLogs
 }: CowDetailsProps) {
   if (!cowId) return null;
 
   const cow = stock.find(c => c.id === cowId);
   if (!cow) return null;
 
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && onUpdateCowImage) {
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size exceeds 5MB limit.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64Url = reader.result as string;
-        await onUpdateCowImage(cow.id, base64Url);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Filter weight records
-  const history = weightTracking
-    .filter(w => w.cowId === cowId)
-    .map((w, idx) => ({
-      date: w.trackingDate ? new Date(w.trackingDate).toLocaleDateString() : `Log #${idx + 1}`,
-      weight: w.currentWeight,
-      rawDate: w.trackingDate ? new Date(w.trackingDate).getTime() : 0,
-      health: w.healthStatus
-    }))
-    .sort((a, b) => a.rawDate - b.rawDate);
-
   // Filter sales details
   const sale = salesTracking.find(s => s.cowId === cowId);
 
   // Filter health/medical logs for this cow
   const cowMedicalLogs = healthLogs
-    .filter(log => log.cowId === cowId)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .filter(log => log.cowId === cowId);
 
   // Dynamic P&L Calculation per Cow
   const purchaseCost = cow.totalPrice || 0;
@@ -84,7 +54,7 @@ export default function CowDetails({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto bg-white border border-slate-100 text-slate-800 rounded-2xl shadow-xl p-6">
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto bg-white border border-slate-100 text-slate-800 rounded-2xl shadow-xl p-6">
         <DialogHeader className="border-b border-slate-100 pb-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
@@ -120,28 +90,16 @@ export default function CowDetails({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-5">
           {/* Column 1: Specs & origin (Left) */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Cattle Photo Module */}
-            <div className="relative group overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm max-h-56 bg-slate-100">
-              <img
-                src={cow.imageUrl || 'https://images.unsplash.com/photo-1546445317-29f4545f9d52?auto=format&fit=crop&w=800&q=80'}
-                alt={`Cattle ${cow.id}`}
-                className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <label
-                htmlFor={`upload_detail_img_${cow.id}`}
-                className="absolute bottom-3 right-3 bg-slate-900/80 hover:bg-slate-900 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 backdrop-blur-xs transition-all opacity-95 hover:scale-105"
-              >
-                <Camera className="h-3.5 w-3.5" />
-                <span>{cow.imageUrl ? '📷 Change Photo' : '📷 Upload Photo'}</span>
-              </label>
-              <input
-                id={`upload_detail_img_${cow.id}`}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageFileChange}
-              />
-            </div>
+            {/* Cattle Photo Module - Only display if custom image exists, keep blank if none */}
+            {cow.imageUrl && (
+              <div className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm max-h-56 bg-slate-100">
+                <img
+                  src={cow.imageUrl}
+                  alt={`Cattle ${cow.id}`}
+                  className="w-full h-56 object-cover"
+                />
+              </div>
+            )}
 
             {/* Spec Card */}
             <div>
@@ -203,7 +161,7 @@ export default function CowDetails({
               </div>
             )}
 
-            {/* Feeding Program Program */}
+            {/* Feeding Program */}
             <div>
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Nutrition Program</h4>
               <div className="bg-emerald-50/20 border border-emerald-100/50 p-4 rounded-2xl space-y-2.5">
@@ -225,7 +183,7 @@ export default function CowDetails({
             </div>
           </div>
 
-          {/* Column 2: Financial Ledger and Weight Charts (Middle) */}
+          {/* Column 2: Financial Ledger (Middle/Right) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Dynamic Profit & Loss module */}
             <div>
@@ -252,70 +210,6 @@ export default function CowDetails({
                     {cow.status === 'Sold' ? 'Realized P&L' : 'Unrealized asset'}
                   </span>
                 </div>
-              </div>
-            </div>
-
-            {/* Weight curve chart */}
-            <div>
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Herd Weight Growth Chart</h4>
-              <div className="h-[200px] bg-slate-50 border border-slate-100 rounded-2xl p-4 shadow-inner">
-                {history.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={history} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px' }}
-                        labelStyle={{ fontSize: '11px', fontWeight: 'bold' }}
-                        itemStyle={{ color: '#059669', fontSize: '13px', fontWeight: 'bold' }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="weight"
-                        stroke="#10b981"
-                        strokeWidth={2.5}
-                        activeDot={{ r: 6 }}
-                        name="Weight (kg)"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-slate-400 text-xs font-semibold">
-                    No weight records found.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Veterinary & Medical Timeline */}
-            <div>
-              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Veterinary Timeline Logs</h4>
-              <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                {cowMedicalLogs.length > 0 ? (
-                  cowMedicalLogs.map((log) => (
-                    <div key={log.id} className="p-3 bg-slate-50/60 border border-slate-100 rounded-xl flex items-start justify-between text-xs">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase ${
-                            log.type === 'Vaccination' ? 'bg-emerald-50 text-emerald-700' :
-                            log.type === 'Disease' ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'
-                          }`}>
-                            {log.type}
-                          </span>
-                          <span className="font-bold text-slate-800">{log.name}</span>
-                        </div>
-                        {log.notes && <p className="text-[10px] text-slate-500 font-semibold mt-1">{log.notes}</p>}
-                        <p className="text-[9px] text-slate-400 font-semibold mt-1">By {log.administeredBy} • {new Date(log.date).toLocaleDateString()}</p>
-                      </div>
-                      <span className="font-mono text-[10px] font-black text-slate-700">៛ {log.cost.toLocaleString()}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-xs text-slate-400 font-semibold bg-slate-50/50 border border-dashed rounded-xl">
-                    No clinical interventions or disease diagnostics logged.
-                  </div>
-                )}
               </div>
             </div>
           </div>
