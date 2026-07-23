@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
 import { HealthLogItem } from '@/lib/types';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { Calendar, User, MapPin, Phone, DollarSign, Scale, Activity, FileText, Heart, ShieldAlert, Zap, Layers } from 'lucide-react';
+import { Calendar, User, MapPin, Phone, DollarSign, Scale, Activity, FileText, Heart, ShieldAlert, Zap, Layers, Camera } from 'lucide-react';
 
 interface CowDetailsProps {
   cowId: string | null;
@@ -15,6 +15,7 @@ interface CowDetailsProps {
   weightTracking: WeightRecord[];
   salesTracking: SalesRecord[];
   healthLogs: HealthLogItem[];
+  onUpdateCowImage?: (cowId: string, imageUrl: string) => Promise<void>;
 }
 
 export default function CowDetails({
@@ -24,12 +25,29 @@ export default function CowDetails({
   stock,
   weightTracking,
   salesTracking,
-  healthLogs
+  healthLogs,
+  onUpdateCowImage
 }: CowDetailsProps) {
   if (!cowId) return null;
 
   const cow = stock.find(c => c.id === cowId);
   if (!cow) return null;
+
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onUpdateCowImage) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size exceeds 5MB limit.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Url = reader.result as string;
+        await onUpdateCowImage(cow.id, base64Url);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Filter weight records
   const history = weightTracking
@@ -102,12 +120,28 @@ export default function CowDetails({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-5">
           {/* Column 1: Specs & origin (Left) */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Cattle Image - Display if present, keep blank if none */}
-            {cow.imageUrl && (
-              <div className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm max-h-52">
-                <img src={cow.imageUrl} alt={`Cattle ${cow.id}`} className="w-full h-52 object-cover" />
-              </div>
-            )}
+            {/* Cattle Photo Module */}
+            <div className="relative group overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm max-h-56 bg-slate-100">
+              <img
+                src={cow.imageUrl || 'https://images.unsplash.com/photo-1546445317-29f4545f9d52?auto=format&fit=crop&w=800&q=80'}
+                alt={`Cattle ${cow.id}`}
+                className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <label
+                htmlFor={`upload_detail_img_${cow.id}`}
+                className="absolute bottom-3 right-3 bg-slate-900/80 hover:bg-slate-900 text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 backdrop-blur-xs transition-all opacity-95 hover:scale-105"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                <span>{cow.imageUrl ? '📷 Change Photo' : '📷 Upload Photo'}</span>
+              </label>
+              <input
+                id={`upload_detail_img_${cow.id}`}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageFileChange}
+              />
+            </div>
 
             {/* Spec Card */}
             <div>

@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getLivestockDataAction, 
   addStockItemAction, 
+  updateStockItemAction,
   addWeightRecordAction, 
   recordSaleAction, 
   recordBatchSaleAction, 
@@ -727,6 +728,10 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
         weightTracking={dbData.weightTracking}
         salesTracking={dbData.salesTracking}
         healthLogs={dbData.healthLogs}
+        onUpdateCowImage={async (cowId, imageUrl) => {
+          await updateStockItemAction(cowId, { imageUrl });
+          queryClient.invalidateQueries({ queryKey: ['livestock'] });
+        }}
       />
 
       {/* Quick Entry / Action Modal */}
