@@ -29,17 +29,31 @@ import {
 
 // Zod validation schemas
 const newCowSchema = z.object({
-  id: z.string().min(2, "ID must be at least 2 characters").regex(/^[A-Z0-9-]+$/, "ID must contain letters, numbers, hyphens only"),
+  id: z.string()
+    .min(1, "Cattle Tag ID is required")
+    .refine((val) => {
+      const trimmed = val.trim();
+      return trimmed !== 'CC-' && trimmed !== 'CC' && trimmed.length > 3;
+    }, "Cattle Tag ID is required. Must input tag ID after CC- (e.g. CC-001)"),
   breed: z.string().min(1, "Breed is required"),
   sex: z.string().min(1, "Sex is required"),
   age: z.string().min(1, "Age is required"),
-  weight: z.coerce.number().positive("Weight must be positive"),
+  weight: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null ? undefined : Number(val)),
+    z.number().positive("Initial weight must be positive")
+  ),
   ownerName: z.string().optional().default(''),
   location: z.string().optional().default(''),
   phone: z.string().optional().default('N/A'),
   buyType: z.string().min(1, "Buy Type is required"),
-  unitPrice: z.coerce.number().nonnegative("Unit price must be non-negative"),
-  totalPrice: z.coerce.number().nonnegative("Total price must be non-negative"),
+  unitPrice: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null ? 0 : Number(val)),
+    z.number().nonnegative("Unit price must be non-negative")
+  ),
+  totalPrice: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null ? 0 : Number(val)),
+    z.number().nonnegative("Total price must be non-negative")
+  ),
   healthStatus: z.string().min(1, "Health status is required"),
   purchaseDate: z.string().min(1, "Purchase date is required"),
   remark: z.string(),
@@ -176,13 +190,13 @@ export default function QuickEntryModal({
       breed: common.breeds[0] || 'គោទន្លេ',
       sex: 'F',
       age: 'N/A',
-      weight: 250,
+      weight: '' as any,
       ownerName: '',
       location: currentUser?.farmLocation || '',
       phone: 'N/A',
       buyType: 'Lumsum',
-      unitPrice: 2628500,
-      totalPrice: 2628500,
+      unitPrice: '' as any,
+      totalPrice: '' as any,
       healthStatus: 'Good',
       purchaseDate: new Date().toISOString().split('T')[0],
       remark: '',
@@ -203,6 +217,11 @@ export default function QuickEntryModal({
   const unitPriceVal = watchAdd('unitPrice');
 
   React.useEffect(() => {
+    const rawPrice = unitPriceVal as unknown as string | number;
+    if (rawPrice === '' || rawPrice === undefined || rawPrice === null) {
+      setAddValue('totalPrice', '' as any);
+      return;
+    }
     const wt = Number(weightVal) || 0;
     const price = Number(unitPriceVal) || 0;
     if (buyTypeVal === 'Weight') {
@@ -241,9 +260,20 @@ export default function QuickEntryModal({
   }, [purchaseTypeVal, setAddValue, common.paymentMethods]);
 
   const handleNextToStep2 = async () => {
+    const enteredId = (watchAdd('id') || '').trim();
+    if (!enteredId || enteredId.toUpperCase() === 'CC-' || enteredId.toUpperCase() === 'CC' || enteredId.length <= 3) {
+      setErrorAdd('id', { type: 'manual', message: 'Cattle Tag ID is required. Must input tag ID after CC- (e.g. CC-001).' });
+      return;
+    }
+
+    const rawWeight = watchAdd('weight') as unknown as string | number;
+    if (rawWeight === undefined || rawWeight === null || rawWeight === '' || Number(rawWeight) <= 0) {
+      setErrorAdd('weight', { type: 'manual', message: 'Initial weight is required. Please enter weight in kg.' });
+      return;
+    }
+
     const isValid = await triggerAdd(['id', 'breed', 'sex', 'age', 'weight', 'purchaseDate']);
     if (isValid) {
-      const enteredId = watchAdd('id');
       const idExists = activeCows.some(c => c.id.toLowerCase() === enteredId.toLowerCase());
       if (idExists) {
         setErrorAdd('id', { type: 'manual', message: 'This Cattle ID is already registered and active.' });
@@ -545,7 +575,7 @@ export default function QuickEntryModal({
                   <div className="space-y-1.5">
                     <Label htmlFor="weight" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Initial Weight (ទម្ងន់ដើម)</Label>
                     <div className="relative">
-                      <Input id="weight" type="number" {...regAdd('weight')} className="rounded-xl pr-10 font-mono font-bold" />
+                      <Input id="weight" type="number" placeholder="e.g. 250" {...regAdd('weight')} className="rounded-xl pr-10 font-mono font-bold" />
                       <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">kg</span>
                     </div>
                     {errorsAdd.weight && <p className="text-red-500 text-xs font-semibold">{errorsAdd.weight.message}</p>}
@@ -673,7 +703,7 @@ export default function QuickEntryModal({
                         </Label>
                         <div className="relative">
                           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-600 text-xs font-extrabold">៛</span>
-                          <Input id="unitPrice" type="number" {...regAdd('unitPrice')} className="rounded-xl pl-8 font-mono font-bold" />
+                          <Input id="unitPrice" type="number" placeholder="e.g. 12000" {...regAdd('unitPrice')} className="rounded-xl pl-8 font-mono font-bold" />
                         </div>
                       </div>
                     </div>
@@ -685,7 +715,7 @@ export default function QuickEntryModal({
                       </Label>
                       <div className="relative">
                         <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-700 text-xs font-extrabold">៛</span>
-                        <Input id="totalPrice" type="number" {...regAdd('totalPrice')} className="rounded-xl pl-8 font-mono text-emerald-700 font-black bg-emerald-50/40 border border-emerald-100 shadow-inner" readOnly />
+                        <Input id="totalPrice" type="number" placeholder="Total valuation in ៛..." {...regAdd('totalPrice')} className="rounded-xl pl-8 font-mono text-emerald-700 font-black bg-emerald-50/40 border border-emerald-100 shadow-inner" readOnly />
                       </div>
                     </div>
                   </div>

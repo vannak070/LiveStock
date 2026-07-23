@@ -239,6 +239,9 @@ export default function InventoryTable({
                 COW ID <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
               <th className="py-4 px-5">
+                FARM <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+              </th>
+              <th className="py-4 px-5">
                 BREED <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
               <th className="py-4 px-5">
@@ -260,6 +263,11 @@ export default function InventoryTable({
               paginatedStock.map((cow, index) => (
                 <tr key={cow.id} className="hover:bg-slate-50/40 transition-colors">
                   <td className="py-3.5 px-5 font-bold text-slate-900">{cow.id}</td>
+                  <td className="py-3.5 px-5 text-slate-800 font-semibold">
+                    <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2 py-0.5 rounded-lg text-xs font-extrabold text-slate-700">
+                      📍 {cow.location || 'SNR Farm'}
+                    </span>
+                  </td>
                   <td className="py-3.5 px-5 text-slate-800">{cow.breed}</td>
                   <td className="py-3.5 px-5">
                     <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold border ${

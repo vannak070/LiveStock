@@ -102,6 +102,13 @@ export default function CowDetails({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-5">
           {/* Column 1: Specs & origin (Left) */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Cattle Image - Display if present, keep blank if none */}
+            {cow.imageUrl && (
+              <div className="overflow-hidden rounded-2xl border border-slate-200/80 shadow-sm max-h-52">
+                <img src={cow.imageUrl} alt={`Cattle ${cow.id}`} className="w-full h-52 object-cover" />
+              </div>
+            )}
+
             {/* Spec Card */}
             <div>
               <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Biological Profile</h4>
