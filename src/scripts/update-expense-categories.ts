@@ -4,17 +4,15 @@ import { pool } from '../config/database';
 import { MasterSetup } from '../lib/types';
 
 const targetCategories = [
-  "គោសំបក",
-  "ចំណី",
-  "ពោត",
-  "ចំបើង",
-  "វ៉ាក់សាំង និងថ្នាំ",
-  "ប្រាក់ខែ",
-  "ទឹក-ភ្លើង",
-  "ទ្រព្យសកម្ម",
-  "ផ្សេងៗ",
-  "ការប្រាក់ធនាគារ",
-  "ដើមទុនធនាគារ"
+  "Bank interest",
+  "forage",
+  "Straw",
+  "Water-Fire",
+  "Asset",
+  "Salary",
+  "Other",
+  "Corn / grass",
+  "Vaccines and medicines"
 ];
 
 async function updateExpenseCategories() {

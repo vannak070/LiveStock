@@ -48,7 +48,7 @@ export class SettingsRepository {
         healthStatuses: ['Good', 'Fair', 'Poor', 'Dead'],
         vaccineTypes: ['Foot and Mouth', 'Brucellosis', 'Anthrax', 'Dewormer A', 'Vitamin Boost'],
         feedTypes: ['Silage', 'Concentrate Feed', 'Fresh Grass', 'Hay Mix'],
-        expenseCategories: ['Feed', 'Medicine', 'Maintenance', 'Labor', 'Utilities', 'Other'],
+        expenseCategories: ['Bank interest', 'forage', 'Straw', 'Water-Fire', 'Asset', 'Salary', 'Other', 'Corn / grass', 'Vaccines and medicines'],
         paymentMethods: ['ABA Pay', 'Cash', 'Bank Transfer'],
         sexes: ['Male', 'Female'],
         diseaseTypes: ['Foot and Mouth Disease (FMD)', 'Brucellosis', 'Anthrax', 'Pneumonia', 'Parasite Infection'],

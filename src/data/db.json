@@ -1991,34 +1991,259 @@
   "healthLogs": [],
   "expenses": [],
   "settings": {
+    "farms": [
+      {
+        "id": "FARM-01",
+        "name": "SNR Farm",
+        "notes": "ទីតាំងបំប៉នសាច់ និងផលិតចំណី",
+        "address": "រទាំង, ព្រែកព្នៅ, ភ្នំពេញ",
+        "ownerId": "4",
+        "capacity": 100,
+        "ownerName": "Vannak",
+        "ownerEmail": "hello@gmail.com",
+        "ownerPassword": "123456789"
+      },
+      {
+        "id": "FARM-03",
+        "name": "Test",
+        "notes": "ក្រោលផ្ទេរ និងចែកចាយ",
+        "address": "ក្រុងសិរីសោភ័ណ, ខេត្តបន្ទាយមានជ័យ",
+        "capacity": 80,
+        "ownerName": "TEST",
+        "ownerEmail": "hello@gmail.com",
+        "ownerPassword": "123456789"
+      }
+    ],
+    "roles": [
+      {
+        "id": "ROLE-01",
+        "name": "Super Admin",
+        "isSystem": true,
+        "description": "Full system management and security authority.",
+        "permissions": [
+          "dashboard_view",
+          "stock_view",
+          "stock_create",
+          "stock_edit",
+          "stock_delete",
+          "batch_view",
+          "batch_create",
+          "batch_edit",
+          "batch_delete",
+          "weight_view",
+          "weight_record",
+          "weight_delete",
+          "health_view",
+          "health_record",
+          "health_delete",
+          "sales_view",
+          "sales_record",
+          "sales_delete",
+          "expenses_view",
+          "expenses_record",
+          "expenses_delete",
+          "analytics_view",
+          "settings_manage"
+        ]
+      },
+      {
+        "id": "ROLE-04",
+        "name": "Farm Owner",
+        "isSystem": true,
+        "description": "Full operational control and lifecycle management of their specific farm.",
+        "permissions": [
+          "dashboard_view",
+          "stock_view",
+          "stock_create",
+          "stock_edit",
+          "stock_delete",
+          "batch_view",
+          "batch_create",
+          "batch_edit",
+          "batch_delete",
+          "weight_view",
+          "weight_record",
+          "weight_delete",
+          "health_view",
+          "health_record",
+          "health_delete",
+          "sales_view",
+          "sales_record",
+          "sales_delete",
+          "expenses_view",
+          "expenses_record",
+          "expenses_delete",
+          "analytics_view",
+          "settings_manage"
+        ]
+      },
+      {
+        "id": "ROLE-05",
+        "name": "Farm Staff",
+        "isSystem": true,
+        "description": "Records weights, health logs, and tracks daily checklists based on custom permissions.",
+        "permissions": [
+          "dashboard_view",
+          "stock_view",
+          "batch_view",
+          "weight_view",
+          "weight_record",
+          "health_view",
+          "health_record"
+        ]
+      }
+    ],
+    "sexes": [
+      "Male",
+      "Female"
+    ],
+    "users": [
+      {
+        "id": "1",
+        "name": "Vannak Admin",
+        "email": "vannak@snrfarm.com",
+        "role": "Super Admin",
+        "status": "Active",
+        "password": "password123",
+        "permissions": [
+          "dashboard_view",
+          "stock_view",
+          "stock_create",
+          "stock_edit",
+          "stock_delete",
+          "batch_view",
+          "batch_create",
+          "batch_edit",
+          "batch_delete",
+          "weight_view",
+          "weight_record",
+          "weight_delete",
+          "health_view",
+          "health_record",
+          "health_delete",
+          "sales_view",
+          "sales_record",
+          "sales_delete",
+          "expenses_view",
+          "expenses_record",
+          "expenses_delete",
+          "analytics_view",
+          "settings_manage"
+        ]
+      },
+      {
+        "id": "2",
+        "name": "Sokha Manager",
+        "email": "sokha.m@snrfarm.com",
+        "role": "Admin",
+        "status": "Active",
+        "password": "password123",
+        "permissions": [
+          "dashboard_view",
+          "stock_view",
+          "stock_create",
+          "stock_edit",
+          "stock_delete",
+          "batch_view",
+          "batch_create",
+          "batch_edit",
+          "batch_delete",
+          "weight_view",
+          "weight_record",
+          "weight_delete",
+          "health_view",
+          "health_record",
+          "health_delete",
+          "sales_view",
+          "sales_record",
+          "sales_delete",
+          "expenses_view",
+          "expenses_record",
+          "expenses_delete",
+          "analytics_view",
+          "settings_manage"
+        ]
+      },
+      {
+        "id": "USR-9ECGB6ZA5",
+        "name": "Vannak",
+        "email": "hello@gmail.com",
+        "role": "Farm Owner",
+        "status": "Active",
+        "password": "123456789",
+        "permissions": [
+          "dashboard_view",
+          "stock_view",
+          "stock_create",
+          "stock_edit",
+          "stock_delete",
+          "batch_view",
+          "batch_create",
+          "batch_edit",
+          "batch_delete",
+          "weight_view",
+          "weight_record",
+          "weight_delete",
+          "health_view",
+          "health_record",
+          "health_delete",
+          "sales_view",
+          "sales_record",
+          "sales_delete",
+          "expenses_view",
+          "expenses_record",
+          "expenses_delete",
+          "analytics_view",
+          "settings_manage"
+        ],
+        "farmLocation": "SNR Farm"
+      },
+      {
+        "id": "USR-R1OVIYYYN",
+        "name": "TEST",
+        "email": "hello@gmail.com",
+        "role": "Farm Owner",
+        "status": "Active",
+        "password": "123456789",
+        "farmLocation": "Test",
+        "permissions": [
+          "dashboard_view",
+          "stock_view",
+          "stock_create",
+          "stock_edit",
+          "stock_delete",
+          "batch_view",
+          "batch_create",
+          "batch_edit",
+          "batch_delete",
+          "weight_view",
+          "weight_record",
+          "weight_delete",
+          "health_view",
+          "health_record",
+          "health_delete",
+          "sales_view",
+          "sales_record",
+          "sales_delete",
+          "expenses_view",
+          "expenses_record",
+          "expenses_delete",
+          "analytics_view",
+          "settings_manage"
+        ]
+      }
+    ],
     "breeds": [
       "គោទន្លេ",
       "កាត់ Brahman",
       "កាត់ Wagyu"
     ],
-    "locations": [
-      "រទាំង",
-      "ព្រៃវែង",
-      "បន្ទាយមានជ័យ",
-      "ក្រោល A",
-      "ក្រោល B"
-    ],
     "buyTypes": [
       "Lumsum",
-      "Weight"
-    ],
-    "healthStatuses": [
-      "Good",
-      "Fair",
-      "Poor",
-      "Dead"
-    ],
-    "vaccineTypes": [
-      "Foot and Mouth",
-      "Brucellosis",
-      "Anthrax",
-      "Dewormer A",
-      "Vitamin Boost"
+      "Weight",
+      "Born in Farm",
+      "Transfer",
+      "Partnership"
     ],
     "feedTypes": [
       "Silage",
@@ -2026,29 +2251,9 @@
       "Fresh Grass",
       "Hay Mix"
     ],
-    "expenseCategories": [
-      "Feed",
-      "Medicine",
-      "Maintenance",
-      "Labor",
-      "Utilities",
-      "Other"
-    ],
-    "paymentMethods": [
-      "ABA Pay",
-      "Cash",
-      "Bank Transfer"
-    ],
-    "sexes": [
-      "Male",
-      "Female"
-    ],
-    "diseaseTypes": [
-      "Foot and Mouth Disease (FMD)",
-      "Brucellosis",
-      "Anthrax",
-      "Pneumonia",
-      "Parasite Infection"
+    "locations": [
+      "SNR Farm",
+      "Test"
     ],
     "batchTypes": [
       "Fattening Program",
@@ -2059,11 +2264,25 @@
       "kg",
       "lbs"
     ],
+    "diseaseTypes": [
+      "Foot and Mouth Disease (FMD)",
+      "Brucellosis",
+      "Anthrax",
+      "Pneumonia",
+      "Parasite Infection"
+    ],
     "revenueTypes": [
       "Livestock Sale",
       "Manure Sale",
       "Milk Sale",
       "Partnership Share"
+    ],
+    "vaccineTypes": [
+      "Foot and Mouth",
+      "Brucellosis",
+      "Anthrax",
+      "Dewormer A",
+      "Vitamin Boost"
     ],
     "purchaseTypes": [
       "Purchase",
@@ -2071,15 +2290,27 @@
       "Transfer",
       "Partnership"
     ],
-    "users": [
-      {
-        "id": "1",
-        "name": "Vannak Admin",
-        "email": "vannak@snrfarm.com",
-        "role": "Super Admin",
-        "status": "Active",
-        "password": "password123"
-      }
+    "healthStatuses": [
+      "Good",
+      "Fair",
+      "Poor",
+      "Dead"
+    ],
+    "paymentMethods": [
+      "ABA Pay",
+      "Cash",
+      "Bank Transfer"
+    ],
+    "expenseCategories": [
+      "Bank interest",
+      "forage",
+      "Straw",
+      "Water-Fire",
+      "Asset",
+      "Salary",
+      "Other",
+      "Corn / grass",
+      "Vaccines and medicines"
     ]
   }
 }

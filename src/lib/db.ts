@@ -34,7 +34,7 @@ function getJsonDbData(): ERPLivestockData {
   parsed.settings.healthStatuses = parsed.settings.healthStatuses || parsed.common?.healthStatuses || ['Good', 'Fair', 'Poor', 'Dead'];
   parsed.settings.vaccineTypes = parsed.settings.vaccineTypes || ['Foot and Mouth', 'Brucellosis', 'Anthrax', 'Dewormer A', 'Vitamin Boost'];
   parsed.settings.feedTypes = parsed.settings.feedTypes || ['Silage', 'Concentrate Feed', 'Fresh Grass', 'Hay Mix'];
-  parsed.settings.expenseCategories = parsed.settings.expenseCategories || ['Feed', 'Medicine', 'Maintenance', 'Labor', 'Utilities', 'Other'];
+  parsed.settings.expenseCategories = parsed.settings.expenseCategories || ['Bank interest', 'forage', 'Straw', 'Water-Fire', 'Asset', 'Salary', 'Other', 'Corn / grass', 'Vaccines and medicines'];
   parsed.settings.paymentMethods = parsed.settings.paymentMethods || ['ABA Pay', 'Cash', 'Bank Transfer'];
   parsed.settings.sexes = parsed.settings.sexes || ['Male', 'Female'];
   parsed.settings.diseaseTypes = parsed.settings.diseaseTypes || ['Foot and Mouth Disease (FMD)', 'Brucellosis', 'Anthrax', 'Pneumonia', 'Parasite Infection'];
