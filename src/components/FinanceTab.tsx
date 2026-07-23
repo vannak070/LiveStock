@@ -448,6 +448,7 @@ export default function FinanceTab({
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/20 text-[#003B33] font-bold uppercase tracking-wider">
                     <th className="py-3.5 px-4">Cattle ID</th>
+                    <th className="py-3.5 px-4">Sex</th>
                     <th className="py-3.5 px-4">Sales Date</th>
                     <th className="py-3.5 px-4">Breed</th>
                     <th className="py-3.5 px-4">Sales Type</th>
@@ -466,9 +467,22 @@ export default function FinanceTab({
                       .map((sale, idx) => {
                         const deducedSaleType = sale.saleType || (sale.weight <= 2 || sale.totalPrice === sale.unitPrice ? 'Lumpsum' : 'Scale');
                         const deducedBuyer = sale.buyer || 'Local Market';
+                        const matchedCow = data.stock.find(s => s.id === sale.cowId);
+                        const cowSex = matchedCow?.sex || 'N/A';
                         return (
                           <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                             <td className="py-3.5 px-4 font-bold text-slate-800">{sale.cowId}</td>
+                            <td className="py-3.5 px-4">
+                              <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                                cowSex.toLowerCase().startsWith('m') || cowSex === 'Male'
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-100'
+                                  : cowSex.toLowerCase().startsWith('f') || cowSex === 'Female'
+                                  ? 'bg-purple-50 text-purple-700 border border-purple-100'
+                                  : 'bg-slate-100 text-slate-600 border border-slate-200'
+                              }`}>
+                                {cowSex.toLowerCase().startsWith('m') || cowSex === 'Male' ? '♂ Male' : cowSex.toLowerCase().startsWith('f') || cowSex === 'Female' ? '♀ Female' : cowSex}
+                              </span>
+                            </td>
                             <td className="py-3.5 px-4 font-mono text-slate-500">
                               {sale.salesDate ? new Date(sale.salesDate).toLocaleDateString() : 'N/A'}
                             </td>
@@ -552,7 +566,7 @@ export default function FinanceTab({
                       })
                   ) : (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-slate-400 font-semibold">
+                      <td colSpan={10} className="py-8 text-center text-slate-400 font-semibold">
                         No sales revenue records registered.
                       </td>
                     </tr>

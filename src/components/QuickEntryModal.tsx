@@ -23,7 +23,8 @@ import {
   MapPin, 
   Scale, 
   HelpCircle,
-  Clock
+  Clock,
+  Search
 } from 'lucide-react';
 
 // Zod validation schemas
@@ -116,11 +117,34 @@ export default function QuickEntryModal({
   const [saleDate, setSaleDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmittingSale, setIsSubmittingSale] = useState(false);
   const [saleBuyer, setSaleBuyer] = useState('');
+  const [cowSearchQuery, setCowSearchQuery] = useState('');
 
   const selectedBatchObj = activeBatches.find(b => b.id === saleBatchId);
   const cohortCows = selectedBatchObj 
     ? activeCows.filter(c => selectedBatchObj.cowIds.includes(c.id))
     : [];
+
+  const filteredActiveCows = React.useMemo(() => {
+    if (!cowSearchQuery.trim()) return activeCows;
+    const q = cowSearchQuery.toLowerCase().trim();
+    return activeCows.filter(c =>
+      c.id.toLowerCase().includes(q) ||
+      (c.breed && c.breed.toLowerCase().includes(q)) ||
+      (c.sex && c.sex.toLowerCase().includes(q))
+    );
+  }, [activeCows, cowSearchQuery]);
+
+  const filteredCohortCows = React.useMemo(() => {
+    if (!cowSearchQuery.trim()) return cohortCows;
+    const q = cowSearchQuery.toLowerCase().trim();
+    return cohortCows.filter(c =>
+      c.id.toLowerCase().includes(q) ||
+      (c.breed && c.breed.toLowerCase().includes(q)) ||
+      (c.sex && c.sex.toLowerCase().includes(q))
+    );
+  }, [cohortCows, cowSearchQuery]);
+
+  const selectedCowObj = activeCows.find(c => c.id === saleCowId);
 
   // Sync selected cow's weight to saleWeight
   React.useEffect(() => {
@@ -850,23 +874,52 @@ export default function QuickEntryModal({
               </div>
             </div>
 
-            {/* Target Select Dropdown */}
+            {/* Target Select Dropdown with Search & Sex Display */}
             {saleTarget === 'cow' ? (
-              <div className="space-y-1.5">
-                <Label htmlFor="sale_cowId" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Cow ID</Label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="sale_cowId" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Cow (ជ្រើសរើសគោ)</Label>
+                  <span className="text-[10px] text-slate-400 font-semibold">{filteredActiveCows.length} cattle available</span>
+                </div>
+
+                {/* Quick Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5 pointer-events-none" />
+                  <Input
+                    type="text"
+                    placeholder="🔍 Filter by Cattle ID, Breed, or Sex..."
+                    value={cowSearchQuery}
+                    onChange={e => setCowSearchQuery(e.target.value)}
+                    className="pl-8.5 h-8.5 text-xs rounded-xl border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/10"
+                  />
+                  {cowSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCowSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full px-1.5 py-0.5 font-bold"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
                 <select
                   id="sale_cowId"
                   value={saleCowId}
                   onChange={e => setSaleCowId(e.target.value)}
                   required
-                  className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-medium cursor-pointer"
+                  className="flex h-9.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-semibold cursor-pointer"
                 >
-                  <option value="">-- Choose active cow --</option>
-                  {activeCows.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.id} ({c.breed} - {c.weight} kg)
-                    </option>
-                  ))}
+                  <option value="">-- Select Cattle ID ({filteredActiveCows.length} options) --</option>
+                  {filteredActiveCows.map(c => {
+                    const isMale = c.sex?.toLowerCase().startsWith('m') || c.sex === 'Male';
+                    const sexLabel = isMale ? '♂ Male (ឈ្មោល)' : '♀ Female (ញី)';
+                    return (
+                      <option key={c.id} value={c.id}>
+                        {c.id} — {sexLabel} • {c.breed} ({c.weight} kg)
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             ) : (
@@ -878,7 +931,7 @@ export default function QuickEntryModal({
                     value={saleBatchId}
                     onChange={e => setSaleBatchId(e.target.value)}
                     required
-                    className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-medium cursor-pointer"
+                    className="flex h-9.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-semibold cursor-pointer"
                   >
                     <option value="">-- Choose active batch --</option>
                     {activeBatches.map(b => (
@@ -890,24 +943,83 @@ export default function QuickEntryModal({
                 </div>
 
                 {saleBatchId && (
-                  <div className="space-y-1.5 animate-in fade-in duration-200">
+                  <div className="space-y-2 animate-in fade-in duration-200">
                     <Label htmlFor="sale_batch_cowId" className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Cow from Batch</Label>
+                    
+                    {/* Quick Search Input for Batch */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5 pointer-events-none" />
+                      <Input
+                        type="text"
+                        placeholder="🔍 Filter by Cattle ID, Breed, or Sex..."
+                        value={cowSearchQuery}
+                        onChange={e => setCowSearchQuery(e.target.value)}
+                        className="pl-8.5 h-8 text-xs rounded-xl border-slate-200"
+                      />
+                    </div>
+
                     <select
                       id="sale_batch_cowId"
                       value={saleCowId}
                       onChange={e => setSaleCowId(e.target.value)}
                       required
-                      className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-medium cursor-pointer"
+                      className="flex h-9.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-semibold cursor-pointer"
                     >
-                      <option value="">-- Choose cow inside cohort --</option>
-                      {cohortCows.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.id} ({c.breed} - {c.weight} kg)
-                        </option>
-                      ))}
+                      <option value="">-- Choose cow inside cohort ({filteredCohortCows.length}) --</option>
+                      {filteredCohortCows.map(c => {
+                        const isMale = c.sex?.toLowerCase().startsWith('m') || c.sex === 'Male';
+                        const sexLabel = isMale ? '♂ Male (ឈ្មោល)' : '♀ Female (ញី)';
+                        return (
+                          <option key={c.id} value={c.id}>
+                            {c.id} — {sexLabel} • {c.breed} ({c.weight} kg)
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Selected Cattle Details Card showing Sex, Breed, Weight, Location */}
+            {selectedCowObj && (
+              <div className="bg-emerald-50/80 border border-emerald-200/90 rounded-2xl p-3.5 space-y-2 animate-in fade-in duration-200 shadow-sm">
+                <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                      <Tag className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <span className="font-black text-sm text-slate-900">{selectedCowObj.id}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold block">{selectedCowObj.location || 'SNR Farm'}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Sex:</span>
+                    <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider border shadow-sm ${
+                      selectedCowObj.sex?.toLowerCase().startsWith('m') || selectedCowObj.sex === 'Male'
+                        ? 'bg-blue-100 text-blue-800 border-blue-200'
+                        : 'bg-purple-100 text-purple-800 border-purple-200'
+                    }`}>
+                      {selectedCowObj.sex?.toLowerCase().startsWith('m') || selectedCowObj.sex === 'Male' ? '♂ Male (ឈ្មោល)' : '♀ Female (ញី)'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-xs pt-0.5">
+                  <div className="bg-white/90 p-2 rounded-xl border border-emerald-100/80">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Breed (ពូជ)</span>
+                    <span className="font-extrabold text-slate-800 text-xs">{selectedCowObj.breed || 'N/A'}</span>
+                  </div>
+                  <div className="bg-white/90 p-2 rounded-xl border border-emerald-100/80">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Weight (ទម្ងន់)</span>
+                    <span className="font-extrabold text-emerald-700 text-xs font-mono">{selectedCowObj.weight} kg</span>
+                  </div>
+                  <div className="bg-white/90 p-2 rounded-xl border border-emerald-100/80">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Status</span>
+                    <span className="font-extrabold text-slate-800 text-xs">{selectedCowObj.healthStatus || 'Good'}</span>
+                  </div>
+                </div>
               </div>
             )}
 
