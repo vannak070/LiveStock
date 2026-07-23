@@ -65,13 +65,13 @@ export default function BatchTab({
   const [subView, setSubView] = useState<'members' | 'feed' | 'report'>('members');
   const [isScalingOpen, setIsScalingOpen] = useState(false);
 
-  // Feeding Program Form States
-  const [portionDsr16, setPortionDsr16] = useState('3.5');
-  const [costDsr16, setCostDsr16] = useState('2000');
-  const [portionGrass, setPortionGrass] = useState('15.0');
-  const [costGrass, setCostGrass] = useState('350');
-  const [portionStraw, setPortionStraw] = useState('2.0');
-  const [costStraw, setCostStraw] = useState('150');
+  // Dynamic Feeding Program Form States
+  const DEFAULT_INGREDIENTS = [
+    { id: '1', name: 'ចំណីសំរេច (DSR-16 Concentrate)', portionPerHead: '3.5', unitCost: '2000' },
+    { id: '2', name: 'ស្មៅ ឬ ពោត ផ្អាប់ (Silage)', portionPerHead: '15.0', unitCost: '350' },
+    { id: '3', name: 'ចំបើង (Rice Straw / Roughage)', portionPerHead: '2.0', unitCost: '150' },
+  ];
+  const [feedIngredients, setFeedIngredients] = useState<Array<{ id: string; name: string; portionPerHead: string; unitCost: string }>>(DEFAULT_INGREDIENTS);
   const [feedProgFrequency, setFeedProgFrequency] = useState('Twice Daily');
   const [feedProgStartDate, setFeedProgStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [feedProgEndDate, setFeedProgEndDate] = useState('');
@@ -96,34 +96,50 @@ export default function BatchTab({
   // Search/Filters for unallocated cows
   const [searchUnassigned, setSearchUnassigned] = useState('');
   const [breedFilter, setBreedFilter] = useState('');
+  const [filterFarm, setFilterFarm] = useState('');
   const [selectedCowIds, setSelectedCowIds] = useState<string[]>([]);
   const [isInitializingHerd, setIsInitializingHerd] = useState(false);
+
+  // Quick-start launcher form state
+  const [launchName, setLaunchName] = useState('Fattening Program ' + new Date().getFullYear());
+  const [launchBatchId, setLaunchBatchId] = useState(`FAT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`);
+  const [launchFarm, setLaunchFarm] = useState(currentUser?.farmLocation || '');
+  const [launchStartDate, setLaunchStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [launchError, setLaunchError] = useState('');
+  const [launchCowIds, setLaunchCowIds] = useState<string[]>([]);
+  const [launchCowSearch, setLaunchCowSearch] = useState('');
+
+  // Auto-sync launchFarm & filterFarm if currentUser has farmLocation
+  useEffect(() => {
+    if (currentUser?.farmLocation) {
+      setLaunchFarm(currentUser.farmLocation);
+      setFilterFarm(currentUser.farmLocation);
+    }
+  }, [currentUser]);
 
   // Sync feed program states when defaultBatch changes
   useEffect(() => {
     if (defaultBatch?.feedingProgram) {
       const prog = defaultBatch.feedingProgram;
-      const dsr = prog.ingredients?.find(i => i.name.includes('DSR-16'));
-      const grass = prog.ingredients?.find(i => i.name.includes('ស្មៅ') || i.name.includes('ពោត'));
-      const straw = prog.ingredients?.find(i => i.name.includes('ចំបើង'));
-
-      if (dsr) {
-        setPortionDsr16(String(dsr.portionPerHead));
-        setCostDsr16(String(dsr.unitCost));
-      }
-      if (grass) {
-        setPortionGrass(String(grass.portionPerHead));
-        setCostGrass(String(grass.unitCost));
-      }
-      if (straw) {
-        setPortionStraw(String(straw.portionPerHead));
-        setCostStraw(String(straw.unitCost));
+      if (prog.ingredients && prog.ingredients.length > 0) {
+        setFeedIngredients(
+          prog.ingredients.map((ing, idx) => ({
+            id: String(idx + 1) + '-' + Date.now(),
+            name: ing.name,
+            portionPerHead: String(ing.portionPerHead ?? 0),
+            unitCost: String(ing.unitCost ?? 0)
+          }))
+        );
+      } else {
+        setFeedIngredients(DEFAULT_INGREDIENTS);
       }
       setFeedProgFrequency(prog.frequency || 'Twice Daily');
       setFeedProgStartDate(prog.startDate || new Date().toISOString().split('T')[0]);
       setFeedProgEndDate(prog.endDate || '');
       setFeedProgStatus(prog.status || 'Active');
       setFeedProgNote(prog.notes || '');
+    } else {
+      setFeedIngredients(DEFAULT_INGREDIENTS);
     }
   }, [defaultBatch]);
 
@@ -155,7 +171,8 @@ export default function BatchTab({
       cow.breed.toLowerCase().includes(query) ||
       cow.location.toLowerCase().includes(query);
     const matchesBreed = !breedFilter || cow.breed === breedFilter;
-    return matchesSearch && matchesBreed;
+    const matchesFarm = !filterFarm || cow.location === filterFarm;
+    return matchesSearch && matchesBreed && matchesFarm;
   });
 
   const handleSelectAllFiltered = () => {
@@ -191,6 +208,7 @@ export default function BatchTab({
         startDate: new Date().toISOString().split('T')[0],
         status: 'Active',
         notes: 'Unified Active Fattening Program Herd.',
+        farmLocation: currentUser?.farmLocation || undefined,
         feedingProgram: defaultFeeding
       });
 
@@ -251,6 +269,59 @@ export default function BatchTab({
         type: 'danger',
         confirmText: 'Dismiss'
       });
+    }
+  };
+
+  // Quick-start launcher: launches a fattening program with full details
+  const handleLaunchProgram = async () => {
+    setLaunchError('');
+    if (!launchName.trim()) { setLaunchError('Program name is required.'); return; }
+    if (!launchBatchId.trim()) { setLaunchError('Batch code is required.'); return; }
+    setIsInitializingHerd(true);
+    try {
+      const defaultFeeding = {
+        ingredients: [
+          { name: "ចំណីសំរេច (DSR-16)", portionPerHead: 3.5, unitCost: 2000 },
+          { name: "ស្មៅ ឬ ពោត ផ្អាប់", portionPerHead: 15.0, unitCost: 350 },
+          { name: "ចំបើង", portionPerHead: 2.0, unitCost: 150 }
+        ],
+        frequency: 'Twice Daily',
+        startDate: launchStartDate,
+        status: 'Active' as const,
+        notes: 'Default recommended fattening program diet.'
+      };
+      await onCreateBatch({
+        id: launchBatchId.trim(),
+        name: launchName.trim(),
+        type: 'Fattening Program',
+        startDate: launchStartDate,
+        status: 'Active',
+        notes: `Fattening program started on ${new Date(launchStartDate).toLocaleDateString()}.`,
+        farmLocation: launchFarm || currentUser?.farmLocation || undefined,
+        feedingProgram: defaultFeeding
+      });
+      if (launchCowIds.length > 0) {
+        await onAssignCows(launchBatchId.trim(), launchCowIds);
+      }
+      const createdId = launchBatchId.trim();
+      setSelectedBatchId(createdId);
+      setConfirmModal({
+        isOpen: true,
+        title: '🚀 Fattening Program Started!',
+        description: `"${launchName}" has been launched successfully${launchCowIds.length > 0 ? ` with ${launchCowIds.length} cattle enrolled` : ''}. You can now manage feed rations, record weights, and track ADG.`,
+        type: 'success',
+        confirmText: "Let's Go!",
+        onConfirm: () => {
+          setSelectedBatchId(createdId);
+          setLaunchName('Fattening Program ' + new Date().getFullYear());
+          setLaunchBatchId(`FAT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`);
+          setLaunchCowIds([]);
+        }
+      });
+    } catch (err: any) {
+      setLaunchError(err.message || 'Failed to start fattening program. Please try again.');
+    } finally {
+      setIsInitializingHerd(false);
     }
   };
 
@@ -324,18 +395,38 @@ export default function BatchTab({
     });
   };
 
+  // Ingredient management handlers
+  const handleAddIngredient = () => {
+    setFeedIngredients(prev => [
+      ...prev,
+      { id: Date.now().toString(), name: '', portionPerHead: '1.0', unitCost: '500' }
+    ]);
+  };
+
+  const handleRemoveIngredient = (id: string) => {
+    setFeedIngredients(prev => prev.filter(item => item.id !== id));
+  };
+
+  const handleIngredientChange = (id: string, field: 'name' | 'portionPerHead' | 'unitCost', value: string) => {
+    setFeedIngredients(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
   // Submit feeding program updates
   const handleSaveFeeding = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!defaultBatch) return;
     setIsSavingFeedProg(true);
     try {
+      const validIngredients = feedIngredients
+        .filter(item => item.name.trim().length > 0)
+        .map(item => ({
+          name: item.name.trim(),
+          portionPerHead: Number(item.portionPerHead) || 0,
+          unitCost: Number(item.unitCost) || 0
+        }));
+
       const feedingConfig = {
-        ingredients: [
-          { name: "ចំណីសំរេច (DSR-16)", portionPerHead: Number(portionDsr16) || 0, unitCost: Number(costDsr16) || 0 },
-          { name: "ស្មៅ ឬ ពោត ផ្អាប់", portionPerHead: Number(portionGrass) || 0, unitCost: Number(costGrass) || 0 },
-          { name: "ចំបើង", portionPerHead: Number(portionStraw) || 0, unitCost: Number(costStraw) || 0 }
-        ],
+        ingredients: validIngredients,
         frequency: feedProgFrequency,
         startDate: feedProgStartDate,
         endDate: feedProgEndDate || undefined,
@@ -374,47 +465,227 @@ export default function BatchTab({
   const totalBiomass = fatteningCowsInHerd.reduce((sum, c) => sum + c.weight, 0);
   const avgBiomass = fatteningCowsInHerd.length > 0 ? Math.round(totalBiomass / fatteningCowsInHerd.length) : 0;
 
-  // Calculate daily feed cost per head
-  const dsrDailyCost = (Number(portionDsr16) || 0) * (Number(costDsr16) || 0);
-  const grassDailyCost = (Number(portionGrass) || 0) * (Number(costGrass) || 0);
-  const strawDailyCost = (Number(portionStraw) || 0) * (Number(costStraw) || 0);
-  const dailyFeedCostPerHead = dsrDailyCost + grassDailyCost + strawDailyCost;
+  // Calculate daily feed cost per head dynamically
+  const dailyFeedCostPerHead = feedIngredients.reduce((sum, item) => {
+    const portion = Number(item.portionPerHead) || 0;
+    const cost = Number(item.unitCost) || 0;
+    return sum + (portion * cost);
+  }, 0);
   const totalHerdDailyFeedCost = dailyFeedCostPerHead * fatteningCowsInHerd.length;
 
   return (
     <div className="space-y-6">
       {/* Onboarding Welcome Panel if defaultBatch doesn't exist */}
       {!defaultBatch ? (
-        <Card className="max-w-xl mx-auto bg-white border border-slate-100 p-8 rounded-2xl shadow-sm text-center space-y-6">
-          <div className="mx-auto h-16 w-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center">
-            <TrendingUp className="h-8 w-8" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="text-xl font-bold text-slate-900">កម្មវិធីគ្រប់គ្រងការបំប៉នគោ (Fattening Program)</h3>
-            <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-              លោកអ្នកមិនបាច់បំបែកគោជាក្រុមឡើយ! ចាប់ផ្តើមកម្មវិធីបំប៉នសរុបមួយ ដើម្បីគ្រប់គ្រងរបបអាហារ ចំណាយប្រចាំថ្ងៃ ព្រមទាំងតាមដានការកើនទម្ងន់គោដោយផ្ទាល់។
-            </p>
-          </div>
-
-          <div className="bg-slate-50 rounded-xl p-4 text-xs text-slate-500 text-left space-y-2.5 max-w-md mx-auto">
-            <p className="font-bold text-slate-700 flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-emerald-600" /> លក្ខណៈងាយស្រួលសម្រាប់ម្ចាស់កសិដ្ឋាន៖
-            </p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>កំណត់របបចំណីអាហារប្រចាំថ្ងៃសម្រាប់ហ្វូងគោបំប៉នទាំងមូល</li>
-              <li>កត់ទម្ងន់រហ័សដោយស្ទង់យកគោគំរូ ៣ ក្បាល (Sampling Mode)</li>
-              <li>មិនចាំបាច់បង្កើតកូដក្រុម ឬគ្រប់គ្រងកាលបរិច្ឆេទក្រុមនីមួយៗឡើយ</li>
-            </ul>
+        /* ─── Premium Quick-Start Launcher ─── */
+        <div className="max-w-2xl mx-auto space-y-4">
+          {/* Hero Banner */}
+          <div className="bg-gradient-to-br from-[#002D26] to-[#004D3A] rounded-2xl p-6 text-white flex items-start gap-5">
+            <div className="h-14 w-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+              <TrendingUp className="h-7 w-7 text-emerald-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-black tracking-tight">Start a Fattening Program</h3>
+              <p className="text-sm text-emerald-200/80 mt-1 leading-relaxed">
+                Set up your fattening batch, enroll cattle, and activate the feeding schedule — all in one step.
+              </p>
+              <div className="flex flex-wrap gap-3 mt-3">
+                {['🧠 AI Feed Ration', '⚡ Auto ADG Tracking', '📊 Daily Cost Reports'].map(f => (
+                  <span key={f} className="text-[10px] font-bold bg-emerald-500/20 text-emerald-300 px-2.5 py-1 rounded-full">{f}</span>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <Button
-            onClick={handleInitializeHerd}
-            disabled={isInitializingHerd}
-            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-600 font-bold text-white px-8 py-3 rounded-xl shadow-md cursor-pointer transition-transform active:scale-95"
-          >
-            {isInitializingHerd ? 'Starting...' : '🚀 ចាប់ផ្តើមកម្មវិធីបំប៉ន (Start Fattening)'}
-          </Button>
-        </Card>
+          {/* Form Card */}
+          <div className="bg-white border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden">
+            {/* Section: Program Details */}
+            <div className="px-6 pt-5 pb-4 border-b border-slate-100">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">─── Program Details</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Program Name *</label>
+                  <input
+                    type="text"
+                    value={launchName}
+                    onChange={e => setLaunchName(e.target.value)}
+                    placeholder="e.g. Fattening Program 2026"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Batch Code *</label>
+                  <input
+                    type="text"
+                    value={launchBatchId}
+                    onChange={e => setLaunchBatchId(e.target.value)}
+                    placeholder="e.g. FAT-2026-001"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">Start Date *</label>
+                  <input
+                    type="date"
+                    value={launchStartDate}
+                    onChange={e => setLaunchStartDate(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section: Enroll Cattle */}
+            <div className="px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">─── Enroll Cattle (Optional)</p>
+                <div className="flex items-center gap-3">
+                  {launchCowIds.length > 0 && (
+                    <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md">{launchCowIds.length} selected</span>
+                  )}
+                  {launchCowIds.length > 0 && (
+                    <button onClick={() => setLaunchCowIds([])} className="text-[10px] font-bold text-rose-500 hover:text-rose-700 cursor-pointer">✕ Clear</button>
+                  )}
+                </div>
+              </div>
+
+              {/* Filter row for enrolling cattle */}
+              <div className={`grid grid-cols-1 ${!currentUser?.farmLocation ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-2 mb-3`}>
+                {/* Farm / Branch selector — only for Admin / Super Admin (Farm Owners don't need to choose) */}
+                {!currentUser?.farmLocation && (
+                  <select
+                    value={launchFarm}
+                    onChange={e => { setLaunchFarm(e.target.value); setLaunchCowIds([]); }}
+                    className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 cursor-pointer transition-all"
+                  >
+                    <option value="">🏚️ All Farms & Branches</option>
+                    {(data.settings?.farms ?? []).map(f => (
+                      <option key={f.id} value={f.name}>{f.name}</option>
+                    ))}
+                  </select>
+                )}
+
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search ID or breed..."
+                    value={launchCowSearch}
+                    onChange={e => setLaunchCowSearch(e.target.value)}
+                    className="w-full pl-8 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
+                {/* Breed filter */}
+                <select
+                  value={launchCowSearch.startsWith('breed:') ? launchCowSearch.replace('breed:', '') : ''}
+                  onChange={e => setLaunchCowSearch(e.target.value ? `breed:${e.target.value}` : '')}
+                  className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 cursor-pointer transition-all"
+                >
+                  <option value="">🐄 All Breeds</option>
+                  {(data.settings?.breeds ?? []).map(b => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Cattle list */}
+              <div className="max-h-48 overflow-y-auto space-y-1.5 rounded-xl border border-slate-200 bg-slate-50/50 p-2">
+                {(() => {
+                  const breedVal = launchCowSearch.startsWith('breed:') ? launchCowSearch.replace('breed:', '') : '';
+                  const textVal = launchCowSearch.startsWith('breed:') ? '' : launchCowSearch.toLowerCase();
+                  const filtered = activeCows
+                    .filter(c => !launchFarm || c.location === launchFarm)
+                    .filter(c => !breedVal || c.breed === breedVal)
+                    .filter(c => !textVal || c.id.toLowerCase().includes(textVal) || c.breed.toLowerCase().includes(textVal));
+                  if (filtered.length === 0) {
+                    return <p className="text-center text-xs text-slate-400 py-4">No cattle match your filters.</p>;
+                  }
+                  return (
+                    <>
+                      <div className="flex items-center justify-between px-1 pb-1">
+                        <button
+                          type="button"
+                          onClick={() => setLaunchCowIds(prev => Array.from(new Set([...prev, ...filtered.map(c => c.id)])))}
+                          className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+                        >
+                          + Select All ({filtered.length})
+                        </button>
+                      </div>
+                      {filtered.map(cow => {
+                        const checked = launchCowIds.includes(cow.id);
+                        return (
+                          <div
+                            key={cow.id}
+                            onClick={() => setLaunchCowIds(prev => checked ? prev.filter(i => i !== cow.id) : [...prev, cow.id])}
+                            className={`flex items-center justify-between p-2.5 rounded-lg border text-xs cursor-pointer transition-all ${
+                              checked
+                                ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+                                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <div>
+                              <span className="font-black text-slate-800">{cow.id}</span>
+                              <span className="ml-2 text-slate-400">{cow.breed} • {cow.weight} kg</span>
+                              <span className="ml-2 text-[10px] text-slate-400 font-medium">{cow.location}</span>
+                            </div>
+                            {checked && <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />}
+                          </div>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1.5 font-medium">You can also add cattle after the program is created.</p>
+            </div>
+
+            {/* Footer: Error + Launch Button */}
+            <div className="px-6 py-4 bg-slate-50/40">
+              {launchError && (
+                <div className="mb-3 flex items-center gap-2 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5">
+                  <ShieldAlert className="h-4 w-4 text-rose-500 flex-shrink-0" />
+                  <p className="text-xs font-semibold text-rose-700">{launchError}</p>
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-[11px] text-slate-400 font-medium">
+                  {launchCowIds.length > 0 ? `🐄 ${launchCowIds.length} cattle will be enrolled immediately.` : 'No cattle enrolled yet — you can add them later.'}
+                </p>
+                <Button
+                  onClick={handleLaunchProgram}
+                  disabled={isInitializingHerd || !launchName.trim() || !launchBatchId.trim()}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm px-6 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 cursor-pointer active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isInitializingHerd ? (
+                    <><span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Starting...</>
+                  ) : (
+                    <><TrendingUp className="h-4 w-4" /> Launch Fattening Program</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Or: Create a Custom Batch */}
+          {hasPermission(currentUser, 'batch_create') && (
+            <div className="flex items-center gap-3 text-slate-400">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">or</span>
+              <div className="flex-1 h-px bg-slate-200" />
+            </div>
+          )}
+          {hasPermission(currentUser, 'batch_create') && (
+            <button
+              onClick={() => { setEditingBatch(null); setIsCreateBatchModalOpen(true); }}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-400 text-slate-400 hover:text-emerald-600 text-sm font-bold transition-all cursor-pointer group"
+            >
+              <Plus className="h-4 w-4 group-hover:scale-110 transition-transform" />
+              Create Custom Batch (Quarantine, Selling Pool, Breeding...)
+            </button>
+          )}
+        </div>
       ) : (
         /* Main Dashboard Panel */
         <>
@@ -650,22 +921,37 @@ export default function BatchTab({
                     <p className="text-[10px] text-slate-400 mt-0.5">Select unassigned active stock cows to put on fattening</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid grid-cols-1 ${!currentUser?.farmLocation ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-2`}>
+                    {/* Farm / Branch filter — only for Admin / Super Admin */}
+                    {!currentUser?.farmLocation && (
+                      <select
+                        value={filterFarm}
+                        onChange={e => { setFilterFarm(e.target.value); setSelectedCowIds([]); }}
+                        className="h-8 rounded-xl border border-slate-200 bg-white px-2 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                      >
+                        <option value="">🏚️ All Farms</option>
+                        {(data.settings?.farms ?? []).map(f => (
+                          <option key={f.id} value={f.name}>{f.name}</option>
+                        ))}
+                      </select>
+                    )}
+                    {/* Search */}
                     <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                      <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
                       <Input
-                        placeholder="ID/Breed..."
+                        placeholder="Search ID / breed..."
                         value={searchUnassigned}
                         onChange={e => setSearchUnassigned(e.target.value)}
                         className="h-8 text-xs pl-8 placeholder:text-slate-400"
                       />
                     </div>
+                    {/* Breed filter */}
                     <select
                       value={breedFilter}
                       onChange={e => setBreedFilter(e.target.value)}
-                      className="h-8 rounded-md border border-slate-200 bg-white px-2 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                      className="h-8 rounded-xl border border-slate-200 bg-white px-2 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
                     >
-                      <option value="">All Breeds</option>
+                      <option value="">🐄 All Breeds</option>
                       {(data.settings.breeds || []).map(b => (
                         <option key={b} value={b}>{b}</option>
                       ))}
@@ -755,123 +1041,103 @@ export default function BatchTab({
                   </p>
                 </div>
 
-                <form onSubmit={handleSaveFeeding} className="space-y-5">
-                  {/* Ingredient 1: DSR-16 */}
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4.5 space-y-3">
+                <form onSubmit={handleSaveFeeding} className="space-y-4">
+                  {/* Dynamic Ingredients List */}
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-slate-800 flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                        1. ចំណីសំរេច (DSR-16 Concentrate Feed)
-                      </span>
+                      <Label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                        Feed Ingredients List ({feedIngredients.length} Items)
+                      </Label>
+                      <button
+                        type="button"
+                        onClick={handleAddIngredient}
+                        className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> + បន្ថែមមុខចំណី (Add Ingredient)
+                      </button>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <Label htmlFor="portion_dsr" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Portion (kg/head/day)</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          id="portion_dsr"
-                          value={portionDsr16}
-                          onChange={e => setPortionDsr16(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="cost_dsr" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Unit Cost (៛ Riel / kg)</Label>
-                        <Input
-                          type="number"
-                          id="cost_dsr"
-                          value={costDsr16}
-                          onChange={e => setCostDsr16(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
+
+                    {feedIngredients.map((item, idx) => {
+                      const itemPortion = Number(item.portionPerHead) || 0;
+                      const itemCost = Number(item.unitCost) || 0;
+                      const itemDailyCost = itemPortion * itemCost;
+
+                      return (
+                        <div key={item.id} className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 flex-1">
+                              <span className="h-5 w-5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black flex items-center justify-center flex-shrink-0">
+                                {idx + 1}
+                              </span>
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={e => handleIngredientChange(item.id, 'name', e.target.value)}
+                                placeholder="e.g. ចំណីសំរេច, ស្មៅ, គ្រាប់ពោត, ចំបើង..."
+                                className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                              />
+                            </div>
+                            {feedIngredients.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveIngredient(item.id)}
+                                className="text-slate-400 hover:text-rose-500 p-1 rounded transition-colors cursor-pointer"
+                                title="Remove ingredient"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-3 pt-1">
+                            <div>
+                              <Label className="text-[9px] font-bold uppercase text-slate-400">Portion (kg/head/day)</Label>
+                              <Input
+                                type="number"
+                                step="0.1"
+                                value={item.portionPerHead}
+                                onChange={e => handleIngredientChange(item.id, 'portionPerHead', e.target.value)}
+                                className="h-8 text-xs font-semibold mt-0.5"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[9px] font-bold uppercase text-slate-400">Unit Cost (៛ / kg)</Label>
+                              <Input
+                                type="number"
+                                value={item.unitCost}
+                                onChange={e => handleIngredientChange(item.id, 'unitCost', e.target.value)}
+                                className="h-8 text-xs font-semibold mt-0.5"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[9px] font-bold uppercase text-slate-400">Daily Cost / Head</Label>
+                              <div className="h-8 flex items-center px-2.5 bg-white border border-slate-200 rounded-md font-mono text-xs font-bold text-emerald-700 mt-0.5">
+                                ៛ {itemDailyCost.toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
-                  {/* Ingredient 2: Silage */}
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4.5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-slate-800 flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                        2. ស្មៅ ឬ ពោត ផ្អាប់ (Grass / Corn Silage)
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <Label htmlFor="portion_grass" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Portion (kg/head/day)</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          id="portion_grass"
-                          value={portionGrass}
-                          onChange={e => setPortionGrass(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="cost_grass" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Unit Cost (៛ Riel / kg)</Label>
-                        <Input
-                          type="number"
-                          id="cost_grass"
-                          value={costGrass}
-                          onChange={e => setCostGrass(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Ingredient 3: Straw */}
-                  <div className="bg-slate-50 border border-slate-100 rounded-xl p-4.5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-slate-800 flex items-center gap-2">
-                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                        3. ចំបើង (Rice Straw / Hay Roughage)
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <Label htmlFor="portion_straw" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Portion (kg/head/day)</Label>
-                        <Input
-                          type="number"
-                          step="0.1"
-                          id="portion_straw"
-                          value={portionStraw}
-                          onChange={e => setPortionStraw(e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="cost_straw" className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Unit Cost (៛ Riel / kg)</Label>
-                        <Input
-                          type="number"
-                          id="cost_straw"
-                          value={costStraw}
-                          onChange={e => setCostStraw(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1">
                       <Label htmlFor="f_frequency" className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Feeding Frequency</Label>
                       <select
                         id="f_frequency"
                         value={feedProgFrequency}
                         onChange={e => setFeedProgFrequency(e.target.value)}
-                        className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none cursor-pointer font-bold"
+                        className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs text-slate-800 focus:outline-none cursor-pointer font-bold"
                       >
-                        <option value="Once Daily">Once Daily</option>
-                        <option value="Twice Daily">Twice Daily</option>
-                        <option value="Three Times Daily">Three Times Daily</option>
-                        <option value="Ad-Libitum">Ad-Libitum (Free Choice)</option>
+                        <option value="Once Daily">Once Daily (ម្ដងក្នុងមួយថ្ងៃ)</option>
+                        <option value="Twice Daily">Twice Daily (ពីរដងក្នុងមួយថ្ងៃ)</option>
+                        <option value="Three Times Daily">Three Times Daily (បីដងក្នុងមួយថ្ងៃ)</option>
+                        <option value="Ad-Libitum">Ad-Libitum (ដាក់អោយស៊ីសេរី)</option>
                       </select>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="f_start" className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ration Start Date</Label>
                       <Input
                         type="date"
@@ -879,6 +1145,7 @@ export default function BatchTab({
                         value={feedProgStartDate}
                         onChange={e => setFeedProgStartDate(e.target.value)}
                         required
+                        className="h-9 text-xs font-bold"
                       />
                     </div>
                   </div>
@@ -887,7 +1154,7 @@ export default function BatchTab({
                     <Button
                       type="submit"
                       disabled={isSavingFeedProg}
-                      className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl text-xs py-2 px-6 font-bold shadow-md cursor-pointer transition-transform active:scale-95"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs py-2 px-6 font-bold shadow-md cursor-pointer transition-transform active:scale-95"
                     >
                       {isSavingFeedProg ? 'Saving...' : '💾 រក្សាទុករបបអាហារ (Save Ration)'}
                     </Button>
@@ -902,18 +1169,18 @@ export default function BatchTab({
                     គណនាថ្លៃចំណី (Feed Cost Analysis)
                   </h5>
                   <div className="space-y-3.5 text-xs text-slate-650">
-                    <div className="flex justify-between border-b border-slate-50 pb-1.5">
-                      <span>DSR-16 Concentrate Cost</span>
-                      <span className="font-mono font-bold text-slate-800">៛ {dsrDailyCost.toLocaleString()} / head</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-50 pb-1.5">
-                      <span>Silage Roughage Cost</span>
-                      <span className="font-mono font-bold text-slate-800">៛ {grassDailyCost.toLocaleString()} / head</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-50 pb-1.5">
-                      <span>Straw Roughage Cost</span>
-                      <span className="font-mono font-bold text-slate-800">៛ {strawDailyCost.toLocaleString()} / head</span>
-                    </div>
+                    {feedIngredients.map((item) => {
+                      const itemPortion = Number(item.portionPerHead) || 0;
+                      const itemCost = Number(item.unitCost) || 0;
+                      const costPerHead = itemPortion * itemCost;
+                      return (
+                        <div key={item.id} className="flex justify-between border-b border-slate-50 pb-1.5">
+                          <span className="truncate pr-2 font-semibold text-slate-700">{item.name || 'Unnamed Feed'}</span>
+                          <span className="font-mono font-bold text-slate-800 flex-shrink-0">៛ {costPerHead.toLocaleString()} / head</span>
+                        </div>
+                      );
+                    })}
+
                     <div className="flex justify-between font-black text-slate-800 text-sm bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">
                       <span className="text-emerald-800 font-bold">Total / Head / Day</span>
                       <span className="text-emerald-800 font-bold">៛ {dailyFeedCostPerHead.toLocaleString()}</span>
@@ -1429,6 +1696,7 @@ export default function BatchTab({
         unassignedCows={unassignedCows}
         batchTypes={data.settings?.batchTypes}
         initialBatch={editingBatch}
+        currentUser={currentUser}
       />
 
       {/* All Batches Table Modal (Read & Manage All Batches) */}

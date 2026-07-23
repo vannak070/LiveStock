@@ -1,35 +1,62 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { ERPLivestockData } from '@/lib/types';
+import { ERPLivestockData, FarmItem } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, DollarSign, Activity, Scale, ShoppingBag, PieChart as PieChartIcon, Heart, ShieldAlert, Award } from 'lucide-react';
+import FarmFilterBar from './FarmFilterBar';
 
 interface AnalyticsTabProps {
   data: ERPLivestockData;
+  currentUser?: any;
+  farms?: FarmItem[];
 }
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6'];
 
-export default function AnalyticsTab({ data }: AnalyticsTabProps) {
+export default function AnalyticsTab({ data, currentUser, farms = [] }: AnalyticsTabProps) {
   const [subTab, setSubTab] = useState<'overview' | 'demographics' | 'batches' | 'health' | 'financial'>('overview');
+  const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
+
+  // Farm-scoped data — all memos below use this instead of raw `data`
+  const farmScopedData = useMemo(() => {
+    if (!selectedFarm) return data;
+    const scopedStock = data.stock.filter(s => s.location === selectedFarm);
+    const scopedIds = scopedStock.map(s => s.id);
+    return {
+      ...data,
+      stock: scopedStock,
+      batches: data.batches.filter(b => b.farmLocation === selectedFarm || b.cowIds.some(id => scopedIds.includes(id))),
+      weightTracking: data.weightTracking.filter(w => scopedIds.includes(w.cowId)),
+      healthLogs: data.healthLogs.filter(h => scopedIds.includes(h.cowId)),
+      salesTracking: data.salesTracking.filter(s => scopedIds.includes(s.cowId)),
+      expenses: data.expenses.filter(e => e.farmLocation === selectedFarm)
+    };
+  }, [data, selectedFarm]);
+
+  // Count cattle per farm for the filter bar
+  const countByFarm = useMemo(() => {
+    const map: Record<string, number> = {};
+    data.stock.forEach(s => { if (s.location) map[s.location] = (map[s.location] || 0) + 1; });
+    return map;
+  }, [data.stock]);
 
   // Active cattle list
   const activeCows = useMemo(() => {
-    return data.stock.filter(c => c.status.toLowerCase() === 'active');
-  }, [data.stock]);
+    return farmScopedData.stock.filter(c => c.status.toLowerCase() === 'active');
+  }, [farmScopedData.stock]);
 
   // Executive BI KPI Summary Metrics
   const biKpis = useMemo(() => {
     const totalActiveHead = activeCows.length;
     const totalAssetValuation = activeCows.reduce((sum, c) => sum + (c.totalPrice || (c.weight * c.unitPrice) || 0), 0);
-    const totalSalesRevenue = data.salesTracking.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
-    const totalOperatingExpenses = data.expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+    const totalSalesRevenue = farmScopedData.salesTracking.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
+    const totalOperatingExpenses = farmScopedData.expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
     const netProfit = totalSalesRevenue - totalOperatingExpenses;
 
-    const deadCount = data.stock.filter(c => c.healthStatus.toLowerCase() === 'dead' || c.status.toLowerCase() === 'dead').length;
-    const mortalityRate = data.stock.length > 0 ? ((deadCount / data.stock.length) * 100).toFixed(1) : '0';
+    const deadCount = farmScopedData.stock.filter(c => c.healthStatus.toLowerCase() === 'dead' || c.status.toLowerCase() === 'dead').length;
+    const mortalityRate = farmScopedData.stock.length > 0 ? ((deadCount / farmScopedData.stock.length) * 100).toFixed(1) : '0';
 
     return {
       totalActiveHead,
@@ -40,7 +67,7 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
       deadCount,
       mortalityRate
     };
-  }, [activeCows, data.stock, data.salesTracking, data.expenses]);
+  }, [activeCows, farmScopedData.stock, farmScopedData.salesTracking, farmScopedData.expenses]);
 
   // Breed Weight & Valuation Performance
   const breedPerformance = useMemo(() => {
@@ -212,7 +239,7 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
       name: category,
       value: amount
     }));
-  }, [data.expenses]);
+  }, [farmScopedData.expenses]);
 
   return (
     <div className="space-y-6 text-left">
@@ -274,6 +301,17 @@ export default function AnalyticsTab({ data }: AnalyticsTabProps) {
           Financials & Sales BI
         </button>
       </div>
+
+      {/* Farm Filter Bar */}
+      <FarmFilterBar
+        farms={farms}
+        selectedFarm={selectedFarm}
+        onFarmChange={setSelectedFarm}
+        countByFarm={countByFarm}
+        totalCount={data.stock.length}
+        label="cattle"
+        currentUser={currentUser}
+      />
 
       {/* 1. Executive BI Overview */}
       {subTab === 'overview' && (

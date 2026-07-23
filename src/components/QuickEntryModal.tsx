@@ -33,9 +33,9 @@ const newCowSchema = z.object({
   sex: z.string().min(1, "Sex is required"),
   age: z.string().min(1, "Age is required"),
   weight: z.coerce.number().positive("Weight must be positive"),
-  ownerName: z.string().min(1, "Owner name is required"),
-  location: z.string().min(1, "Location is required"),
-  phone: z.string().min(1, "Phone is required"),
+  ownerName: z.string().optional().default(''),
+  location: z.string().optional().default(''),
+  phone: z.string().optional().default('N/A'),
   buyType: z.string().min(1, "Buy Type is required"),
   unitPrice: z.coerce.number().nonnegative("Unit price must be non-negative"),
   totalPrice: z.coerce.number().nonnegative("Total price must be non-negative"),
@@ -67,6 +67,7 @@ interface QuickEntryModalProps {
   activeBatches?: BatchItem[];
   defaultTab?: 'add' | 'weight' | 'sale';
   preselectedCowId?: string | null;
+  currentUser?: any;
   onAddCow: (data: z.infer<typeof newCowSchema>) => Promise<void>;
   onAddWeight: (cowId: string, weight: number, healthStatus: string, date: string) => Promise<void>;
   onRecordSale: (cowId: string, unitPrice: number, saleType: 'Weight' | 'Lumpsum', date: string, buyer?: string) => Promise<void>;
@@ -81,6 +82,7 @@ export default function QuickEntryModal({
   activeBatches = [],
   defaultTab = 'add',
   preselectedCowId = null,
+  currentUser,
   onAddCow,
   onAddWeight,
   onRecordSale,
@@ -146,13 +148,13 @@ export default function QuickEntryModal({
   const { register: regAdd, handleSubmit: handleAddSubmit, setValue: setAddValue, watch: watchAdd, trigger: triggerAdd, setError: setErrorAdd, formState: { errors: errorsAdd }, reset: resetAdd } = useForm<z.infer<typeof newCowSchema>>({
     resolver: zodResolver(newCowSchema) as any,
     defaultValues: {
-      id: '',
+      id: 'CC-',
       breed: common.breeds[0] || 'គោទន្លេ',
       sex: 'F',
       age: 'N/A',
       weight: 250,
       ownerName: '',
-      location: '',
+      location: currentUser?.farmLocation || '',
       phone: 'N/A',
       buyType: 'Lumsum',
       unitPrice: 2628500,
@@ -164,6 +166,13 @@ export default function QuickEntryModal({
       paymentMethod: common.paymentMethods?.[0] || 'ABA Pay',
     }
   });
+
+  // Auto-set location whenever modal opens for farm owners
+  React.useEffect(() => {
+    if (isOpen && currentUser?.farmLocation) {
+      setAddValue('location', currentUser.farmLocation);
+    }
+  }, [isOpen, currentUser, setAddValue]);
 
   const buyTypeVal = watchAdd('buyType');
   const weightVal = watchAdd('weight');
@@ -221,7 +230,9 @@ export default function QuickEntryModal({
   };
 
   const handleNextToStep3 = async () => {
-    const isValid = await triggerAdd(['ownerName', 'location', 'phone', 'buyType', 'unitPrice', 'purchaseType', 'paymentMethod']);
+    // Only validate buyType, unitPrice, purchaseType, paymentMethod
+    // ownerName, location, phone are now optional
+    const isValid = await triggerAdd(['buyType', 'unitPrice', 'purchaseType', 'paymentMethod']);
     if (isValid) {
       setStep(3);
     }
@@ -465,7 +476,7 @@ export default function QuickEntryModal({
                   </Label>
                   <div className="relative">
                     <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-                    <Input id="id" placeholder="e.g. SNR-204" {...regAdd('id')} className="rounded-xl pl-10" />
+                    <Input id="id" placeholder="e.g. CC-204" {...regAdd('id')} className="rounded-xl pl-10" />
                   </div>
                   {errorsAdd.id && <p className="text-red-500 text-xs font-semibold">{errorsAdd.id.message}</p>}
                 </div>
@@ -546,18 +557,31 @@ export default function QuickEntryModal({
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="location" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Barn / Location (ក្រោលគោ)</Label>
-                    <select
-                      id="location"
-                      {...regAdd('location')}
-                      className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-semibold cursor-pointer"
-                    >
-                      {common.locations.map(l => (
-                        <option key={l} value={l}>{l}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* Barn / Location — hidden for farm owners (auto-set) */}
+                  {!currentUser?.farmLocation ? (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="location" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Barn / Location (ក្រោលគោ)</Label>
+                      <select
+                        id="location"
+                        {...regAdd('location')}
+                        className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-semibold cursor-pointer"
+                      >
+                        <option value="">— Select barn —</option>
+                        {common.locations.map(l => (
+                          <option key={l} value={l}>{l}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Barn / Location (ក្រោលគោ)</Label>
+                      <div className="flex items-center gap-2 h-9 bg-emerald-50 border border-emerald-200 rounded-xl px-3">
+                        <MapPin className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                        <span className="text-sm font-bold text-emerald-800 truncate">{currentUser.farmLocation}</span>
+                        <span className="ml-auto text-[9px] font-black text-emerald-600 uppercase tracking-wide">Auto</span>
+                      </div>
+                    </div>
+                  )}
 
                   {purchaseTypeVal === 'Purchase' && (
                     <div className="space-y-1.5 animate-in fade-in duration-200">
@@ -578,19 +602,27 @@ export default function QuickEntryModal({
                 {purchaseTypeVal !== 'Born in Farm' && (
                   <div className="grid grid-cols-2 gap-3 animate-in fade-in duration-200">
                     <div className="space-y-1.5">
-                      <Label htmlFor="ownerName" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        {purchaseTypeVal === 'Transfer' ? 'Transfer From Owner (ប្រភពផ្ទេរ)' : 
-                         purchaseTypeVal === 'Partnership' ? 'Partner Name (ដៃគូសហការ)' : 
-                         'Source Supplier / Owner (ប្រភពទិញ)'}
+                      <Label htmlFor="ownerName" className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <span>
+                          {purchaseTypeVal === 'Transfer' ? 'Transfer From Owner (ប្រភពផ្ទេរ)' :
+                           purchaseTypeVal === 'Partnership' ? 'Partner Name (ដៃគូសហការ)' :
+                           'Source Supplier / Owner (ប្រភពទិញ)'}
+                        </span>
+                        <span className="text-[8px] font-bold text-slate-300 normal-case bg-slate-100 px-1.5 py-0.5 rounded-md">Optional</span>
                       </Label>
-                      <Input id="ownerName" placeholder={purchaseTypeVal === 'Partnership' ? "Partner's name..." : "Owner Name..."} {...regAdd('ownerName')} className="rounded-xl" />
-                      {errorsAdd.ownerName && <p className="text-red-500 text-xs font-semibold">{errorsAdd.ownerName.message}</p>}
+                      <Input id="ownerName" placeholder={purchaseTypeVal === 'Partnership' ? "Partner's name..." : "Supplier name (optional)..."} {...regAdd('ownerName')} className="rounded-xl" />
                     </div>
 
                     {purchaseTypeVal !== 'Transfer' && (
                       <div className="space-y-1.5">
-                        <Label htmlFor="phone" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact Phone (លេខទូរស័ព្ទ)</Label>
-                        <Input id="phone" {...regAdd('phone')} className="rounded-xl" />
+                        <Label htmlFor="phone" className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                          <span>Contact Phone (លេខទូរស័ព្ទ)</span>
+                          <span className="text-[8px] font-bold text-slate-300 normal-case bg-slate-100 px-1.5 py-0.5 rounded-md">Optional</span>
+                        </Label>
+                        <div className="relative">
+                          <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-3.5 w-3.5" />
+                          <Input id="phone" placeholder="e.g. 012 345 678" {...regAdd('phone')} className="rounded-xl pl-9" />
+                        </div>
                       </div>
                     )}
                   </div>

@@ -3,11 +3,26 @@ import { BatchItem } from '../lib/types';
 import { PoolClient } from 'pg';
 
 export class BatchRepository {
+  private isTableInitialized = false;
+
   private async executeQuery(sql: string, params?: any[], client?: PoolClient) {
     if (client) {
       return client.query(sql, params);
     }
     return query(sql, params);
+  }
+
+  private async ensureColumns(client?: PoolClient) {
+    if (this.isTableInitialized) return;
+    try {
+      await this.executeQuery(`
+        ALTER TABLE batches ADD COLUMN IF NOT EXISTS feeding_program JSONB;
+        ALTER TABLE batches ADD COLUMN IF NOT EXISTS farm_location VARCHAR(100);
+      `, [], client);
+      this.isTableInitialized = true;
+    } catch (e) {
+      console.warn('Failed to ensure columns on batches table:', e);
+    }
   }
 
   private mapRowToBatch(row: any, cowIds: string[] = []): BatchItem {
@@ -25,6 +40,7 @@ export class BatchRepository {
   }
 
   async findAll(): Promise<BatchItem[]> {
+    await this.ensureColumns();
     const batchRes = await query('SELECT * FROM batches ORDER BY created_at DESC');
     const cowRes = await query('SELECT batch_id, cow_id FROM batch_cows');
 
@@ -38,6 +54,7 @@ export class BatchRepository {
   }
 
   async findById(id: string, client?: PoolClient): Promise<BatchItem | null> {
+    await this.ensureColumns(client);
     const batchRes = await this.executeQuery('SELECT * FROM batches WHERE id = $1', [id], client);
     if (batchRes.rows.length === 0) return null;
 
@@ -48,6 +65,7 @@ export class BatchRepository {
   }
 
   async create(batch: Omit<BatchItem, 'cowIds'>, client?: PoolClient): Promise<BatchItem> {
+    await this.ensureColumns(client);
     const sql = `
       INSERT INTO batches (id, name, type, start_date, status, notes, feeding_program, farm_location)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

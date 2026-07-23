@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ERPLivestockData, ExpenseItem } from '@/lib/types';
+import { ERPLivestockData, ExpenseItem, FarmItem } from '@/lib/types';
 import { SalesRecord } from '@/lib/xlsx-parser';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -11,6 +11,7 @@ import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, ClipboardList, Tren
 import { ConfirmModal } from './ui/confirm-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { hasPermission } from '@/lib/utils';
+import FarmFilterBar from './FarmFilterBar';
 
 interface FinanceTabProps {
   data: ERPLivestockData;
@@ -21,6 +22,7 @@ interface FinanceTabProps {
   onUpdateSalesRecord?: (cowId: string, updates: Partial<SalesRecord>) => Promise<void>;
   onRecordSaleClick?: () => void;
   currentUser?: any;
+  farms?: FarmItem[];
 }
 
 export default function FinanceTab({ 
@@ -31,8 +33,10 @@ export default function FinanceTab({
   onDeleteSalesRecord,
   onUpdateSalesRecord,
   onRecordSaleClick,
-  currentUser
+  currentUser,
+  farms = []
 }: FinanceTabProps) {
+  const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -69,10 +73,35 @@ export default function FinanceTab({
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
-  // Financial aggregates
-  const totalSales = data.salesTracking.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
-  const totalPurchases = data.stock.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
-  const totalExpenses = data.expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
+  // Farm-filtered data for display
+  const farmFilteredExpenses = React.useMemo(() => {
+    if (!selectedFarm) return data.expenses;
+    return data.expenses.filter(e => e.farmLocation === selectedFarm);
+  }, [data.expenses, selectedFarm]);
+
+  const farmFilteredSales = React.useMemo(() => {
+    if (!selectedFarm) return data.salesTracking;
+    const stockIds = data.stock.filter(s => s.location === selectedFarm).map(s => s.id);
+    return data.salesTracking.filter(s => stockIds.includes(s.cowId));
+  }, [data.salesTracking, data.stock, selectedFarm]);
+
+  const farmFilteredStock = React.useMemo(() => {
+    if (!selectedFarm) return data.stock;
+    return data.stock.filter(s => s.location === selectedFarm);
+  }, [data.stock, selectedFarm]);
+
+  const countByFarm = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    data.expenses.forEach(e => {
+      if (e.farmLocation) map[e.farmLocation] = (map[e.farmLocation] || 0) + 1;
+    });
+    return map;
+  }, [data.expenses]);
+
+  // Financial aggregates (farm-scoped when filter active)
+  const totalSales = farmFilteredSales.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+  const totalPurchases = farmFilteredStock.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+  const totalExpenses = farmFilteredExpenses.reduce((sum, item) => sum + (item.amount || 0), 0);
   const netEarnings = totalSales - totalPurchases - totalExpenses;
 
   const handleSub = async (e: React.FormEvent) => {
@@ -141,6 +170,17 @@ export default function FinanceTab({
           </Button>
         )}
       </div>
+
+      {/* Farm Filter Bar */}
+      <FarmFilterBar
+        farms={farms}
+        selectedFarm={selectedFarm}
+        onFarmChange={setSelectedFarm}
+        countByFarm={countByFarm}
+        totalCount={data.expenses.length}
+        label="transactions"
+        currentUser={currentUser}
+      />
 
       {/* Mini Stats Card Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -305,8 +345,8 @@ export default function FinanceTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 text-slate-700 font-medium">
-                {data.expenses.length > 0 ? (
-                  data.expenses.map((expense) => (
+                {farmFilteredExpenses.length > 0 ? (
+                  farmFilteredExpenses.map((expense) => (
                     <tr key={expense.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3.5 px-4">
                         <span className="px-2 py-0.5 rounded-lg font-bold border border-slate-200 text-slate-650 bg-slate-50 text-[10px] uppercase">
@@ -419,8 +459,8 @@ export default function FinanceTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 text-slate-700 font-medium">
-                  {data.salesTracking.length > 0 ? (
-                    [...data.salesTracking]
+                  {farmFilteredSales.length > 0 ? (
+                    [...farmFilteredSales]
                       .sort((a, b) => new Date(b.salesDate || '').getTime() - new Date(a.salesDate || '').getTime())
                       .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
                       .map((sale, idx) => {

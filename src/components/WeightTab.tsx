@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ERPLivestockData } from '@/lib/types';
+import { ERPLivestockData, FarmItem } from '@/lib/types';
 import { Button } from './ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { Scale, TrendingUp, ClipboardList, Calendar, AlertTriangle, CheckCircle, Clock, Edit2, Trash2 } from 'lucide-react';
@@ -10,6 +10,7 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission } from '@/lib/utils';
+import FarmFilterBar from './FarmFilterBar';
 
 interface WeightTabProps {
   data: ERPLivestockData;
@@ -17,11 +18,13 @@ interface WeightTabProps {
   onDeleteWeightRecord?: (cowId: string, trackingDate: string) => Promise<void>;
   onUpdateWeightRecord?: (cowId: string, trackingDate: string, currentWeight: number, healthStatus: string) => Promise<void>;
   currentUser?: any;
+  farms?: FarmItem[];
 }
 
-export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord, onUpdateWeightRecord, currentUser }: WeightTabProps) {
+export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord, onUpdateWeightRecord, currentUser, farms = [] }: WeightTabProps) {
   const [scheduleType, setScheduleType] = useState<'biweekly' | 'monthly'>('biweekly');
   const [selectedCohortId, setSelectedCohortId] = useState<string>('all');
+  const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
 
   const [editingWeightRecord, setEditingWeightRecord] = useState<{ cowId: string; trackingDate: string; currentWeight: number; healthStatus: string } | null>(null);
 
@@ -41,6 +44,18 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
 
   const intervalDays = scheduleType === 'biweekly' ? 14 : 30;
 
+  // Count weight records per farm
+  const countByFarm = React.useMemo(() => {
+    const stockById: Record<string, string> = {};
+    data.stock.forEach(s => { if (s.location) stockById[s.id] = s.location; });
+    const map: Record<string, number> = {};
+    data.weightTracking.forEach(log => {
+      const loc = stockById[log.cowId];
+      if (loc) map[loc] = (map[loc] || 0) + 1;
+    });
+    return map;
+  }, [data.stock, data.weightTracking]);
+
   // Active cohorts list
   const cohorts = data.batches || [];
   const getCowCohort = (cowId: string) => {
@@ -48,7 +63,13 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
   };
 
   // Sort weight tracking logs chronologically (newest first)
-  const recentLogs = [...data.weightTracking].sort((a, b) => {
+  const farmFilteredWeightLogs = React.useMemo(() => {
+    if (!selectedFarm) return data.weightTracking;
+    const stockIds = data.stock.filter(s => s.location === selectedFarm).map(s => s.id);
+    return data.weightTracking.filter(log => stockIds.includes(log.cowId));
+  }, [data.weightTracking, data.stock, selectedFarm]);
+
+  const recentLogs = [...farmFilteredWeightLogs].sort((a, b) => {
     const timeA = a.trackingDate ? new Date(a.trackingDate).getTime() : 0;
     const timeB = b.trackingDate ? new Date(b.trackingDate).getTime() : 0;
     return timeB - timeA;
@@ -159,6 +180,17 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
           )}
         </div>
       </div>
+
+      {/* Farm Filter Bar */}
+      <FarmFilterBar
+        farms={farms}
+        selectedFarm={selectedFarm}
+        onFarmChange={setSelectedFarm}
+        countByFarm={countByFarm}
+        totalCount={data.weightTracking.length}
+        label="weight records"
+        currentUser={currentUser}
+      />
 
       {/* Mini Alert metrics banner */}
       {(overdueCount > 0 || duesoonCount > 0) && (

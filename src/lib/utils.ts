@@ -8,12 +8,17 @@ export function cn(...inputs: ClassValue[]) {
 
 export function hasPermission(currentUser: any, key: PermissionKey): boolean {
   if (!currentUser) return false;
-  if (currentUser.role === 'Super Admin') return true;
-  
+  if (currentUser.role === 'Super Admin' || currentUser.role === 'Admin') return true;
+
+  if (currentUser.role === 'Farm Owner') {
+    // Farm Owners have full operational permissions over their farm
+    if (key !== 'farms_manage') return true;
+  }
+
   if (currentUser.permissions && Array.isArray(currentUser.permissions)) {
     return currentUser.permissions.includes(key);
   }
-  
+
   const defaultPerms = DEFAULT_ROLE_PERMISSIONS[currentUser.role] || [];
   return defaultPerms.includes(key);
 }

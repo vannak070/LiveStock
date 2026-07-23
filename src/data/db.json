@@ -1126,5 +1126,960 @@
       "M",
       "F"
     ]
+  },
+  "batches": [
+    {
+      "id": "FAT-2026-495",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-288",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-661",
+      "name": "Fattening Herd (ហ្វូងគោបំប៉ន)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Unified Active Fattening Program Herd.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-523",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-123",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-840",
+      "name": "Batch 011",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-840",
+      "name": "Batch 011",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-840",
+      "name": "Batch 011",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "BAT-2026-152",
+      "name": "ហ្វូងបំប៉នថ្មី (New Fattening Herd)",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default fattening ration."
+      },
+      "farmLocation": "SNR Farm",
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-987",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-326",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-326",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-825",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-599",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": [
+        "C-010",
+        "C-003"
+      ]
+    },
+    {
+      "id": "FAT-2026-599",
+      "name": "Fattening Program",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-599",
+      "name": "Fattening Program",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "087654321",
+      "name": "Fattening Program",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-413",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-393",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-112",
+      "name": "Fattening Program",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-980",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-293",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-602",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-565",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    },
+    {
+      "id": "FAT-2026-884",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": [
+        "CC-001",
+        "CC-121"
+      ]
+    },
+    {
+      "id": "FAT-2026-435",
+      "name": "Fattening Program 2026",
+      "type": "Fattening Program",
+      "startDate": "2026-07-23",
+      "status": "Active",
+      "notes": "Fattening program started on 7/23/2026.",
+      "farmLocation": "SNR Farm",
+      "feedingProgram": {
+        "ingredients": [
+          {
+            "name": "ចំណីសំរេច (DSR-16)",
+            "portionPerHead": 3.5,
+            "unitCost": 2000
+          },
+          {
+            "name": "ស្មៅ ឬ ពោត ផ្អាប់",
+            "portionPerHead": 15,
+            "unitCost": 350
+          },
+          {
+            "name": "ចំបើង",
+            "portionPerHead": 2,
+            "unitCost": 150
+          }
+        ],
+        "frequency": "Twice Daily",
+        "startDate": "2026-07-23",
+        "status": "Active",
+        "notes": "Default recommended fattening program diet."
+      },
+      "cowIds": []
+    }
+  ],
+  "healthLogs": [],
+  "expenses": [],
+  "settings": {
+    "breeds": [
+      "គោទន្លេ",
+      "កាត់ Brahman",
+      "កាត់ Wagyu"
+    ],
+    "locations": [
+      "រទាំង",
+      "ព្រៃវែង",
+      "បន្ទាយមានជ័យ",
+      "ក្រោល A",
+      "ក្រោល B"
+    ],
+    "buyTypes": [
+      "Lumsum",
+      "Weight"
+    ],
+    "healthStatuses": [
+      "Good",
+      "Fair",
+      "Poor",
+      "Dead"
+    ],
+    "vaccineTypes": [
+      "Foot and Mouth",
+      "Brucellosis",
+      "Anthrax",
+      "Dewormer A",
+      "Vitamin Boost"
+    ],
+    "feedTypes": [
+      "Silage",
+      "Concentrate Feed",
+      "Fresh Grass",
+      "Hay Mix"
+    ],
+    "expenseCategories": [
+      "Feed",
+      "Medicine",
+      "Maintenance",
+      "Labor",
+      "Utilities",
+      "Other"
+    ],
+    "paymentMethods": [
+      "ABA Pay",
+      "Cash",
+      "Bank Transfer"
+    ],
+    "sexes": [
+      "Male",
+      "Female"
+    ],
+    "diseaseTypes": [
+      "Foot and Mouth Disease (FMD)",
+      "Brucellosis",
+      "Anthrax",
+      "Pneumonia",
+      "Parasite Infection"
+    ],
+    "batchTypes": [
+      "Fattening Program",
+      "Quanrantin & Vet Card",
+      "Selling Pool"
+    ],
+    "weightUnits": [
+      "kg",
+      "lbs"
+    ],
+    "revenueTypes": [
+      "Livestock Sale",
+      "Manure Sale",
+      "Milk Sale",
+      "Partnership Share"
+    ],
+    "purchaseTypes": [
+      "Purchase",
+      "Born in Farm",
+      "Transfer",
+      "Partnership"
+    ],
+    "users": [
+      {
+        "id": "1",
+        "name": "Vannak Admin",
+        "email": "vannak@snrfarm.com",
+        "role": "Super Admin",
+        "status": "Active",
+        "password": "password123"
+      }
+    ]
   }
 }

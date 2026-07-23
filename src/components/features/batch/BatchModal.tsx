@@ -13,6 +13,7 @@ interface BatchModalProps {
   unassignedCows: StockItem[];
   batchTypes?: string[];
   initialBatch?: BatchItem | null;
+  currentUser?: any;
 }
 
 export const BatchModal: React.FC<BatchModalProps> = ({
@@ -21,7 +22,8 @@ export const BatchModal: React.FC<BatchModalProps> = ({
   onSubmit,
   unassignedCows,
   batchTypes = ['Fattening Program', 'Quanrantin & Vet Card', 'Selling Pool', 'Breeding Program'],
-  initialBatch = null
+  initialBatch = null,
+  currentUser
 }) => {
   const isEditMode = !!initialBatch;
 
@@ -83,6 +85,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         startDate,
         status,
         notes,
+        farmLocation: initialBatch?.farmLocation || currentUser?.farmLocation || undefined,
         feedingProgram: initialBatch?.feedingProgram || (type === 'Fattening Program' ? defaultFeeding : undefined)
       }, selectedCowIds);
 

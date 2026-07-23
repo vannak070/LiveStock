@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Edit3, DollarSign, RefreshCcw, ChevronLeft, ChevronRight, Activity, Trash2 } from 'lucide-react';
 import { StockItem } from '@/lib/xlsx-parser';
+import { FarmItem } from '@/lib/types';
 import { Button } from './ui/button';
 import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission } from '@/lib/utils';
+import FarmFilterBar from './FarmFilterBar';
 
 interface InventoryTableProps {
   stock: StockItem[];
@@ -15,6 +17,7 @@ interface InventoryTableProps {
   onDeleteCow?: (cowId: string) => Promise<void>;
   onAddCowClick?: () => void;
   currentUser?: any;
+  farms?: FarmItem[];
 }
 
 export default function InventoryTable({
@@ -24,7 +27,8 @@ export default function InventoryTable({
   onRecordSale,
   onDeleteCow,
   onAddCowClick,
-  currentUser
+  currentUser,
+  farms = []
 }: InventoryTableProps) {
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -44,21 +48,37 @@ export default function InventoryTable({
   const [search, setSearch] = useState('');
   const [selectedBreed, setSelectedBreed] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState<'Active' | 'Sold' | 'All'>('Active');
-  
+  const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 20;
 
+  // Count per farm (from all stock)
+  const countByFarm = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    stock.forEach(item => {
+      if (item.location) map[item.location] = (map[item.location] || 0) + 1;
+    });
+    return map;
+  }, [stock]);
+
+  // Filter by farm first
+  const farmFilteredStock = React.useMemo(() => {
+    if (!selectedFarm) return stock;
+    return stock.filter(item => item.location === selectedFarm);
+  }, [stock, selectedFarm]);
+
   // Filter stock items by status
   const statusFilteredStock = React.useMemo(() => {
-    if (selectedStatus === 'All') return stock;
-    return stock.filter(item => item.status.toLowerCase().trim() === selectedStatus.toLowerCase().trim());
-  }, [stock, selectedStatus]);
+    if (selectedStatus === 'All') return farmFilteredStock;
+    return farmFilteredStock.filter(item => item.status.toLowerCase().trim() === selectedStatus.toLowerCase().trim());
+  }, [farmFilteredStock, selectedStatus]);
 
   // Extract unique breeds from stock for filtering
   const uniqueBreeds = React.useMemo(() => {
-    return ['All', ...new Set(stock.map(item => item.breed).filter(Boolean))];
-  }, [stock]);
+    return ['All', ...new Set(farmFilteredStock.map(item => item.breed).filter(Boolean))];
+  }, [farmFilteredStock]);
 
   // Sort stock: Latest purchase date first, then highest ID first (latest registration)
   const sortedStock = React.useMemo(() => {
@@ -84,7 +104,7 @@ export default function InventoryTable({
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedBreed, selectedStatus]);
+  }, [search, selectedBreed, selectedStatus, selectedFarm]);
 
   // Compute pagination bounds
   const totalRows = filteredStock.length;
@@ -114,6 +134,17 @@ export default function InventoryTable({
           </Button>
         )}
       </div>
+
+      {/* Farm Filter Bar */}
+      <FarmFilterBar
+        farms={farms}
+        selectedFarm={selectedFarm}
+        onFarmChange={setSelectedFarm}
+        countByFarm={countByFarm}
+        totalCount={stock.length}
+        label="cattle"
+        currentUser={currentUser}
+      />
 
       {/* Search and Filters Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 border border-slate-200/60 rounded-2xl shadow-sm">

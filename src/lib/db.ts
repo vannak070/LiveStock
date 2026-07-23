@@ -72,6 +72,16 @@ export async function getDbData(): Promise<ERPLivestockData> {
       settingsService.getSettings()
     ]);
 
+    const jsonDb = getJsonDbData();
+    const batchMap = new Map<string, BatchItem>();
+    for (const b of jsonDb.batches || []) {
+      batchMap.set(b.id, b);
+    }
+    for (const b of batches || []) {
+      batchMap.set(b.id, b);
+    }
+    const mergedBatches = Array.from(batchMap.values());
+
     const common = {
       breeds: settings.breeds || [],
       healthStatuses: settings.healthStatuses || [],

@@ -64,9 +64,6 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
   const [selectedCowDetailsId, setSelectedCowDetailsId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  // Admin Farm Filter — only used when user is Super Admin/Admin/Company (no farmLocation)
-  const [selectedFarmFilter, setSelectedFarmFilter] = useState<string | null>(null);
-
   // TanStack Query for dynamic data fetching
   const { data: rawDbData } = useQuery<ERPLivestockData>({
     queryKey: ['livestock'],
@@ -81,52 +78,41 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     refetchOnWindowFocus: true,
   });
 
-  // Scoped Data based on Current User's farmLocation OR Admin's selected farm filter
+  // Scoped Data based on Current User's farmLocation (farm-level users only)
   const dbData = useMemo(() => {
     if (!rawDbData) return rawDbData;
+    if (!currentUser?.farmLocation) return rawDbData; // admins see all raw data
 
-    // Determine which farm location to filter by:
-    // 1. Farm-scoped users always use their own location
-    // 2. Admin users with a selected filter use that
-    // 3. Admin users with no filter see ALL data
-    const filterLoc = currentUser?.farmLocation
-      ? currentUser.farmLocation   // farm-level user: always scoped
-      : selectedFarmFilter         // admin with filter selected
-      ?? null;                     // admin with no filter: null = show all
+    const farmLoc = currentUser.farmLocation;
 
-    if (!filterLoc) return rawDbData; // no scope = full data for admins
+    const matchesFarm = (loc?: string) => {
+      if (!loc) return false;
+      const l = loc.trim().toLowerCase();
+      const f = farmLoc.trim().toLowerCase();
+      if (l === f) return true;
+      if ((f === 'រទាំង' || f.includes('snr')) && (l === 'រទាំង' || l.includes('snr'))) return true;
+      return false;
+    };
 
-    const farmLoc = filterLoc;
-
-    // 1. Filter stock items to only those at this farm location
-    const scopedStock = rawDbData.stock.filter(item => item.location === farmLoc);
+    const scopedStock = rawDbData.stock.filter(item => matchesFarm(item.location));
     const scopedStockIds = scopedStock.map(c => c.id);
 
-    // 2. Filter batches that belong to this location OR contain cows at this location
     const scopedBatches = rawDbData.batches.map(batch => ({
       ...batch,
       cowIds: batch.cowIds.filter(id => scopedStockIds.includes(id))
     })).filter(batch =>
-      batch.farmLocation === farmLoc ||
+      matchesFarm(batch.farmLocation) ||
+      !batch.farmLocation ||
       batch.cowIds.length > 0
     );
 
-    // 3. Filter weight records for cows at this farm
     const scopedWeightTracking = rawDbData.weightTracking.filter(item => scopedStockIds.includes(item.cowId));
-
-    // 4. Filter health logs for cows at this farm
     const scopedHealthLogs = rawDbData.healthLogs.filter(item => scopedStockIds.includes(item.cowId));
-
-    // 5. Filter sales records for cows at this farm
     const scopedSalesTracking = rawDbData.salesTracking.filter(item => scopedStockIds.includes(item.cowId));
-
-    // 6. Filter expenses that belong to this farm location
     const scopedExpenses = rawDbData.expenses.filter(item => item.farmLocation === farmLoc);
-
-    // 7. Restrict locations list so scoped users can't assign cows to other farms
     const scopedCommon = {
       ...rawDbData.common,
-      locations: currentUser?.farmLocation ? [farmLoc] : rawDbData.common.locations
+      locations: [farmLoc]
     };
 
     return {
@@ -139,7 +125,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       expenses: scopedExpenses,
       common: scopedCommon
     };
-  }, [rawDbData, currentUser, selectedFarmFilter]);
+  }, [rawDbData, currentUser]);
 
   // Mutations
   const addCowMutation = useMutation({
@@ -384,10 +370,14 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     }
   });
 
-  // Active cows list for drop downs
+  // Active cows list & health alert counters (strictly scoped to current user's farm)
   const activeCows = dbData.stock.filter(c => c.status.toLowerCase() === 'active');
-  const healthAlertsCount = activeCows.filter(c => c.healthStatus.toLowerCase() === 'poor').length;
-  const vaccineAlertsCount = 1; // Mock due vaccinations count
+  const healthAlertsCount = activeCows.filter(c =>
+    ['poor', 'sick', 'critical', 'quarantine'].includes(c.healthStatus?.toLowerCase() || '')
+  ).length;
+  const vaccineAlertsCount = activeCows.filter(c =>
+    dbData.healthLogs.some(l => l.cowId === c.id && (l.type === 'Disease' || l.notes?.toLowerCase().includes('sick')))
+  ).length;
 
   // Trigger Action panel
   const handleOpenQuickEntry = (tabType: 'add' | 'weight' | 'sale' = 'add', cowId: string | null = null) => {
@@ -577,9 +567,6 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       vaccineAlertsCount={vaccineAlertsCount}
       currentUser={currentUser}
       onLogout={handleLogout}
-      farms={rawDbData?.settings?.farms ?? []}
-      selectedFarmFilter={selectedFarmFilter}
-      onFarmFilterChange={(loc) => setSelectedFarmFilter(loc)}
     >
       {/* Dynamic Tab Rendering */}
       {activeTab === 'dashboard' && (
@@ -600,6 +587,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           }}
           onAddCowClick={() => handleOpenQuickEntry('add', null)}
           currentUser={currentUser}
+          farms={dbData.settings?.farms ?? []}
         />
       )}
 
@@ -609,7 +597,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           onCreateBatch={async (batch) => {
             const batchWithLoc = {
               ...batch,
-              farmLocation: currentUser?.farmLocation || undefined
+              farmLocation: batch.farmLocation || currentUser?.farmLocation || undefined
             };
             await createBatchMutation.mutateAsync(batchWithLoc);
           }}
@@ -640,6 +628,17 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           data={dbData}
           onAddHealthLog={async (log) => {
             await addHealthLogMutation.mutateAsync(log);
+            if (log.cost && log.cost > 0) {
+              const targetCow = dbData.stock.find(c => c.id === log.cowId);
+              const farmLoc = currentUser?.farmLocation || targetCow?.location || undefined;
+              await addExpenseMutation.mutateAsync({
+                category: 'Medicine',
+                amount: Number(log.cost),
+                date: log.date || new Date().toISOString().split('T')[0],
+                description: `Medical ${log.type}: ${log.name} (${log.cowId})${log.administeredBy ? ` - ${log.administeredBy}` : ''}`,
+                farmLocation: farmLoc
+              });
+            }
           }}
           onDeleteHealthLog={async (logId) => {
             await deleteHealthLogMutation.mutateAsync(logId);
@@ -648,6 +647,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
             await updateHealthLogMutation.mutateAsync({ logId, updates });
           }}
           currentUser={currentUser}
+          farms={dbData.settings?.farms ?? []}
         />
       )}
 
@@ -662,6 +662,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
             await updateWeightRecordMutation.mutateAsync({ cowId, trackingDate, currentWeight, healthStatus });
           }}
           currentUser={currentUser}
+          farms={dbData.settings?.farms ?? []}
         />
       )}
 
@@ -689,12 +690,15 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           }}
           onRecordSaleClick={() => handleOpenQuickEntry('sale', null)}
           currentUser={currentUser}
+          farms={dbData.settings?.farms ?? []}
         />
       )}
 
       {activeTab === 'analytics' && (
         <AnalyticsTab
           data={dbData}
+          currentUser={currentUser}
+          farms={dbData.settings?.farms ?? []}
         />
       )}
 
@@ -734,6 +738,7 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
         activeBatches={dbData.batches.filter(b => b.status === 'Active')}
         defaultTab={quickEntryTab}
         preselectedCowId={preselectedCowId}
+        currentUser={currentUser}
         onAddCow={async (data) => {
           await addCowMutation.mutateAsync(data);
         }}

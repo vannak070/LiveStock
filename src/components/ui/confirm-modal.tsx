@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogFooter } from './dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './dialog';
 import { Button } from './button';
 import { ShieldAlert, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 
@@ -58,39 +58,46 @@ export function ConfirmModal({
   const style = colorMap[type] || colorMap.warning;
   const Icon = style.icon;
 
+  const handlePrimaryClick = () => {
+    if (onConfirm) {
+      onConfirm();
+    }
+    onClose();
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-sm p-6 rounded-2xl bg-white border border-slate-100 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex flex-col items-center text-center space-y-4 pt-2">
+        <DialogHeader className="flex flex-col items-center text-center space-y-3 pt-2">
           <div className={`h-12 w-12 rounded-full flex items-center justify-center border ${style.bg} ${style.border}`}>
             <Icon className={`h-6 w-6 ${style.text}`} />
           </div>
-          <div className="space-y-1">
-            <h4 className="text-base font-extrabold text-slate-800 tracking-tight">{title}</h4>
-            <p className="text-xs text-slate-400 font-medium leading-relaxed px-2">{description}</p>
-          </div>
-        </div>
+          <DialogTitle className="text-base font-extrabold text-slate-800 tracking-tight text-center">
+            {title}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-slate-400 font-medium leading-relaxed px-2 text-center">
+            {description}
+          </DialogDescription>
+        </DialogHeader>
+
         <DialogFooter className="flex sm:justify-center gap-2 mt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            className="rounded-xl font-bold text-xs py-2 px-4 flex-1 border-slate-200"
-          >
-            {cancelText}
-          </Button>
-          {onConfirm && (
+          {type !== 'success' && type !== 'info' && (
             <Button
               type="button"
-              onClick={() => {
-                onConfirm();
-                onClose();
-              }}
-              className={`rounded-xl font-bold text-xs py-2 px-4 flex-1 text-white shadow ${style.button}`}
+              variant="outline"
+              onClick={onClose}
+              className="rounded-xl font-bold text-xs py-2 px-4 flex-1 border-slate-200"
             >
-              {confirmText}
+              {cancelText}
             </Button>
           )}
+          <Button
+            type="button"
+            onClick={handlePrimaryClick}
+            className={`rounded-xl font-bold text-xs py-2 px-4 flex-1 text-white shadow ${style.button}`}
+          >
+            {confirmText}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
