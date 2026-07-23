@@ -374,7 +374,7 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
   // Operating Expense Breakdown
   const expenseBreakdown = useMemo(() => {
     const map: Record<string, number> = {};
-    data.expenses.forEach(exp => {
+    farmScopedData.expenses.forEach(exp => {
       map[exp.category] = (map[exp.category] || 0) + exp.amount;
     });
     return Object.entries(map).map(([category, amount]) => ({

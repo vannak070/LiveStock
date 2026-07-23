@@ -1,50 +1,121 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Production Automated Setup Script for Cloudways / Remote Linux Server
+# deploy-production.sh  —  SAFE production deployment script
 #
-# ⚠️  IMPORTANT – DATABASE POLICY
-#     This script NEVER runs `npm run restore-db` (init-db.ts) in production.
-#     init-db.ts seeds local test data and would WIPE the production database.
-#     Instead, `npm run safe-migrate` is used — it only creates missing
-#     tables / columns with IF NOT EXISTS and never touches existing data.
+# ⚠️  DATABASE PROTECTION RULES (READ BEFORE CHANGING THIS FILE):
+#     1. NEVER run `npm run restore-db` (init-db.ts) on production.
+#        init-db.ts drops ALL tables and seeds local test data.
+#     2. NEVER run schema.sql directly on production.
+#        schema.sql starts with DROP TABLE IF EXISTS ... CASCADE.
+#     3. ONLY `npm run safe-migrate` is allowed — it uses
+#        CREATE TABLE IF NOT EXISTS and ADD COLUMN IF NOT EXISTS only.
+#
+# WHAT THIS SCRIPT DOES (in order):
+#   1. Auto-backup  — creates a timestamped JSON backup before ANY changes
+#   2. Git pull     — fetches latest code from main branch
+#   3. npm install  — installs/updates Node.js dependencies
+#   4. safe-migrate — applies only NEW schema additions (never drops/seeds)
+#   5. npm build    — compiles Next.js production bundle
+#   6. pm2 reload   — zero-downtime restart of both services
+#
+# Usage (from your Mac):
+#   ssh root@104.248.149.103 'cd /root/LiveStock && bash scripts/deploy-production.sh'
+#
+# Or run the full remote deploy from local:
+#   bash scripts/remote-deploy.sh
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-echo "=== 🚀 Livestock Management ERP Production Deployment Setup ==="
+APP_DIR="/root/LiveStock"
+BACKUP_DIR="$APP_DIR/backups"
+TIMESTAMP=$(date "+%Y-%m-%d_%H-%M-%S")
+BACKUP_FILE="$BACKUP_DIR/pre_deploy_$TIMESTAMP.json"
 
-# 1. Check Node.js and PM2
-echo "[Step 1/5] Checking environment tools..."
-if ! command -v node &> /dev/null; then
-    echo "❌ Node.js is not installed. Please install Node.js v20+."
-    exit 1
-fi
+echo ""
+echo "╔═══════════════════════════════════════════════════════════════╗"
+echo "║  🚀  Livestock ERP — Safe Production Deployment              ║"
+echo "║  $(date '+%Y-%m-%d %H:%M:%S %Z')                                    ║"
+echo "╚═══════════════════════════════════════════════════════════════╝"
+echo ""
 
-if ! command -v pm2 &> /dev/null; then
-    echo "⚠️ PM2 process manager not found. Installing PM2 globally..."
-    npm install -g pm2
-fi
+# ── STEP 1: Auto-backup current production database ────────────────────────
+echo "━━━ [1/6] Creating pre-deploy database backup..."
+mkdir -p "$BACKUP_DIR"
 
-# 2. Install dependencies
-echo "[Step 2/5] Installing production dependencies..."
-npm install --production=false
+node << 'JSEOF'
+const fs = require("fs");
+const { Pool } = require("/root/LiveStock/node_modules/pg");
+const pool = new Pool({ host:"localhost", port:5432, user:"postgres", password:"postgres123", database:"livestock_db" });
+const BACKUP_FILE = process.env.BACKUP_FILE;
+async function dump() {
+  const c = await pool.connect();
+  try {
+    const stock           = (await c.query("SELECT * FROM stock")).rows;
+    const weight_tracking = (await c.query("SELECT * FROM weight_tracking")).rows;
+    const sales_tracking  = (await c.query("SELECT * FROM sales_tracking")).rows;
+    const batches         = (await c.query("SELECT * FROM batches")).rows;
+    const batch_cows      = (await c.query("SELECT * FROM batch_cows")).rows;
+    const expenses        = (await c.query("SELECT * FROM expenses")).rows;
+    const health_logs     = (await c.query("SELECT * FROM health_logs")).rows;
+    const users           = (await c.query("SELECT * FROM users")).rows;
+    const master_settings = (await c.query("SELECT * FROM master_settings")).rows;
+    const feed_products   = (await c.query("SELECT * FROM feed_products")).rows;
+    const feed_transactions=(await c.query("SELECT * FROM feed_transactions")).rows;
+    const payload = JSON.stringify({ backup_created_at: new Date().toISOString(), stock, weight_tracking, sales_tracking, batches, batch_cows, expenses, health_logs, users, master_settings, feed_products, feed_transactions }, null, 2);
+    fs.writeFileSync(BACKUP_FILE, payload);
+    console.log("   ✓ Backup saved: " + BACKUP_FILE);
+    console.log("   ✓ Cattle: " + stock.length + " | Weight logs: " + weight_tracking.length + " | Batches: " + batches.length);
+  } finally { c.release(); await pool.end(); }
+}
+dump().catch(e => { console.error("   ⚠️  Backup failed (non-blocking):", e.message); });
+JSEOF
 
-# 3. Safe Schema-Only Migration (non-destructive — keeps all production data)
-echo "[Step 3/5] Running safe schema migrations (no data wipe)..."
+# Keep only the last 10 backups to save disk space
+ls -t "$BACKUP_DIR"/pre_deploy_*.json 2>/dev/null | tail -n +11 | xargs rm -f 2>/dev/null || true
+
+# ── STEP 2: Pull latest code ───────────────────────────────────────────────
+echo ""
+echo "━━━ [2/6] Pulling latest code from GitHub..."
+cd "$APP_DIR"
+git pull origin main
+echo "   ✓ Code updated"
+
+# ── STEP 3: Install dependencies ──────────────────────────────────────────
+echo ""
+echo "━━━ [3/6] Installing dependencies..."
+npm install --production=false --silent
+echo "   ✓ Dependencies ready"
+
+# ── STEP 4: Safe schema migration (NEVER restore-db) ──────────────────────
+echo ""
+echo "━━━ [4/6] Running safe schema migration..."
+echo "   ℹ️  Using safe-migrate (CREATE IF NOT EXISTS only — data untouched)"
 npm run safe-migrate
+echo "   ✓ Schema is up to date"
 
-# 4. Build Next.js Production App
-echo "[Step 4/5] Building Next.js production web application..."
+# ── STEP 5: Build Next.js ─────────────────────────────────────────────────
+echo ""
+echo "━━━ [5/6] Building Next.js production bundle..."
 npm run build
+echo "   ✓ Build complete"
 
-# 5. Start/Reload PM2 Processes
-echo "[Step 5/5] Launching production processes via PM2..."
-pm2 startOrReload ecosystem.config.js
+# ── STEP 6: Reload PM2 ────────────────────────────────────────────────────
+echo ""
+echo "━━━ [6/6] Reloading PM2 services (zero-downtime)..."
+pm2 startOrReload "$APP_DIR/ecosystem.config.js" --update-env
 pm2 save
+echo "   ✓ Services reloaded"
 
+# ── Summary ───────────────────────────────────────────────────────────────
 echo ""
-echo "=== 🎉 PRODUCTION DEPLOYMENT COMPLETE! ==="
-echo "Express Backend API running on port 3002"
-echo "Next.js Frontend UI running on port 3000"
-echo "Check PM2 status with: pm2 status"
+echo "╔═══════════════════════════════════════════════════════════════╗"
+echo "║  ✅  DEPLOYMENT COMPLETE                                      ║"
+echo "╚═══════════════════════════════════════════════════════════════╝"
+echo "  Frontend  : http://104.248.149.103"
+echo "  API       : http://104.248.149.103:3002/health"
+echo "  PM2 status: pm2 status"
+echo "  Backup at : $BACKUP_FILE"
 echo ""
-echo "ℹ️  Production database was NOT modified — only missing schema was added."
+echo "  ℹ️  Production database was NOT modified — only schema was updated."
+echo "  ℹ️  To restore if needed: node scripts/restore-from-backup.sh $BACKUP_FILE"
+echo ""
