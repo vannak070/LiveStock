@@ -209,7 +209,12 @@ export default function BatchTab({
     .filter(b => b.status === 'Active')
     .flatMap(b => b.cowIds);
 
-  const activeCows = data.stock.filter(c => c.status.toLowerCase() === 'active');
+  const activeCows = React.useMemo(() => {
+    return effectiveFarm
+      ? data.stock.filter(c => c.status.toLowerCase() === 'active' && c.location === effectiveFarm)
+      : data.stock.filter(c => c.status.toLowerCase() === 'active');
+  }, [data.stock, effectiveFarm]);
+
   const unassignedCows = activeCows.filter(c => !allAssignedCowIds.includes(c.id));
 
   const filteredUnassignedCows = unassignedCows.filter(cow => {
@@ -737,6 +742,17 @@ export default function BatchTab({
       ) : (
         /* Main Dashboard Panel */
         <>
+          {/* STEP 1: SELECT FARM FIRST */}
+          <FarmFilterBar
+            farms={farms}
+            selectedFarm={selectedFarm}
+            onFarmChange={setSelectedFarm}
+            countByFarm={countByFarm}
+            totalCount={data.batches.length}
+            label="batches"
+            currentUser={currentUser}
+          />
+
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -792,17 +808,6 @@ export default function BatchTab({
               )}
             </div>
           </div>
-
-          {/* Farm Filter Bar */}
-          <FarmFilterBar
-            farms={farms}
-            selectedFarm={selectedFarm}
-            onFarmChange={setSelectedFarm}
-            countByFarm={countByFarm}
-            totalCount={data.batches.length}
-            label="batches"
-            currentUser={currentUser}
-          />
 
           {/* KPI Dashboard Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-left">
