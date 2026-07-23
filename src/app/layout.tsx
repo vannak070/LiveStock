@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SNR Cattle Fattening ERP | Fattening Livestock Management System",
-  description: "Enterprise grade cattle fattening management, weight growth history tracking, and sales analytics system.",
+  title: "LiveStock Fattening ERP | Fattening Livestock Management System",
+  description: "Enterprise multi-farm livestock fattening ERP platform for tracking weight performance, ADG, feed rations, health logs, and financial P&L.",
 };
 
 export default function RootLayout({

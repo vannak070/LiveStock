@@ -155,7 +155,7 @@ export default function SidebarLayout({
             <img src="/logo.png" alt="SNR Logo" className="h-8 w-auto object-contain" />
           </div>
           <div>
-            <p className="text-white font-black text-sm tracking-wide leading-none">SNR Fattening</p>
+            <p className="text-white font-black text-sm tracking-wide leading-none">LiveStock Fattening</p>
             <p className="text-emerald-500 text-[9px] font-bold tracking-[0.12em] uppercase mt-0.5">Cattle ERP</p>
           </div>
         </div>
@@ -352,7 +352,7 @@ export default function SidebarLayout({
               </button>
               <div>
                 <h2 className="text-base sm:text-xl font-black tracking-tight text-slate-900 leading-tight">
-                  SNR Cattle Fattening ERP
+                  LiveStock Fattening ERP
                 </h2>
                 <p className="text-[10px] sm:text-xs text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
