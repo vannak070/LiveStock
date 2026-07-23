@@ -1281,11 +1281,11 @@ export default function BatchTab({
                               <tr key={cow.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
                                 <td className="py-3 px-4 font-black text-slate-800">{cow.id}</td>
                                 <td className="py-3 px-4 text-slate-500">{cow.breed}</td>
-                                <td className="py-3 px-4 font-mono font-bold text-slate-650">{initialWeight} kg</td>
-                                <td className="py-3 px-4 font-mono font-black text-slate-800">{currentWeight} kg</td>
+                                <td className="py-3 px-4 font-mono font-bold text-slate-650">{format2Decimals(initialWeight)} kg</td>
+                                <td className="py-3 px-4 font-mono font-black text-slate-800">{format2Decimals(currentWeight)} kg</td>
                                 <td className="py-3 px-4">
                                   <span className={`font-mono font-black text-xs ${gain >= 0 ? 'text-emerald-650' : 'text-rose-500'}`}>
-                                    {gain >= 0 ? `+${gain}` : gain} kg
+                                    {gain >= 0 ? `+${format2Decimals(gain)}` : format2Decimals(gain)} kg
                                   </span>
                                 </td>
                                 <td className="py-3 px-4 font-mono">
@@ -1296,7 +1296,7 @@ export default function BatchTab({
                                       ? 'bg-blue-50 text-blue-600'
                                       : 'bg-rose-50 text-rose-600'
                                   }`}>
-                                    {adg.toFixed(2)} kg/day
+                                    {format2Decimals(adg)} kg/day
                                   </span>
                                 </td>
                               </tr>
