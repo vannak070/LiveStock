@@ -4,14 +4,20 @@ export const en = {
     dashboard: 'Dashboard',
     cattleRegistry: 'Cattle Registry',
     batchManagement: 'Batch Management',
-    healthVaccines: 'Health & Vaccines',
-    financeLedger: 'Financial Ledger',
-    analytics: 'Analytics',
+    healthVaccines: 'Medical & Vaccines',
+    financeLedger: 'Feed Costs & Revenue',
+    analytics: 'Growth & Profit Analytics',
     farmsBranches: 'Farms & Stall Branches',
-    masterSettings: 'Master Settings',
-    systemTitle: 'HOVA Livestock Management',
+    masterSettings: 'ERP Master Setup',
+    systemTitle: 'LiveStock Fattening ERP',
+    systemSubtitle: 'Fattening Livestock Management System',
     role: 'Role',
-    logout: 'Sign Out'
+    logout: 'Sign Out',
+    overview: 'Overview',
+    livestockErp: 'Livestock ERP',
+    financials: 'Financials',
+    insights: 'Insights',
+    administration: 'Administration'
   },
   // Common Actions & Buttons
   common: {
@@ -23,7 +29,7 @@ export const en = {
     search: 'Search...',
     reset: 'Reset',
     filter: 'Filter',
-    allFarms: 'All Farms',
+    allFarms: 'All Farms & Branches',
     actions: 'Actions',
     status: 'Status',
     date: 'Date',
@@ -31,15 +37,17 @@ export const en = {
     total: 'Total',
     confirm: 'Confirm',
     close: 'Close',
-    loading: 'Loading...'
+    loading: 'Loading...',
+    clear: 'Clear',
+    select: 'Select'
   },
-  // Cattle Inventory Table
+  // Cattle Inventory Table & Forms
   inventory: {
     title: 'Fattening Cattle Registry',
     subtitle: 'Manage cattle stock, view growth, and track biological profiles.',
-    registerCow: 'Register New Cow',
+    registerCow: 'Register Fattening Cattle',
     cowId: 'Cow ID',
-    farm: 'Farm',
+    farm: 'Farm / Location',
     breed: 'Breed',
     sex: 'Sex',
     initialWeight: 'Initial Weight',
@@ -51,8 +59,12 @@ export const en = {
     sold: 'Sold',
     quarantine: 'Quarantine',
     dead: 'Dead',
-    noCows: 'No cattle records match active filters.',
-    searchPlaceholder: 'Search Tag ID or Breed...'
+    noCows: 'No stock items match active filters.',
+    searchPlaceholder: 'Search Tag ID or Breed...',
+    paymentMethod: 'Payment Method',
+    purchaseType: 'Purchase Type',
+    supplier: 'Supplier / Owner',
+    remark: 'Remark / Notes'
   },
   // Weight & Growth
   weight: {
@@ -62,7 +74,24 @@ export const en = {
     currentWeight: 'Current Weight',
     weightGain: 'Weight Gain / Loss',
     adg: 'Average Daily Gain (ADG)',
-    trackingDate: 'Log Date'
+    trackingDate: 'Log Date',
+    recordWeights: 'Record Weights'
+  },
+  // Batches & Diet
+  batches: {
+    title: 'Fattening Management & Rations',
+    subtitle: 'Manage rations, weights, and average daily gain (ADG) for the entire fattening herd.',
+    newBatch: 'New Batch',
+    editBatch: 'Edit Batch',
+    deleteBatch: 'Delete Batch',
+    deleteConfirmTitle: 'Delete Batch?',
+    herdAllocation: 'Herd & Allocation',
+    dailyFeedRation: 'Daily Feed Ration',
+    adgReports: 'ADG Reports & Growth',
+    ingredientName: 'Ingredient Name',
+    portionHead: 'Portion / Head (kg)',
+    unitCost: 'Unit Cost (KHR)',
+    totalRationCost: 'Total Ration Cost'
   },
   // Sales & Revenue
   sales: {
@@ -72,7 +101,9 @@ export const en = {
     totalPrice: 'Total Sale Amount',
     buyer: 'Buyer Name',
     saleType: 'Sale Basis',
-    salesDate: 'Sale Date'
+    salesDate: 'Sale Date',
+    weightBasis: 'Weight Basis',
+    lumpsumBasis: 'Lumpsum Basis'
   },
   // Health & Medical
   health: {
@@ -83,13 +114,15 @@ export const en = {
     cost: 'Cost (KHR)',
     vaccine: 'Vaccination',
     deworming: 'Deworming',
-    checkup: 'Routine Checkup'
+    checkup: 'Routine Checkup',
+    medicalCost: 'Medical Cost'
   },
   // Dashboard & Metrics
   dashboard: {
-    totalHerd: 'Total Active Herd',
+    totalHerd: 'Active Herd',
     totalFarms: 'Total Farms',
-    avgWeight: 'Average Herd Weight',
+    avgWeight: 'Avg Weight',
+    assetValue: 'Asset Value',
     monthlySales: 'Monthly Revenue',
     recentActivity: 'Recent Farm Activities'
   }

@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ConfirmModal } from './ui/confirm-modal';
 import { BatchModal } from './features/batch/BatchModal';
 import { hasPermission } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface BatchTabProps {
   data: ERPLivestockData;
@@ -61,6 +62,7 @@ export default function BatchTab({
     type: 'warning'
   });
 
+  const { t } = useLanguage();
   // Local tab views inside default batch
   const [subView, setSubView] = useState<'members' | 'feed' | 'report'>('members');
   const [isScalingOpen, setIsScalingOpen] = useState(false);
@@ -723,7 +725,7 @@ export default function BatchTab({
                   }}
                   className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
                 >
-                  <Plus className="h-4 w-4" /> ក្រុមថ្មី (New Batch)
+                  <Plus className="h-4 w-4" /> {t('batches.newBatch')}
                 </Button>
               )}
 
@@ -737,7 +739,7 @@ export default function BatchTab({
                       }}
                       className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
                     >
-                      ✏️ កែប្រែ (Edit)
+                      ✏️ {t('common.edit')}
                     </Button>
                   )}
 
@@ -746,7 +748,7 @@ export default function BatchTab({
                       onClick={() => handleDeleteBatch(defaultBatch.id)}
                       className="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
                     >
-                      <Trash2 className="h-3.5 w-3.5" /> លុប (Delete)
+                      <Trash2 className="h-3.5 w-3.5" /> {t('common.delete')}
                     </Button>
                   )}
                 </>
@@ -756,7 +758,7 @@ export default function BatchTab({
                 onClick={() => setIsAllBatchesOpen(true)}
                 className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-xs py-2 px-3 shadow-xs flex items-center gap-1 cursor-pointer"
               >
-                <Layers className="h-4 w-4 text-emerald-600" /> 📋 ក្រុមទាំងអស់ ({data.batches.length})
+                <Layers className="h-4 w-4 text-emerald-600" /> 📋 {t('common.allFarms')} ({data.batches.length})
               </Button>
 
               {hasPermission(currentUser, 'weight_record') && (
@@ -764,7 +766,7 @@ export default function BatchTab({
                   onClick={openScalingDialog}
                   className="bg-emerald-600 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs py-2 px-4 shadow-md flex items-center gap-1.5 cursor-pointer transition-all hover:translate-y-[-1px]"
                 >
-                  <Scale className="h-4 w-4" /> ⚖️ កត់គីឡូគោបំប៉ន (Record Weights)
+                  <Scale className="h-4 w-4" /> ⚖️ {t('weight.recordWeights')}
                 </Button>
               )}
             </div>
@@ -776,7 +778,7 @@ export default function BatchTab({
               <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Cattle In Fattening</p>
               <p className="text-2xl font-black text-slate-800 mt-1">
                 {fatteningCowsInHerd.length}{' '}
-                <span className="text-xs font-bold text-emerald-600">Head (ក្បាល)</span>
+                <span className="text-xs font-bold text-emerald-600">Head</span>
               </p>
             </div>
             <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
@@ -812,7 +814,7 @@ export default function BatchTab({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              🧑‍🌾 ហ្វូងគោបំប៉ន & បន្ថែមគោ (Herd & Allocation)
+              🧑‍🌾 {t('batches.herdAllocation')}
             </button>
             <button
               onClick={() => setSubView('feed')}
@@ -822,7 +824,7 @@ export default function BatchTab({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              🌾 ចំណីអាហារប្រចាំថ្ងៃ (Daily Feed Ration)
+              🌾 {t('batches.dailyFeedRation')}
             </button>
             <button
               onClick={() => setSubView('report')}
@@ -832,7 +834,7 @@ export default function BatchTab({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              📊 របាយការណ៍លូតលាស់ & FCR (ADG Reports)
+              📊 {t('batches.adgReports')}
             </button>
           </div>
 

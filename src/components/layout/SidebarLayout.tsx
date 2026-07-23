@@ -335,11 +335,11 @@ export default function SidebarLayout({
               </button>
               <div>
                 <h2 className="text-base sm:text-xl font-black tracking-tight text-slate-900 leading-tight">
-                  LiveStock Fattening ERP
+                  {t('nav.systemTitle')}
                 </h2>
                 <p className="text-[10px] sm:text-xs text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                  Fattening Livestock Management System
+                  {t('nav.systemSubtitle')}
                 </p>
               </div>
             </div>
@@ -356,7 +356,7 @@ export default function SidebarLayout({
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Active Herd</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.totalHerd')}</p>
                 <h3 className="text-xl font-black text-slate-900 mt-0.5 leading-none">{totalHead}<span className="text-[10px] text-emerald-600 font-bold ml-1">head</span></h3>
               </div>
               <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
@@ -366,7 +366,7 @@ export default function SidebarLayout({
 
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Avg Weight</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.avgWeight')}</p>
                 <h3 className="text-xl font-black text-slate-900 mt-0.5 leading-none">{averageWeight}<span className="text-[10px] text-blue-600 font-bold ml-1">kg</span></h3>
               </div>
               <div className="h-9 w-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
@@ -376,7 +376,7 @@ export default function SidebarLayout({
 
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
               <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Asset Value</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.assetValue')}</p>
                 <h3 className="text-sm font-black text-slate-900 mt-0.5 leading-none truncate">៛ {inventoryValue.toLocaleString()}</h3>
               </div>
               <div className="h-9 w-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">

@@ -11,6 +11,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { ConfirmModal } from './ui/confirm-modal';
+import { useLanguage } from '@/context/LanguageContext';
 import { 
   FileText, 
   DollarSign, 
@@ -119,6 +120,7 @@ export default function QuickEntryModal({
     type: 'warning'
   });
 
+  const { t } = useLanguage();
   const [tab, setTab] = useState<'add' | 'weight' | 'sale'>(defaultTab);
   const [step, setStep] = useState(1); // For Add Cow multi-step form
 
@@ -679,13 +681,13 @@ export default function QuickEntryModal({
                   {/* Barn / Location — editable for Admin/Super Admin, locked for assigned farm users */}
                   {isAdminUser ? (
                     <div className="space-y-1.5">
-                      <Label htmlFor="location" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Farm / Location (កសិដ្ឋាន)</Label>
+                      <Label htmlFor="location" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('inventory.farm')}</Label>
                       <select
                         id="location"
                         {...regAdd('location')}
                         className="flex h-9 w-full rounded-xl border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 shadow-sm font-semibold cursor-pointer"
                       >
-                        <option value="">— Select Farm —</option>
+                        <option value="">— {t('common.select')} {t('inventory.farm')} —</option>
                         {(common.farms && common.farms.length > 0
                           ? common.farms.map(f => f.name)
                           : common.locations || []
@@ -696,7 +698,7 @@ export default function QuickEntryModal({
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Farm / Location (កសិដ្ឋាន)</Label>
+                      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('inventory.farm')}</Label>
                       <div className="flex items-center gap-2 h-9 bg-emerald-50 border border-emerald-200 rounded-xl px-3">
                         <MapPin className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
                         <span className="text-sm font-bold text-emerald-800 truncate">{currentUser?.farmLocation}</span>
@@ -707,7 +709,7 @@ export default function QuickEntryModal({
 
                   {purchaseTypeVal === 'Purchase' && (
                     <div className="space-y-1.5 animate-in fade-in duration-200">
-                      <Label htmlFor="paymentMethod" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Method (វិធីទូទាត់)</Label>
+                      <Label htmlFor="paymentMethod" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('inventory.paymentMethod')}</Label>
                       <select
                         id="paymentMethod"
                         {...regAdd('paymentMethod')}
