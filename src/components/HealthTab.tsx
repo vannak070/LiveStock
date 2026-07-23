@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/
 import { ShieldCheck, Heart, User, Calendar, Activity, DollarSign, Edit2, Trash2 } from 'lucide-react';
 import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 
 interface HealthTabProps {
@@ -21,6 +22,7 @@ interface HealthTabProps {
 }
 
 export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onUpdateHealthLog, currentUser, farms = [] }: HealthTabProps) {
+  const { t } = useLanguage();
   const [isLogging, setIsLogging] = useState(false);
   const [selectedCohortId, setSelectedCohortId] = useState<string>('all');
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
@@ -154,8 +156,8 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Medical & Vaccine Ledger</h3>
-          <p className="text-xs text-slate-400 font-medium">Record fattening herd vaccinations, deworming schedules, disease treatments, and veterinary events.</p>
+          <h3 className="text-xl font-bold text-slate-900 tracking-tight">{t('health.title')}</h3>
+          <p className="text-xs text-slate-400 font-medium">{t('health.subtitle')}</p>
         </div>
         {hasPermission(currentUser, 'health_record') && (
           <Button 
@@ -170,7 +172,7 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
             }} 
             className="bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-xs py-2 shadow"
           >
-            {isLogging ? 'View Health Ledger' : '+ Log Medical Event'}
+            {isLogging ? t('common.close') : `+ ${t('health.addLog')}`}
           </Button>
         )}
       </div>

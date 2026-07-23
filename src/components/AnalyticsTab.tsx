@@ -5,6 +5,7 @@ import { ERPLivestockData, FarmItem } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, Users, DollarSign, Activity, Scale, ShoppingBag, PieChart as PieChartIcon, Heart, ShieldAlert, Award } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 
 interface AnalyticsTabProps {
@@ -16,6 +17,7 @@ interface AnalyticsTabProps {
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#14B8A6'];
 
 export default function AnalyticsTab({ data, currentUser, farms = [] }: AnalyticsTabProps) {
+  const { t } = useLanguage();
   const [subTab, setSubTab] = useState<'overview' | 'demographics' | 'batches' | 'health' | 'financial'>('overview');
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
 
@@ -254,7 +256,7 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
           }`}
         >
           <PieChartIcon className="h-4 w-4" />
-          Executive BI Overview
+          {t('analytics.overview')}
         </button>
         <button
           onClick={() => setSubTab('demographics')}
@@ -265,7 +267,7 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
           }`}
         >
           <Users className="h-4 w-4" />
-          Herd Demographics & Stock
+          {t('analytics.demographics')}
         </button>
         <button
           onClick={() => setSubTab('batches')}
@@ -276,7 +278,7 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
           }`}
         >
           <Scale className="h-4 w-4" />
-          Fattening & ADG Growth
+          {t('analytics.batchPerformance')}
         </button>
         <button
           onClick={() => setSubTab('health')}
@@ -287,7 +289,7 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
           }`}
         >
           <Heart className="h-4 w-4" />
-          Health & Vet Analytics
+          {t('analytics.healthAnalytics')}
         </button>
         <button
           onClick={() => setSubTab('financial')}
@@ -298,7 +300,7 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
           }`}
         >
           <DollarSign className="h-4 w-4" />
-          Financials & Sales BI
+          {t('analytics.financialPerformance')}
         </button>
       </div>
 

@@ -11,6 +11,7 @@ import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, ClipboardList, Tren
 import { ConfirmModal } from './ui/confirm-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { hasPermission } from '@/lib/utils';
+import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 
 interface FinanceTabProps {
@@ -36,6 +37,7 @@ export default function FinanceTab({
   currentUser,
   farms = []
 }: FinanceTabProps) {
+  const { t } = useLanguage();
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -149,8 +151,8 @@ export default function FinanceTab({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-bold text-slate-900 tracking-tight">Feed Costs & Revenue Ledger</h3>
-          <p className="text-xs text-slate-400 font-medium">Track feed costs, veterinary expenses, cattle acquisition, and fattening sales revenue.</p>
+          <h3 className="text-xl font-bold text-slate-900 tracking-tight">{t('finance.title')}</h3>
+          <p className="text-xs text-slate-400 font-medium">{t('finance.subtitle')}</p>
         </div>
         {ledgerView === 'expenses' && hasPermission(currentUser, 'expenses_record') && (
           <Button
@@ -159,14 +161,21 @@ export default function FinanceTab({
                 setIsLogging(false);
                 setEditingExpenseId(null);
                 setDescription('');
-                setAmount(150000);
               } else {
                 setIsLogging(true);
               }
             }}
-            className="bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-xs py-2 shadow"
+            className="bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-xs py-2 shadow flex items-center gap-1.5"
           >
-            {isLogging ? 'View Finance Ledger' : '+ Record Expense'}
+            {isLogging ? t('common.close') : `+ ${t('finance.addExpense')}`}
+          </Button>
+        )}
+        {ledgerView === 'revenue' && onRecordSaleClick && hasPermission(currentUser, 'sales_record') && (
+          <Button
+            onClick={onRecordSaleClick}
+            className="bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-xs py-2 shadow flex items-center gap-1.5 cursor-pointer"
+          >
+            ➕ {t('sales.recordSale')}
           </Button>
         )}
       </div>

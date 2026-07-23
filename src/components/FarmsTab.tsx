@@ -22,6 +22,7 @@ import { updateSettingsAction, updateStockLocationAction } from '@/app/actions';
 import { MasterSetup, FarmItem, UserRoleItem, DEFAULT_ROLE_PERMISSIONS } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { ConfirmModal } from './ui/confirm-modal';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface FarmsTabProps {
   settings: MasterSetup;
@@ -31,6 +32,7 @@ interface FarmsTabProps {
 }
 
 export default function FarmsTab({ settings, currentUser, stock, batches }: FarmsTabProps) {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [isAddingFarm, setIsAddingFarm] = useState(false);
   const [editingFarm, setEditingFarm] = useState<FarmItem | null>(null);
@@ -255,10 +257,10 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
         <div>
           <h2 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
             <Building className="h-6 w-6 text-emerald-600" />
-            Farm Locations & Branches Management
+            {t('farms.title')}
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Create and edit farm locations, set cattle capacity, and configure farm owner login credentials.
+            {t('farms.subtitle')}
           </p>
         </div>
         <button
@@ -266,7 +268,7 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
           className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-[0.98] self-start sm:self-center"
         >
           <Plus className="h-4 w-4" />
-          Add Farm Branch
+          {t('farms.addFarm')}
         </button>
       </div>
 

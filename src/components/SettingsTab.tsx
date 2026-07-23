@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateSettingsAction } from '@/app/actions';
 import { ConfirmModal } from './ui/confirm-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface SettingsTabProps {
   settings: MasterSetup;
@@ -24,6 +25,7 @@ const DEFAULT_SYSTEM_ROLES: CustomRoleDefinition[] = [
 ];
 
 export default function SettingsTab({ settings, currentUser }: SettingsTabProps) {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [subTab, setSubTab] = useState<'livestock' | 'financial' | 'users'>('livestock');
 
@@ -372,7 +374,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     <div className="space-y-6">
       {/* Tab Navigation header */}
       {!isFarmOwner ? (
-        <div className="flex border-b border-slate-200">
+        <div className="flex border-b border-slate-200 overflow-x-auto">
           <button
             onClick={() => { setSubTab('livestock'); setActiveCategory('breeds'); }}
             className={`flex items-center gap-2 px-6 py-3.5 border-b-2 font-bold text-xs uppercase tracking-wider transition-all duration-150 cursor-pointer ${
@@ -382,7 +384,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
             }`}
           >
             <Settings className="h-4 w-4" />
-            Livestock Configs
+            {t('settings.systemParams')}
           </button>
           <button
             onClick={() => { setSubTab('financial'); setActiveCategory('expenseCategories'); }}
@@ -393,7 +395,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
             }`}
           >
             <DollarSign className="h-4 w-4" />
-            Financial Setup
+            {t('finance.title')}
           </button>
           <button
             onClick={() => setSubTab('users')}
@@ -404,7 +406,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
             }`}
           >
             <Shield className="h-4 w-4" />
-            User Permissions & Roles
+            {t('settings.userManagement')}
           </button>
         </div>
       ) : (

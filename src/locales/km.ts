@@ -21,6 +21,7 @@ export const km: TranslationKeys = {
     insights: 'វិភាគទិន្នន័យ',
     administration: 'ការគ្រប់គ្រង'
   },
+
   // Common Actions & Buttons
   common: {
     add: 'បន្ថែម',
@@ -41,8 +42,10 @@ export const km: TranslationKeys = {
     close: 'បិទ',
     loading: 'កំពុងទាញយក...',
     clear: 'សម្អាត',
-    select: 'ជ្រើសរើស'
+    select: 'ជ្រើសរើស',
+    head: 'ក្បាល'
   },
+
   // Cattle Inventory Table & Forms
   inventory: {
     title: 'បញ្ជីសារពើភណ្ឌគោបំប៉ន',
@@ -68,6 +71,7 @@ export const km: TranslationKeys = {
     supplier: 'អ្នកផ្គត់ផ្គង់ / ម្ចាស់',
     remark: 'ចំណាំ'
   },
+
   // Weight & Growth
   weight: {
     title: 'កំណត់ត្រាទម្ងន់ និង ការលូតលាស់',
@@ -79,46 +83,128 @@ export const km: TranslationKeys = {
     trackingDate: 'កាលបរិច្ឆេទកត់ត្រា',
     recordWeights: 'កត់គីឡូគោបំប៉ន'
   },
-  // Batches & Diet
+
+  // Batches & Diet Management
   batches: {
     title: 'កម្មវិធីបំប៉នគោសាច់',
     subtitle: 'គ្រប់គ្រងរបបចំណី ទម្ងន់ និងកម្រិតឡើងទម្ងន់ប្រចាំថ្ងៃ (ADG)។',
     newBatch: 'ក្រុមថ្មី',
     editBatch: 'កែប្រែក្រុមគោ',
     deleteBatch: 'លុបក្រុមគោ',
+    allBatches: 'ក្រុមទាំងអស់',
     deleteConfirmTitle: 'តើអ្នកប្រាកដជាចង់លុបក្រុមគោនេះទេ?',
+    deleteConfirmDesc: 'គោដែលនៅក្នុងក្រុមនេះនឹងត្រូវបានដកចេញពីក្រុមដោយស្វ័យប្រវត្តិ។',
     herdAllocation: 'ហ្វូងគោបំប៉ន និង បែងចែក',
     dailyFeedRation: 'ចំណីអាហារប្រចាំថ្ងៃ',
     adgReports: 'របាយការណ៍លូតលាស់ និង ADG',
     ingredientName: 'ឈ្មោះធាតុផ្សំចំណី',
     portionHead: 'បរិមាណក្នុងមួយក្បាល (គក)',
     unitCost: 'តម្លៃក្នុងមួយខ្នាត (៛)',
-    totalRationCost: 'ចំណាយចំណីសរុប'
+    totalRationCost: 'ចំណាយចំណីសរុប',
+    cattleInFattening: 'ចំនួនគោបំប៉នសរុប',
+    totalHerdBiomass: 'ទម្ងន់គោសរុប',
+    avgWeightPerHead: 'ទម្ងន់មធ្យមភាគក្នុងមួយក្បាល',
+    dailyFeedCost: 'ចំណាយចំណីប្រចាំថ្ងៃសរុប',
+    currentHerdList: 'បញ្ជីឈ្មោះគោបំប៉នបច្ចុប្បន្ន',
+    addCattleToBatch: 'បន្ថែមគោចូលក្នុងក្រុម',
+    feedRecipeTitle: 'រូបមន្តចំណីអាហារ'
   },
-  // Sales & Revenue
-  sales: {
-    title: 'ការលក់គោ និង ចំណូល',
+
+  // Medical & Vaccines
+  health: {
+    title: 'កំណត់ត្រាព្យាបាល និង វ៉ាក់សាំង',
+    subtitle: 'តាមដានការចាក់វ៉ាក់សាំង ព្យាបាលជំងឺ និងថែទាំសុខភាពសត្វ។',
+    addLog: 'បន្ថែមព័ត៌មានព្យាបាល',
+    editLog: 'កែប្រែព័ត៌មានព្យាបាល',
+    deleteLog: 'លុបព័ត៌មានព្យាបាល',
+    treatmentType: 'ប្រភេទព្យាបាល',
+    medicineName: 'ឈ្មោះថ្នាំ',
+    vetDoctor: 'គ្រូពេទ្យសត្វ',
+    cost: 'ចំណាយ (៛)',
+    vaccine: 'ចាក់វ៉ាក់សាំង',
+    deworming: 'ទម្លាក់ព្រូន',
+    checkup: 'ពិនិត្យសុខភាពទូទៅ',
+    treatment: 'ព្យាបាលជំងឺ',
+    medicalCost: 'ចំណាយព្យាបាល',
+    totalHealthLogs: 'កំណត់ត្រាព្យាបាលសរុប',
+    noHealthLogs: 'មិនមានព័ត៌មានព្យាបាល ឬ វ៉ាក់សាំងឡើយ។'
+  },
+
+  // Financial Ledger & Revenue
+  finance: {
+    title: 'សៀវភៅចំណូលចំណាយ និង ការលក់',
+    subtitle: 'តាមដានចំណូលពីការលក់គោ ចំណាយចំណីអាហារ និងប្រតិបត្តិការកសិដ្ឋាន។',
     recordSale: 'កត់ត្រាការលក់គោ',
+    addExpense: 'បន្ថែមចំណាយ',
+    totalSalesRevenue: 'ចំណូលសរុបពីការលក់',
+    totalExpenses: 'ចំណាយប្រតិបត្តិការសរុប',
+    netProfit: 'ប្រាក់ចំណេញសុទ្ធ',
+    salesLedger: 'សៀវភៅចំណូលលក់',
+    expenseLedger: 'សៀវភៅចំណាយ',
+    category: 'ប្រភេទចំណាយ',
+    amount: 'ទឹកប្រាក់ (៛)',
     unitPrice: 'តម្លៃក្នុងមួយគីឡូ (៛)',
     totalPrice: 'ប្រាក់សរុបពីការលក់',
     buyer: 'ឈ្មោះអ្នកទិញ',
     saleType: 'រូបភាពលក់',
     salesDate: 'កាលបរិច្ឆេទលក់',
     weightBasis: 'លក់គិតតាមគីឡូ',
-    lumpsumBasis: 'លក់ផ្តាច់ក្បាល'
+    lumpsumBasis: 'លក់ផ្តាច់ក្បាល',
+    feedExpense: 'ចំណាយចំណីអាហារ',
+    vetExpense: 'ចំណាយថ្នាំនិងវ៉ាក់សាំង',
+    utilityExpense: 'ចំណាយទឹកភ្លើង',
+    laborExpense: 'ចំណាយប្រាក់ខែបុគ្គលិក',
+    otherExpense: 'ចំណាយផ្សេងៗ'
   },
-  // Health & Medical
-  health: {
-    title: 'កំណត់ត្រាព្យាបាល និង វ៉ាក់សាំង',
-    addLog: 'បន្ថែមព័ត៌មានព្យាបាល',
-    treatmentType: 'ប្រភេទព្យាបាល',
-    vetDoctor: 'គ្រូពេទ្យសត្វ',
-    cost: 'ចំណាយ (៛)',
-    vaccine: 'ចាក់វ៉ាក់សាំង',
-    deworming: 'ទម្លាក់ព្រូន',
-    checkup: 'ពិនិត្យសុខភាពទូទៅ',
-    medicalCost: 'ចំណាយព្យាបាល'
+
+  // Growth & Profit Analytics
+  analytics: {
+    title: 'របាយការណ៍ និង វិភាគទិន្នន័យ',
+    subtitle: 'វិភាគទិន្នន័យកសិដ្ឋាន តាមដានការលូតលាស់ កម្រិតចំណេញ និងប្រសិទ្ធភាពចំណី។',
+    overview: 'ទិដ្ឋភាពទូទៅ',
+    demographics: 'ស្ថិតិហ្វូងគោ',
+    batchPerformance: 'ប្រសិទ្ធភាពក្រុមគោ',
+    healthAnalytics: 'សុខភាពសត្វ',
+    financialPerformance: 'ហិរញ្ញវត្ថុ',
+    herdDistribution: 'ការបែងចែកពូជគោ',
+    healthStatusRatio: 'សមាមាត្រសុខភាព',
+    weightGainTrend: 'និន្នាការលូតលាស់ទម្ងន់',
+    revenueVsExpense: 'ប្រៀបធៀបចំណូល និង ចំណាយ',
+    adgLeaderboard: 'ចំណាត់ថ្នាក់ការលូតលាស់ ADG'
   },
+
+  // Farms & Stall Branches
+  farms: {
+    title: 'កសិដ្ឋាន និង ក្រោលគោ',
+    subtitle: 'គ្រប់គ្រងទីតាំងកសិដ្ឋាន សមត្ថភាពក្រោល គណនីម្ចាស់ និងបុគ្គលិក។',
+    addFarm: 'បន្ថែមប្រព័ន្ធកសិដ្ឋានថ្មី',
+    editFarm: 'កែប្រែកសិដ្ឋាន',
+    deleteFarm: 'លុបកសិដ្ឋាន',
+    farmName: 'ឈ្មោះកសិដ្ឋាន',
+    address: 'អាសយដ្ឋាន',
+    capacity: 'សមត្ថភាពក្រោល',
+    ownerName: 'ឈ្មោះម្ចាស់កសិដ្ឋាន',
+    ownerEmail: 'អ៊ីមែលម្ចាស់កសិដ្ឋាន',
+    notes: 'កំណត់ចំណាំ',
+    totalFarms: 'ចំនួនកសិដ្ឋានសរុប',
+    assignedStaff: 'បុគ្គលិក និង គ្រូពេទ្យ'
+  },
+
+  // ERP Master Setup
+  settings: {
+    title: 'ការកំណត់ប្រព័ន្ធ',
+    subtitle: 'កំណត់សិទ្ធិប្រើប្រាស់ គណនីបុគ្គលិក និងទិន្នន័យប្រព័ន្ធ។',
+    userManagement: 'អ្នកប្រើប្រាស់ និង សិទ្ធិ',
+    systemParams: 'ប៉ារ៉ាម៉ែត្រប្រព័ន្ធ',
+    backupMigration: 'បម្រុងទុកទិន្នន័យ',
+    addUser: 'បន្ថែមគណនីបុគ្គលិក',
+    editUser: 'កែប្រែគណនី',
+    userName: 'ឈ្មោះអ្នកប្រើប្រាស់',
+    userEmail: 'អាសយដ្ឋានអ៊ីមែល',
+    userRole: 'តួនាទី',
+    permissions: 'សិទ្ធិប្រើប្រាស់'
+  },
+
   // Dashboard & Metrics
   dashboard: {
     totalHerd: 'ចំនួនគោសរុប',

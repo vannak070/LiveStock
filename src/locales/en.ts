@@ -19,6 +19,7 @@ export const en = {
     insights: 'Insights',
     administration: 'Administration'
   },
+
   // Common Actions & Buttons
   common: {
     add: 'Add',
@@ -39,8 +40,10 @@ export const en = {
     close: 'Close',
     loading: 'Loading...',
     clear: 'Clear',
-    select: 'Select'
+    select: 'Select',
+    head: 'head'
   },
+
   // Cattle Inventory Table & Forms
   inventory: {
     title: 'Fattening Cattle Registry',
@@ -66,6 +69,7 @@ export const en = {
     supplier: 'Supplier / Owner',
     remark: 'Remark / Notes'
   },
+
   // Weight & Growth
   weight: {
     title: 'Herd Weight Tracking & Growth Log',
@@ -77,46 +81,128 @@ export const en = {
     trackingDate: 'Log Date',
     recordWeights: 'Record Weights'
   },
-  // Batches & Diet
+
+  // Batches & Diet Management
   batches: {
     title: 'Fattening Management & Rations',
     subtitle: 'Manage rations, weights, and average daily gain (ADG) for the entire fattening herd.',
     newBatch: 'New Batch',
     editBatch: 'Edit Batch',
     deleteBatch: 'Delete Batch',
+    allBatches: 'All Batches',
     deleteConfirmTitle: 'Delete Batch?',
+    deleteConfirmDesc: 'Are you sure you want to delete this fattening batch? Enrolled cattle will be unassigned.',
     herdAllocation: 'Herd & Allocation',
     dailyFeedRation: 'Daily Feed Ration',
     adgReports: 'ADG Reports & Growth',
     ingredientName: 'Ingredient Name',
     portionHead: 'Portion / Head (kg)',
     unitCost: 'Unit Cost (KHR)',
-    totalRationCost: 'Total Ration Cost'
+    totalRationCost: 'Total Ration Cost',
+    cattleInFattening: 'Cattle In Fattening',
+    totalHerdBiomass: 'Total Herd Weight',
+    avgWeightPerHead: 'Avg Weight per Head',
+    dailyFeedCost: 'Daily Feed Expense',
+    currentHerdList: 'Current Fattening Herd Members',
+    addCattleToBatch: 'Add Cattle to Batch',
+    feedRecipeTitle: 'Daily Ration Formula'
   },
-  // Sales & Revenue
-  sales: {
-    title: 'Livestock Sales & Revenue',
+
+  // Medical & Vaccines
+  health: {
+    title: 'Medical & Vaccine Health Logs',
+    subtitle: 'Track cattle vaccinations, disease treatments, and veterinary care logs.',
+    addLog: 'Add Health Log',
+    editLog: 'Edit Health Log',
+    deleteLog: 'Delete Health Log',
+    treatmentType: 'Treatment Type',
+    medicineName: 'Medicine Name',
+    vetDoctor: 'Veterinarian / Doctor',
+    cost: 'Cost (KHR)',
+    vaccine: 'Vaccination',
+    deworming: 'Deworming',
+    checkup: 'Routine Checkup',
+    treatment: 'Treatment',
+    medicalCost: 'Medical Expense',
+    totalHealthLogs: 'Total Treatment Logs',
+    noHealthLogs: 'No medical or vaccine records found.'
+  },
+
+  // Financial Ledger & Revenue
+  finance: {
+    title: 'Feed Costs, Expenses & Revenue',
+    subtitle: 'Financial ledger for tracking cattle sales revenue, feed expenses, and farm operational costs.',
     recordSale: 'Record Cattle Sale',
+    addExpense: 'Add Expense Entry',
+    totalSalesRevenue: 'Total Sales Revenue',
+    totalExpenses: 'Total Operating Expenses',
+    netProfit: 'Net Farm Profit',
+    salesLedger: 'Sales Revenue Ledger',
+    expenseLedger: 'Operating Expenses Ledger',
+    category: 'Category',
+    amount: 'Amount (KHR)',
     unitPrice: 'Unit Price (KHR/kg)',
     totalPrice: 'Total Sale Amount',
     buyer: 'Buyer Name',
     saleType: 'Sale Basis',
     salesDate: 'Sale Date',
     weightBasis: 'Weight Basis',
-    lumpsumBasis: 'Lumpsum Basis'
+    lumpsumBasis: 'Lumpsum Basis',
+    feedExpense: 'Feed Expense',
+    vetExpense: 'Medical & Vaccine',
+    utilityExpense: 'Utilities & Power',
+    laborExpense: 'Labor & Salary',
+    otherExpense: 'Other Expenses'
   },
-  // Health & Medical
-  health: {
-    title: 'Medical & Vaccine Health Logs',
-    addLog: 'Add Health Log',
-    treatmentType: 'Treatment Type',
-    vetDoctor: 'Veterinarian / Doctor',
-    cost: 'Cost (KHR)',
-    vaccine: 'Vaccination',
-    deworming: 'Deworming',
-    checkup: 'Routine Checkup',
-    medicalCost: 'Medical Cost'
+
+  // Growth & Profit Analytics
+  analytics: {
+    title: 'Growth & Profit Analytics',
+    subtitle: 'Enterprise Business Intelligence dashboard for tracking ADG, mortality, feed costs, and ROI.',
+    overview: 'Overview Summary',
+    demographics: 'Herd Demographics',
+    batchPerformance: 'Batch Performance',
+    healthAnalytics: 'Medical & Health Insights',
+    financialPerformance: 'Financial BI Analytics',
+    herdDistribution: 'Breed Distribution',
+    healthStatusRatio: 'Health Status Breakdown',
+    weightGainTrend: 'Herd Weight Progress Trend',
+    revenueVsExpense: 'Monthly Revenue vs Expenses',
+    adgLeaderboard: 'ADG Performance Leaders'
   },
+
+  // Farms & Stall Branches
+  farms: {
+    title: 'Farms & Stall Branches',
+    subtitle: 'Manage farm locations, barn capacities, owner accounts, and staff assignments.',
+    addFarm: 'Add New Farm Branch',
+    editFarm: 'Edit Farm Branch',
+    deleteFarm: 'Delete Farm Branch',
+    farmName: 'Farm Name',
+    address: 'Location Address',
+    capacity: 'Barn Capacity',
+    ownerName: 'Farm Owner Name',
+    ownerEmail: 'Owner Email Account',
+    notes: 'Notes / Description',
+    totalFarms: 'Total Registered Farms',
+    assignedStaff: 'Assigned Staff & Vets'
+  },
+
+  // ERP Master Setup
+  settings: {
+    title: 'ERP Master Setup',
+    subtitle: 'Configure user roles, permissions, master dropdown parameters, and database backups.',
+    userManagement: 'Users & Access Control',
+    systemParams: 'System Parameters',
+    backupMigration: 'Backup & Database Sync',
+    addUser: 'Add User Account',
+    editUser: 'Edit User Account',
+    userName: 'User Name',
+    userEmail: 'Email Address',
+    userRole: 'Assigned Role',
+    permissions: 'Module Permissions'
+  },
+
   // Dashboard & Metrics
   dashboard: {
     totalHerd: 'Active Herd',
