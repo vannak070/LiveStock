@@ -6,7 +6,9 @@ export interface FeedProductItem {
   category: string; // e.g. 'Concentrate', 'Silage', 'Roughage', 'Supplement'
   unit: string; // e.g. 'bag', 'kg', 'ton'
   weightPerUnit: number; // e.g. 30 (kg per bag)
-  unitCost: number; // e.g. 2000 (៛ per kg or bag)
+  unitCost: number; // e.g. 2000 (៛ per kg)
+  costType?: 'per_bag' | 'per_kg'; // Cost entry unit preference
+  costPerBag?: number; // e.g. 60000 (៛ per bag)
   minThresholdBags: number; // Default 50 bags
   minThresholdKg: number; // Default 1500 kg (50 bags * 30 kg)
   description?: string;

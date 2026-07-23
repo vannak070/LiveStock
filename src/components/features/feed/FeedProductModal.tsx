@@ -28,6 +28,8 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
   const [category, setCategory] = useState('Concentrate');
   const [unit, setUnit] = useState('bag');
   const [weightPerUnit, setWeightPerUnit] = useState('30');
+  const [costType, setCostType] = useState<'per_bag' | 'per_kg'>('per_bag');
+  const [costPerBag, setCostPerBag] = useState('60000');
   const [unitCost, setUnitCost] = useState('2000');
   const [minThresholdBags, setMinThresholdBags] = useState('50');
   const [description, setDescription] = useState('');
@@ -42,8 +44,18 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
         setName(initialProduct.name);
         setCategory(initialProduct.category || 'Concentrate');
         setUnit(initialProduct.unit || 'bag');
-        setWeightPerUnit(String(initialProduct.weightPerUnit ?? 30));
-        setUnitCost(String(initialProduct.unitCost ?? 0));
+        const wtUnit = initialProduct.weightPerUnit ?? 30;
+        setWeightPerUnit(String(wtUnit));
+
+        const cType = initialProduct.costType || 'per_bag';
+        setCostType(cType);
+
+        const uCost = initialProduct.unitCost ?? 2000;
+        const cBag = initialProduct.costPerBag ?? (uCost * wtUnit);
+
+        setUnitCost(String(uCost));
+        setCostPerBag(String(cBag));
+
         setMinThresholdBags(String(initialProduct.minThresholdBags ?? 50));
         setDescription(initialProduct.description || '');
         setSupplier(initialProduct.supplier || '');
@@ -55,6 +67,8 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
         setCategory('Concentrate');
         setUnit('bag');
         setWeightPerUnit('30');
+        setCostType('per_bag');
+        setCostPerBag('60000');
         setUnitCost('2000');
         setMinThresholdBags('50');
         setDescription('');
@@ -64,6 +78,35 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
     }
   }, [isOpen, initialProduct]);
 
+  // Handle auto calculation when costPerBag or unitCost or weightPerUnit changes
+  const handleCostPerBagChange = (val: string) => {
+    setCostPerBag(val);
+    const bagCostVal = parseFloat(val) || 0;
+    const wt = parseFloat(weightPerUnit) || 30;
+    if (wt > 0) {
+      setUnitCost(String(Math.round(bagCostVal / wt)));
+    }
+  };
+
+  const handleUnitCostChange = (val: string) => {
+    setUnitCost(val);
+    const uCostVal = parseFloat(val) || 0;
+    const wt = parseFloat(weightPerUnit) || 30;
+    setCostPerBag(String(Math.round(uCostVal * wt)));
+  };
+
+  const handleWeightPerUnitChange = (val: string) => {
+    setWeightPerUnit(val);
+    const wt = parseFloat(val) || 30;
+    if (costType === 'per_bag') {
+      const bagCostVal = parseFloat(costPerBag) || 0;
+      if (wt > 0) setUnitCost(String(Math.round(bagCostVal / wt)));
+    } else {
+      const uCostVal = parseFloat(unitCost) || 0;
+      setCostPerBag(String(Math.round(uCostVal * wt)));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -72,6 +115,8 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
     try {
       const wtUnit = parseFloat(weightPerUnit) || 30;
       const bagsThreshold = parseFloat(minThresholdBags) || 50;
+      const uCost = parseFloat(unitCost) || 0;
+      const cBag = parseFloat(costPerBag) || (uCost * wtUnit);
 
       await onSubmit({
         id: id.trim() || `PROD-F${Date.now().toString().slice(-4)}`,
@@ -79,7 +124,9 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
         category,
         unit,
         weightPerUnit: wtUnit,
-        unitCost: parseFloat(unitCost) || 0,
+        unitCost: uCost,
+        costType,
+        costPerBag: cBag,
         minThresholdBags: bagsThreshold,
         minThresholdKg: bagsThreshold * wtUnit,
         description: description.trim(),
@@ -178,12 +225,12 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="prod_wt_unit" className="text-xs font-bold text-slate-700">Weight per Unit (kg)</Label>
+              <Label htmlFor="prod_wt_unit" className="text-xs font-bold text-slate-700">Weight per Bag (kg)</Label>
               <Input
                 type="number"
                 id="prod_wt_unit"
                 value={weightPerUnit}
-                onChange={e => setWeightPerUnit(e.target.value)}
+                onChange={e => handleWeightPerUnitChange(e.target.value)}
                 placeholder="30"
                 required
                 className="text-xs font-mono font-bold"
@@ -191,19 +238,68 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="prod_unit_cost" className="text-xs font-bold text-slate-700">Unit Cost (៛ / unit)</Label>
-              <Input
-                type="number"
-                id="prod_unit_cost"
-                value={unitCost}
-                onChange={e => setUnitCost(e.target.value)}
-                placeholder="2000"
-                required
-                className="text-xs font-mono font-bold"
-              />
+          {/* Pricing & Cost Structure Selection */}
+          <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-black text-slate-800 uppercase tracking-wider">Unit Cost Pricing Mode</Label>
+              <div className="flex bg-white p-1 rounded-xl border border-slate-200 text-xs font-bold shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => setCostType('per_bag')}
+                  className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${costType === 'per_bag' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Cost per Bag (៛ / បាវ)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCostType('per_kg')}
+                  className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${costType === 'per_kg' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  Cost per kg (៛ / គីឡូ)
+                </button>
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="prod_cost_bag" className="text-xs font-bold text-slate-700">
+                  Cost per Bag (៛ / bag) {costType === 'per_bag' && <span className="text-emerald-600 font-extrabold">(Primary)</span>}
+                </Label>
+                <Input
+                  type="number"
+                  id="prod_cost_bag"
+                  value={costPerBag}
+                  onChange={e => handleCostPerBagChange(e.target.value)}
+                  placeholder="60000"
+                  required
+                  className={`text-xs font-mono font-bold ${costType === 'per_bag' ? 'border-emerald-500 bg-white ring-2 ring-emerald-500/20' : 'bg-slate-100'}`}
+                />
+                <p className="text-[10px] text-slate-500 font-semibold">
+                  = ៛ {parseFloat(costPerBag || '0').toLocaleString()} per 30kg bag
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="prod_unit_cost" className="text-xs font-bold text-slate-700">
+                  Cost per kg (៛ / kg) {costType === 'per_kg' && <span className="text-emerald-600 font-extrabold">(Primary)</span>}
+                </Label>
+                <Input
+                  type="number"
+                  id="prod_unit_cost"
+                  value={unitCost}
+                  onChange={e => handleUnitCostChange(e.target.value)}
+                  placeholder="2000"
+                  required
+                  className={`text-xs font-mono font-bold ${costType === 'per_kg' ? 'border-emerald-500 bg-white ring-2 ring-emerald-500/20' : 'bg-slate-100'}`}
+                />
+                <p className="text-[10px] text-slate-500 font-semibold">
+                  = ៛ {parseFloat(unitCost || '0').toLocaleString()} per kg
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
             <div className="space-y-1">
               <Label htmlFor="prod_min_threshold" className="text-xs font-bold text-slate-700">Low Stock Warning (Bags)</Label>

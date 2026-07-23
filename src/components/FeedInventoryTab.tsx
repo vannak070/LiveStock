@@ -468,8 +468,11 @@ export default function FeedInventoryTab({
                       <td className="py-3.5 px-5 font-mono text-slate-700">
                         {prod.unit} ({prod.weightPerUnit} kg/unit)
                       </td>
-                      <td className="py-3.5 px-5 font-mono font-black text-slate-900">
-                        ៛ {format2DecimalsWithCommas(prod.unitCost)}
+                      <td className="py-3.5 px-5 font-mono text-slate-900">
+                        <span className="font-black text-emerald-800">៛ {format2DecimalsWithCommas(prod.costPerBag || (prod.unitCost * prod.weightPerUnit))}</span> / bag
+                        <div className="text-[10px] font-bold text-slate-400">
+                          (៛ {format2DecimalsWithCommas(prod.unitCost)} / kg)
+                        </div>
                       </td>
                       <td className="py-3.5 px-5 font-mono font-bold text-amber-700">
                         {prod.minThresholdBags || 50} bags ({format2DecimalsWithCommas(prod.minThresholdKg || 1500)} kg)
