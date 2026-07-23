@@ -28,6 +28,10 @@ export default function CowDetails({
 }: CowDetailsProps) {
   const [imageLoadError, setImageLoadError] = useState(false);
 
+  React.useEffect(() => {
+    setImageLoadError(false);
+  }, [cowId]);
+
   if (!cowId) return null;
 
   const cow = stock.find(c => c.id === cowId);
