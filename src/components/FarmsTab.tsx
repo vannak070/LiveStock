@@ -18,7 +18,7 @@ import {
   Mail,
   Lock
 } from 'lucide-react';
-import { updateSettingsAction } from '@/app/actions';
+import { updateSettingsAction, updateStockLocationAction } from '@/app/actions';
 import { MasterSetup, FarmItem, UserRoleItem, DEFAULT_ROLE_PERMISSIONS } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { ConfirmModal } from './ui/confirm-modal';
@@ -203,6 +203,10 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
       locations: updatedLocations,
       users: updatedUsers
     };
+
+    if (editingFarm && editingFarm.name !== newName) {
+      updateStockLocationAction(editingFarm.name, newName);
+    }
 
     updateSettingsMutation.mutate(updatedSettings);
     setIsAddingFarm(false);

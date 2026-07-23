@@ -76,6 +76,12 @@ export class StockService {
       return stockRepository.delete(id, client);
     });
   }
+
+  async updateStockLocation(oldLocation: string, newLocation: string): Promise<void> {
+    return withTransaction(async (client) => {
+      await stockRepository.updateLocation(oldLocation, newLocation, client);
+    });
+  }
 }
 
 export const stockService = new StockService();

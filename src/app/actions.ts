@@ -25,7 +25,8 @@ import {
   deleteWeightRecord,
   updateWeightRecord,
   deleteSalesRecord,
-  updateSalesRecord
+  updateSalesRecord,
+  updateStockLocation
 } from '@/lib/db';
 import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
 import { MasterSetup, BatchItem, HealthLogItem, ExpenseItem } from '@/lib/types';
@@ -57,6 +58,16 @@ export async function updateStockItemAction(id: string, updates: Partial<StockIt
     return { success: true, data: updated };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to update stock item' };
+  }
+}
+
+export async function updateStockLocationAction(oldLocation: string, newLocation: string) {
+  try {
+    await updateStockLocation(oldLocation, newLocation);
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to update stock location' };
   }
 }
 

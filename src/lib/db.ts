@@ -145,6 +145,20 @@ export async function deleteStockItem(cowId: string): Promise<void> {
   }
 }
 
+export async function updateStockLocation(oldLocation: string, newLocation: string): Promise<void> {
+  try {
+    await stockService.updateStockLocation(oldLocation, newLocation);
+  } catch (err) {
+    const data = getJsonDbData();
+    data.stock.forEach(c => {
+      if (c.location === oldLocation) {
+        c.location = newLocation;
+      }
+    });
+    writeJsonDbData(data);
+  }
+}
+
 // 2. Weight Tracking History
 export async function addWeightRecord(cowId: string, currentWeight: number, healthStatus: string, trackingDate?: string): Promise<WeightRecord> {
   try {
