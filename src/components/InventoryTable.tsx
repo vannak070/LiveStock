@@ -113,6 +113,16 @@ export default function InventoryTable({
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
   const paginatedStock = filteredStock.slice(indexOfFirstRow, indexOfLastRow);
 
+  const getFarmName = (locationCodeOrId?: string) => {
+    if (!locationCodeOrId || !locationCodeOrId.trim()) return 'N/A';
+    const loc = locationCodeOrId.trim();
+    const farm = farms.find(f => 
+      f.id === loc || 
+      f.name?.toLowerCase() === loc.toLowerCase()
+    );
+    return farm ? farm.name : loc;
+  };
+
   return (
     <div className="space-y-4">
       {/* Page Header */}
@@ -264,8 +274,8 @@ export default function InventoryTable({
                 <tr key={cow.id} className="hover:bg-slate-50/40 transition-colors">
                   <td className="py-3.5 px-5 font-bold text-slate-900">{cow.id}</td>
                   <td className="py-3.5 px-5 text-slate-800 font-semibold">
-                    <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2 py-0.5 rounded-lg text-xs font-extrabold text-slate-700">
-                      📍 {cow.location || 'SNR Farm'}
+                    <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-700">
+                      🏢 {getFarmName(cow.location)}
                     </span>
                   </td>
                   <td className="py-3.5 px-5 text-slate-800">{cow.breed}</td>
