@@ -1228,6 +1228,41 @@ export default function BatchTab({
                       <span className="text-teal-800 font-bold">Herd Daily Cost ({fatteningCowsInHerd.length} head)</span>
                       <span className="text-teal-800 font-bold">៛ {totalHerdDailyFeedCost.toLocaleString()}</span>
                     </div>
+
+                    {/* DSR-16 Feed Stock & Ration Link Card */}
+                    {(() => {
+                      const dsrTx = data.feedTransactions || [];
+                      const dsrIn = dsrTx.filter(t => t.type === 'STOCK_IN').reduce((sum, t) => sum + (t.quantityBags || 0), 0);
+                      const dsrOut = dsrTx.filter(t => t.type === 'STOCK_OUT').reduce((sum, t) => sum + (t.quantityBags || 0), 0);
+                      const dsrOnHandBags = Math.max(0, dsrIn - dsrOut);
+
+                      const dsrIng = feedIngredients.find(i => i.name.toLowerCase().includes('dsr-16') || i.name.toLowerCase().includes('concentrate'));
+                      const dsrPortion = Number(dsrIng?.portionPerHead || 3.5);
+                      const dailyHerdDsrKg = fatteningCowsInHerd.length * dsrPortion;
+                      const dailyHerdDsrBags = dailyHerdDsrKg / 30;
+                      const daysRemaining = dailyHerdDsrBags > 0 ? Math.floor(dsrOnHandBags / dailyHerdDsrBags) : 999;
+
+                      return (
+                        <div className={`p-3 rounded-xl border text-xs space-y-1.5 ${
+                          dsrOnHandBags <= 50 ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-slate-50 border-slate-200 text-slate-800'
+                        }`}>
+                          <div className="flex items-center justify-between font-black">
+                            <span>📦 Live DSR-16 Feed Stock</span>
+                            <span className="font-mono text-emerald-700">{dsrOnHandBags.toLocaleString()} bags ({dsrOnHandBags * 30} kg)</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+                            <span>Daily Herd Ration Rate:</span>
+                            <span className="font-mono font-bold text-slate-700">{dailyHerdDsrKg.toFixed(1)} kg/day ({dailyHerdDsrBags.toFixed(2)} bags/d)</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] font-extrabold pt-1 border-t border-slate-200/60">
+                            <span>Feed Stock Coverage:</span>
+                            <span className={`font-mono ${daysRemaining <= 7 ? 'text-rose-600 animate-pulse font-black' : 'text-emerald-700'}`}>
+                              {daysRemaining < 900 ? `~${daysRemaining} Days Remaining` : 'Stock Available'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </Card>
               </div>

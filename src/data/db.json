@@ -1989,7 +1989,16 @@
     }
   ],
   "healthLogs": [],
-  "expenses": [],
+  "expenses": [
+    {
+      "category": "Feed",
+      "amount": 8202000,
+      "date": "2026-07-23",
+      "description": "Feed Procurement: DSR-16 Fattening Feed (200 bags / 6000 kg) - Ref: TX-640152",
+      "farmLocation": "SNR Farm",
+      "id": "EXP-BCX9NSCOC"
+    }
+  ],
   "settings": {
     "farms": [
       {
@@ -2312,5 +2321,40 @@
       "Corn / grass",
       "Vaccines and medicines"
     ]
-  }
+  },
+  "feedProducts": [
+    {
+      "id": "PROD-F01",
+      "name": "DSR-16 Fattening Feed",
+      "category": "Concentrate",
+      "unit": "bag",
+      "weightPerUnit": 30,
+      "unitCost": 1367,
+      "costType": "per_bag",
+      "costPerBag": 41000,
+      "minThresholdBags": 50,
+      "minThresholdKg": 1500,
+      "description": "High-protein commercial fattening concentrate ration (30kg/bag).",
+      "supplier": "Dangkao Pang",
+      "status": "Active"
+    }
+  ],
+  "feedTransactions": [
+    {
+      "id": "TX-FEED-1784802657519",
+      "date": "2026-07-23",
+      "productId": "PROD-F01",
+      "productName": "DSR-16 Fattening Feed",
+      "type": "STOCK_IN",
+      "quantityBags": 200,
+      "quantityKg": 6000,
+      "unitCost": 1367,
+      "totalCost": 8202000,
+      "sourceFarm": "Supplier",
+      "targetFarm": "SNR Farm",
+      "referenceNo": "TX-640152",
+      "recordedBy": "SNR Farm",
+      "notes": ""
+    }
+  ]
 }

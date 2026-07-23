@@ -83,6 +83,41 @@ export default function FeedInventoryTab({
   const userFarm = currentUser?.farmLocation;
   const effectiveFarm = userFarm || selectedFarm;
 
+  // Calculate Daily Feed Ration usage for active fattening batches
+  const batchRationUsage = useMemo(() => {
+    const activeBatches = (data.batches || []).filter(b => b.status === 'Active');
+    
+    let totalDailyRationKg = 0;
+    let activeHeadcount = 0;
+
+    activeBatches.forEach(b => {
+      if (effectiveFarm && b.farmLocation && b.farmLocation !== effectiveFarm) return;
+      
+      const cattleCount = b.cowIds ? b.cowIds.length : 0;
+      activeHeadcount += cattleCount;
+
+      if (b.feedingProgram && b.feedingProgram.status === 'Active') {
+        const dsrIngredient = b.feedingProgram.ingredients?.find(i => 
+          i.name.toLowerCase().includes('dsr-16') || i.name.toLowerCase().includes('concentrate')
+        ) || b.feedingProgram.ingredients?.[0];
+
+        if (dsrIngredient) {
+          const portionKg = dsrIngredient.portionPerHead || 0;
+          totalDailyRationKg += (cattleCount * portionKg);
+        }
+      }
+    });
+
+    const totalDailyRationBags = totalDailyRationKg / 30;
+
+    return {
+      activeHeadcount,
+      activeBatchesCount: activeBatches.length,
+      totalDailyRationKg,
+      totalDailyRationBags
+    };
+  }, [data.batches, effectiveFarm]);
+
   // Compute real-time stock balances per product and per farm location
   const balances: FeedBalanceItem[] = useMemo(() => {
     const balanceMap: Record<string, { bags: number; kg: number }> = {};
@@ -248,6 +283,33 @@ export default function FeedInventoryTab({
             >
               <ArrowUpRight className="h-4 w-4" /> 📤 Stock Out
             </Button>
+          </div>
+        </div>
+
+        {/* Batch Daily Feed Ration & Stock Relationship Card */}
+        <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-left shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+              <Scale className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                ⚡ Batch Daily Feed Ration Link Active ({batchRationUsage.activeHeadcount} Active Cattle)
+              </h4>
+              <p className="text-[11px] text-emerald-800 font-semibold mt-0.5">
+                Daily Feed Consumption Rate: <strong className="text-emerald-950 font-black">{batchRationUsage.totalDailyRationKg.toLocaleString()} kg/day</strong> ({batchRationUsage.totalDailyRationBags.toFixed(2)} bags/day) across {batchRationUsage.activeBatchesCount} active fattening programs.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 bg-white px-3.5 py-2 rounded-xl border border-emerald-200 shadow-2xs">
+            <div className="text-right">
+              <p className="text-[9px] font-black uppercase text-slate-400">Stock Coverage</p>
+              <p className="text-xs font-black text-emerald-800">
+                {batchRationUsage.totalDailyRationKg > 0 
+                  ? `~${Math.floor(totalOnsiteKg / batchRationUsage.totalDailyRationKg)} Days Remaining` 
+                  : 'Sufficient Feed'}
+              </p>
+            </div>
           </div>
         </div>
 
