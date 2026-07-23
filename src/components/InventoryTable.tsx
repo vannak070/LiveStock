@@ -133,15 +133,21 @@ export default function InventoryTable({
       .sort((a, b) => {
         const timeA = a.trackingDate ? new Date(a.trackingDate).getTime() : 0;
         const timeB = b.trackingDate ? new Date(b.trackingDate).getTime() : 0;
-        return timeA - timeB;
+        if (timeA !== timeB) return timeA - timeB;
+        if (a.oldWeight === 0 && b.oldWeight !== 0) return -1;
+        if (a.oldWeight !== 0 && b.oldWeight === 0) return 1;
+        return a.currentWeight - b.currentWeight;
       });
 
     let initialWeight = cow.weight || 0;
     let currentWeight = cow.weight || 0;
 
     if (cowLogs.length > 0) {
-      initialWeight = cowLogs[0].oldWeight > 0 ? cowLogs[0].oldWeight : cowLogs[0].currentWeight;
-      currentWeight = cowLogs[cowLogs.length - 1].currentWeight;
+      const firstLog = cowLogs[0];
+      initialWeight = firstLog.oldWeight > 0 ? firstLog.oldWeight : firstLog.currentWeight;
+      
+      const lastLog = cowLogs[cowLogs.length - 1];
+      currentWeight = Math.max(lastLog.currentWeight, cow.weight || 0);
     }
 
     const weightGain = Math.round((currentWeight - initialWeight) * 10) / 10;

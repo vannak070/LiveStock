@@ -25,12 +25,12 @@ export class WeightRepository {
   }
 
   async findAll(): Promise<WeightRecord[]> {
-    const res = await query('SELECT * FROM weight_tracking ORDER BY tracking_date DESC');
+    const res = await query('SELECT * FROM weight_tracking ORDER BY tracking_date ASC, id ASC');
     return res.rows.map(row => this.mapRowToWeightRecord(row));
   }
 
   async findByCowId(cowId: string): Promise<WeightRecord[]> {
-    const res = await query('SELECT * FROM weight_tracking WHERE cow_id = $1 ORDER BY tracking_date DESC', [cowId]);
+    const res = await query('SELECT * FROM weight_tracking WHERE cow_id = $1 ORDER BY tracking_date ASC, id ASC', [cowId]);
     return res.rows.map(row => this.mapRowToWeightRecord(row));
   }
 
