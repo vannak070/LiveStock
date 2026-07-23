@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint",
     "restore-db": "npx tsx src/db/migrations/init-db.ts",
+    "safe-migrate": "npx tsx src/db/migrations/safe-migrate.ts",
     "clear-db": "npx tsx src/db/migrations/clear-production-db.ts",
     "clear-stock": "npx tsx src/db/migrations/clear-stock-only.ts",
     "deploy:setup": "bash scripts/deploy-production.sh"

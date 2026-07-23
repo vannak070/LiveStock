@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
 # Production Automated Setup Script for Cloudways / Remote Linux Server
+#
+# ⚠️  IMPORTANT – DATABASE POLICY
+#     This script NEVER runs `npm run restore-db` (init-db.ts) in production.
+#     init-db.ts seeds local test data and would WIPE the production database.
+#     Instead, `npm run safe-migrate` is used — it only creates missing
+#     tables / columns with IF NOT EXISTS and never touches existing data.
+# ─────────────────────────────────────────────────────────────────────────────
 set -e
 
 echo "=== 🚀 Livestock Management ERP Production Deployment Setup ==="
@@ -20,11 +28,9 @@ fi
 echo "[Step 2/5] Installing production dependencies..."
 npm install --production=false
 
-# 3. Database Migration & Schema Restoration
-echo "[Step 3/5] Executing PostgreSQL database migrations..."
-npm run restore-db
-npx tsx src/db/migrations/migrate-feeding-program.ts
-npx tsx src/db/migrations/migrate-user-permissions.ts
+# 3. Safe Schema-Only Migration (non-destructive — keeps all production data)
+echo "[Step 3/5] Running safe schema migrations (no data wipe)..."
+npm run safe-migrate
 
 # 4. Build Next.js Production App
 echo "[Step 4/5] Building Next.js production web application..."
@@ -40,3 +46,5 @@ echo "=== 🎉 PRODUCTION DEPLOYMENT COMPLETE! ==="
 echo "Express Backend API running on port 3002"
 echo "Next.js Frontend UI running on port 3000"
 echo "Check PM2 status with: pm2 status"
+echo ""
+echo "ℹ️  Production database was NOT modified — only missing schema was added."
