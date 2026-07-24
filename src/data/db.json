@@ -2013,6 +2013,78 @@
       "description": "Feed Procurement: DSR-16 Cow Feed (500 bags / 15000 kg) - Ref: TX-723879",
       "farmLocation": "SNR Farm",
       "id": "EXP-UUFOFZTD8"
+    },
+    {
+      "id": "EXP-20260407-001",
+      "category": "ផ្សេងៗ",
+      "amount": 119000,
+      "date": "2026-04-07",
+      "description": "ជួសជុលម៉ូតូ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-20260407-002",
+      "category": "ផ្សេងៗ",
+      "amount": 40000,
+      "date": "2026-04-07",
+      "description": "ម៉ែត្រវាស់គោ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-20260407-003",
+      "category": "ផ្សេងៗ",
+      "amount": 8000,
+      "date": "2026-04-07",
+      "description": "កាត់ទូរស័ព្ទ បង់ភ័ក",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-20260407-004",
+      "category": "ផ្សេងៗ",
+      "amount": 40000,
+      "date": "2026-04-07",
+      "description": "រត់ឯកសារ និងផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-20260407-005",
+      "category": "ផ្សេងៗ",
+      "amount": 100000,
+      "date": "2026-04-07",
+      "description": "ប៊ឺង និងផ្លែឈើ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-20260407-006",
+      "category": "ផ្សេងៗ",
+      "amount": 30000,
+      "date": "2026-04-07",
+      "description": "ទុយោទឹក",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-20260420-001",
+      "category": "ផ្សេងៗ",
+      "amount": 450000,
+      "date": "2026-04-20",
+      "description": "សាហុយ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-20260420-002",
+      "category": "ផ្សេងៗ",
+      "amount": 150000,
+      "date": "2026-04-20",
+      "description": "សេវាក្រូគោ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-20260420-003",
+      "category": "ចំណី",
+      "amount": 146000,
+      "date": "2026-04-20",
+      "description": "កន្ទក់",
+      "farmLocation": "SNR Farm"
     }
   ],
   "settings": {

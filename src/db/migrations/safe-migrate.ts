@@ -167,6 +167,7 @@ async function safeMigrate() {
         created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    await client.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS farm_location VARCHAR(100);`);
     console.log('[✓] expenses');
 
     // ── 10. feed_products & feed_transactions ─────────────────────────────────
