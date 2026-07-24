@@ -168,6 +168,30 @@ async function safeMigrate() {
     `);
     console.log('[✓] expenses');
 
+    // ── 10. feed_products & feed_transactions ─────────────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS feed_products (
+        id                 VARCHAR(50) PRIMARY KEY,
+        name               VARCHAR(100) NOT NULL,
+        category           VARCHAR(50),
+        unit               VARCHAR(20) DEFAULT 'bag',
+        weight_per_unit    NUMERIC(10,2) DEFAULT 30,
+        unit_cost          NUMERIC(15,4) DEFAULT 0,
+        cost_type          VARCHAR(20) DEFAULT 'per_bag',
+        cost_per_bag       NUMERIC(15,2) DEFAULT 0,
+        min_threshold_bags NUMERIC(10,2) DEFAULT 50,
+        min_threshold_kg   NUMERIC(10,2) DEFAULT 1500,
+        description        TEXT,
+        supplier           VARCHAR(100),
+        status             VARCHAR(20) DEFAULT 'Active',
+        created_at         TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at         TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      ALTER TABLE feed_products ADD COLUMN IF NOT EXISTS cost_type VARCHAR(20) DEFAULT 'per_bag';
+      ALTER TABLE feed_products ADD COLUMN IF NOT EXISTS cost_per_bag NUMERIC(15,2) DEFAULT 0;
+    `);
+    console.log('[✓] feed_products');
+
     // ── Indexes (CREATE INDEX IF NOT EXISTS is idempotent) ──────────────────
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_stock_status          ON stock(status)',

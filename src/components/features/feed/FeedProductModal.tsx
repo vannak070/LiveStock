@@ -84,7 +84,7 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
     const bagCostVal = parseFloat(val) || 0;
     const wt = parseFloat(weightPerUnit) || 30;
     if (wt > 0) {
-      setUnitCost(String(Math.round(bagCostVal / wt)));
+      setUnitCost(String(parseFloat((bagCostVal / wt).toFixed(4))));
     }
   };
 
@@ -92,7 +92,7 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
     setUnitCost(val);
     const uCostVal = parseFloat(val) || 0;
     const wt = parseFloat(weightPerUnit) || 30;
-    setCostPerBag(String(Math.round(uCostVal * wt)));
+    setCostPerBag(String(parseFloat((uCostVal * wt).toFixed(2))));
   };
 
   const handleWeightPerUnitChange = (val: string) => {
@@ -100,10 +100,10 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
     const wt = parseFloat(val) || 30;
     if (costType === 'per_bag') {
       const bagCostVal = parseFloat(costPerBag) || 0;
-      if (wt > 0) setUnitCost(String(Math.round(bagCostVal / wt)));
+      if (wt > 0) setUnitCost(String(parseFloat((bagCostVal / wt).toFixed(4))));
     } else {
       const uCostVal = parseFloat(unitCost) || 0;
-      setCostPerBag(String(Math.round(uCostVal * wt)));
+      setCostPerBag(String(parseFloat((uCostVal * wt).toFixed(2))));
     }
   };
 

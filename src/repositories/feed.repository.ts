@@ -38,7 +38,9 @@ export class FeedRepository {
         category VARCHAR(100) NOT NULL,
         unit VARCHAR(50) DEFAULT 'bag',
         weight_per_unit NUMERIC(10, 2) DEFAULT 30,
-        unit_cost NUMERIC(15, 2) DEFAULT 0,
+        unit_cost NUMERIC(15, 4) DEFAULT 0,
+        cost_type VARCHAR(20) DEFAULT 'per_bag',
+        cost_per_bag NUMERIC(15, 2) DEFAULT 0,
         min_threshold_bags NUMERIC(10, 2) DEFAULT 50,
         min_threshold_kg NUMERIC(10, 2) DEFAULT 1500,
         description TEXT,
@@ -46,6 +48,9 @@ export class FeedRepository {
         status VARCHAR(50) DEFAULT 'Active',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE feed_products ADD COLUMN IF NOT EXISTS cost_type VARCHAR(20) DEFAULT 'per_bag';
+      ALTER TABLE feed_products ADD COLUMN IF NOT EXISTS cost_per_bag NUMERIC(15, 2) DEFAULT 0;
 
       CREATE TABLE IF NOT EXISTS feed_transactions (
         id VARCHAR(100) PRIMARY KEY,
@@ -55,7 +60,7 @@ export class FeedRepository {
         type VARCHAR(50) NOT NULL, -- STOCK_IN | STOCK_OUT | TRANSFER
         quantity_bags NUMERIC(12, 2) DEFAULT 0,
         quantity_kg NUMERIC(12, 2) DEFAULT 0,
-        unit_cost NUMERIC(15, 2) DEFAULT 0,
+        unit_cost NUMERIC(15, 4) DEFAULT 0,
         total_cost NUMERIC(15, 2) DEFAULT 0,
         source_farm VARCHAR(255),
         target_farm VARCHAR(255),
@@ -78,35 +83,46 @@ export class FeedRepository {
   async getProducts(): Promise<FeedProductItem[]> {
     await this.ensureSchema();
     const res = await query(`SELECT * FROM feed_products ORDER BY id ASC`);
-    return res.rows.map(row => ({
-      id: String(row.id),
-      name: String(row.name),
-      category: String(row.category),
-      unit: String(row.unit),
-      weightPerUnit: parseFloat(String(row.weight_per_unit || 30)),
-      unitCost: parseFloat(String(row.unit_cost || 0)),
-      minThresholdBags: parseFloat(String(row.min_threshold_bags || 50)),
-      minThresholdKg: parseFloat(String(row.min_threshold_kg || 1500)),
-      description: row.description ? String(row.description) : undefined,
-      supplier: row.supplier ? String(row.supplier) : undefined,
-      status: row.status === 'Inactive' ? 'Inactive' : 'Active',
-      createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined
-    }));
+    return res.rows.map(row => {
+      const wtUnit = parseFloat(String(row.weight_per_unit || 30));
+      const uCost = parseFloat(String(row.unit_cost || 0));
+      const cBagRaw = parseFloat(String(row.cost_per_bag || 0));
+      const cBag = cBagRaw > 0 ? cBagRaw : (uCost * wtUnit);
+
+      return {
+        id: String(row.id),
+        name: String(row.name),
+        category: String(row.category),
+        unit: String(row.unit),
+        weightPerUnit: wtUnit,
+        unitCost: uCost,
+        costType: (row.cost_type as 'per_bag' | 'per_kg') || 'per_bag',
+        costPerBag: cBag,
+        minThresholdBags: parseFloat(String(row.min_threshold_bags || 50)),
+        minThresholdKg: parseFloat(String(row.min_threshold_kg || 1500)),
+        description: row.description ? String(row.description) : undefined,
+        supplier: row.supplier ? String(row.supplier) : undefined,
+        status: row.status === 'Inactive' ? 'Inactive' : 'Active',
+        createdAt: row.created_at ? new Date(row.created_at).toISOString() : undefined
+      };
+    });
   }
 
   async saveProduct(product: FeedProductItem, client?: PoolClient): Promise<FeedProductItem> {
     await this.ensureSchema();
     const sql = `
       INSERT INTO feed_products (
-        id, name, category, unit, weight_per_unit, unit_cost, 
+        id, name, category, unit, weight_per_unit, unit_cost, cost_type, cost_per_bag,
         min_threshold_bags, min_threshold_kg, description, supplier, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         category = EXCLUDED.category,
         unit = EXCLUDED.unit,
         weight_per_unit = EXCLUDED.weight_per_unit,
         unit_cost = EXCLUDED.unit_cost,
+        cost_type = EXCLUDED.cost_type,
+        cost_per_bag = EXCLUDED.cost_per_bag,
         min_threshold_bags = EXCLUDED.min_threshold_bags,
         min_threshold_kg = EXCLUDED.min_threshold_kg,
         description = EXCLUDED.description,
@@ -120,6 +136,8 @@ export class FeedRepository {
       product.unit || 'bag',
       product.weightPerUnit || 30,
       product.unitCost || 0,
+      product.costType || 'per_bag',
+      product.costPerBag || (product.unitCost || 0) * (product.weightPerUnit || 30),
       product.minThresholdBags || 50,
       product.minThresholdKg || (product.minThresholdBags || 50) * (product.weightPerUnit || 30),
       product.description || null,
