@@ -124,8 +124,9 @@ async function safeMigrate() {
         created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    // feeding_program column added in later migration
+    // feeding_program & expected_selling_price columns added in later migration
     await client.query(`ALTER TABLE batches ADD COLUMN IF NOT EXISTS feeding_program JSONB DEFAULT NULL;`);
+    await client.query(`ALTER TABLE batches ADD COLUMN IF NOT EXISTS expected_selling_price NUMERIC DEFAULT NULL;`);
     console.log('[✓] batches');
 
     // ── 7. batch_cows ─────────────────────────────────────────────────────────

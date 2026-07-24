@@ -38,6 +38,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
   const [status, setStatus] = useState<'Active' | 'Closed'>('Active');
   const [farmLocation, setFarmLocation] = useState(currentUser?.farmLocation || '');
   const [notes, setNotes] = useState('');
+  const [expectedSellingPrice, setExpectedSellingPrice] = useState<string>('');
   const [selectedCowIds, setSelectedCowIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,6 +52,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         setStatus(initialBatch.status || 'Active');
         setFarmLocation(initialBatch.farmLocation || currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : ''));
         setNotes(initialBatch.notes || '');
+        setExpectedSellingPrice(initialBatch.expectedSellingPrice ? String(initialBatch.expectedSellingPrice) : '');
         setSelectedCowIds([]);
       } else {
         const randomSuffix = Math.floor(100 + Math.random() * 900);
@@ -61,6 +63,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         setStatus('Active');
         setFarmLocation(currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : ''));
         setNotes('');
+        setExpectedSellingPrice('');
         setSelectedCowIds([]);
       }
     }
@@ -101,7 +104,8 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         status,
         notes,
         farmLocation: farmLocation || initialBatch?.farmLocation || currentUser?.farmLocation || undefined,
-        feedingProgram: initialBatch?.feedingProgram || (type === 'Fattening Program' ? defaultFeeding : undefined)
+        feedingProgram: initialBatch?.feedingProgram || (type === 'Fattening Program' ? defaultFeeding : undefined),
+        expectedSellingPrice: expectedSellingPrice ? Number(expectedSellingPrice) : undefined
       }, selectedCowIds);
 
       onClose();
@@ -230,6 +234,18 @@ export const BatchModal: React.FC<BatchModalProps> = ({
                 <option value="Active">Active</option>
                 <option value="Closed">Closed</option>
               </select>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="batch_price" className="text-xs font-bold text-slate-700">Expected Selling Price (៛) / តម្លៃលក់រំពឹងទុក</Label>
+              <Input
+                type="number"
+                id="batch_price"
+                value={expectedSellingPrice}
+                onChange={e => setExpectedSellingPrice(e.target.value)}
+                placeholder="ឧទាហរណ៍៖ 25,000,000"
+                className="text-xs font-bold font-mono"
+              />
             </div>
           </div>
 

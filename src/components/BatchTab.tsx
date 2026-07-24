@@ -887,7 +887,7 @@ export default function BatchTab({
           </div>
 
           {/* KPI Dashboard Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-left">
             <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
               <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Cattle In Fattening</p>
               <p className="text-2xl font-black text-slate-800 mt-1">
@@ -907,6 +907,12 @@ export default function BatchTab({
               <p className="text-2xl font-black text-slate-800 mt-1">
                 {format2Decimals(avgBiomass)}{' '}
                 <span className="text-xs font-bold text-slate-500">kg</span>
+              </p>
+            </div>
+            <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
+              <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Expected Selling Price</p>
+              <p className="text-2xl font-black text-emerald-600 mt-1">
+                {defaultBatch?.expectedSellingPrice ? `៛ ${format2DecimalsWithCommas(defaultBatch.expectedSellingPrice)}` : 'Not Set'}
               </p>
             </div>
             <div className="bg-gradient-to-br from-emerald-50/20 to-teal-50/25 border border-emerald-100/50 p-4.5 rounded-2xl shadow-xs animate-pulse">

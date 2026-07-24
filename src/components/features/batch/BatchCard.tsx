@@ -53,6 +53,13 @@ export const BatchCard: React.FC<BatchCardProps> = ({ batch, assignedCows, isSel
         </div>
       </div>
 
+      {batch.expectedSellingPrice ? (
+        <div className="mt-2.5 pt-2 border-t border-stone-800/40 text-xs flex items-center justify-between">
+          <span className="text-stone-400 text-[11px]">Expected Price (តម្លៃរំពឹងទុក):</span>
+          <span className="font-mono font-bold text-emerald-400">៛ {Number(batch.expectedSellingPrice).toLocaleString()}</span>
+        </div>
+      ) : null}
+
       <div className="mt-3 flex items-center justify-between text-xs text-stone-400 pt-2 border-t border-stone-800/40">
         <span className="flex items-center gap-1">
           <Calendar className="w-3.5 h-3.5 text-stone-500" />

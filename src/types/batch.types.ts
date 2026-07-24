@@ -23,4 +23,5 @@ export interface BatchItem {
   notes?: string;
   feedingProgram?: FeedingProgramConfig;
   farmLocation?: string;
+  expectedSellingPrice?: number;
 }
