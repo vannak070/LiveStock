@@ -81,21 +81,41 @@ export default function FinanceTab({
   const [salesPage, setSalesPage] = useState(1);
   const [salesPageSize, setSalesPageSize] = useState(10);
 
-  // Date Range Filter States
+  // Date & Category & Amount Range Filter States
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [minAmount, setMinAmount] = useState<string>('');
+  const [maxAmount, setMaxAmount] = useState<string>('');
 
-  // Reset page when farm or date filter changes
+  // Extract unique categories from expense items
+  const expenseCategories = React.useMemo(() => {
+    const cats = data.expenses.map(e => e.category).filter(Boolean);
+    return Array.from(new Set(cats));
+  }, [data.expenses]);
+
+  // Reset page when farm or filters change
   React.useEffect(() => {
     setExpensePage(1);
     setSalesPage(1);
-  }, [selectedFarm, startDate, endDate, expensePageSize, salesPageSize]);
+  }, [selectedFarm, startDate, endDate, selectedCategory, minAmount, maxAmount, expensePageSize, salesPageSize]);
 
-  // Farm & Date filtered data for display
+  // Farm & Date & Category & Amount Range filtered data for display
   const farmFilteredExpenses = React.useMemo(() => {
     let list = data.expenses;
     if (selectedFarm) {
       list = list.filter(e => e.farmLocation === selectedFarm);
+    }
+    if (selectedCategory && selectedCategory !== 'all') {
+      list = list.filter(e => e.category === selectedCategory);
+    }
+    if (minAmount) {
+      const min = parseFloat(minAmount);
+      if (!isNaN(min)) list = list.filter(e => (e.amount || 0) >= min);
+    }
+    if (maxAmount) {
+      const max = parseFloat(maxAmount);
+      if (!isNaN(max)) list = list.filter(e => (e.amount || 0) <= max);
     }
     if (startDate || endDate) {
       list = list.filter(e => {
@@ -107,7 +127,7 @@ export default function FinanceTab({
       });
     }
     return list;
-  }, [data.expenses, selectedFarm, startDate, endDate]);
+  }, [data.expenses, selectedFarm, startDate, endDate, selectedCategory, minAmount, maxAmount]);
 
   const farmFilteredSales = React.useMemo(() => {
     let list = data.salesTracking;
@@ -382,6 +402,48 @@ export default function FinanceTab({
           <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
             <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-mono">Expense Transactions</h4>
             <div className="flex items-center gap-2 flex-wrap">
+              {/* Category Filter Dropdown */}
+              <select
+                value={selectedCategory}
+                onChange={e => setSelectedCategory(e.target.value)}
+                className="h-8 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+              >
+                <option value="all">Filter: All Categories ({data.expenses.length})</option>
+                {expenseCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+
+              {/* Amount Range Filter Inputs */}
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2 py-0.5">
+                <span className="text-[10px] font-extrabold uppercase text-slate-400">Min ៛</span>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={minAmount}
+                  onChange={e => setMinAmount(e.target.value)}
+                  className="w-20 h-7 bg-white border border-slate-200 rounded-lg px-2 text-xs font-mono font-bold text-slate-800 focus:outline-none"
+                />
+                <span className="text-[10px] font-extrabold uppercase text-slate-400">Max ៛</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxAmount}
+                  onChange={e => setMaxAmount(e.target.value)}
+                  className="w-24 h-7 bg-white border border-slate-200 rounded-lg px-2 text-xs font-mono font-bold text-slate-800 focus:outline-none"
+                />
+                {(minAmount || maxAmount || selectedCategory !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => { setMinAmount(''); setMaxAmount(''); setSelectedCategory('all'); }}
+                    className="text-[10px] font-extrabold text-slate-400 hover:text-rose-600 px-1 cursor-pointer"
+                    title="Clear Category & Amount Range Filters"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
               <DateRangeFilterBar
                 startDate={startDate}
                 endDate={endDate}
