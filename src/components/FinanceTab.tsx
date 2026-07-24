@@ -15,6 +15,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
 import { exportToExcel } from '@/lib/excel-export';
+import { DateRangeFilterBar } from './common/DateRangeFilterBar';
 
 interface FinanceTabProps {
   data: ERPLivestockData;
@@ -80,23 +81,51 @@ export default function FinanceTab({
   const [salesPage, setSalesPage] = useState(1);
   const [salesPageSize, setSalesPageSize] = useState(10);
 
-  // Reset page when farm filter changes
+  // Date Range Filter States
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Reset page when farm or date filter changes
   React.useEffect(() => {
     setExpensePage(1);
     setSalesPage(1);
-  }, [selectedFarm, expensePageSize, salesPageSize]);
+  }, [selectedFarm, startDate, endDate, expensePageSize, salesPageSize]);
 
-  // Farm-filtered data for display
+  // Farm & Date filtered data for display
   const farmFilteredExpenses = React.useMemo(() => {
-    if (!selectedFarm) return data.expenses;
-    return data.expenses.filter(e => e.farmLocation === selectedFarm);
-  }, [data.expenses, selectedFarm]);
+    let list = data.expenses;
+    if (selectedFarm) {
+      list = list.filter(e => e.farmLocation === selectedFarm);
+    }
+    if (startDate || endDate) {
+      list = list.filter(e => {
+        if (!e.date) return true;
+        const d = e.date.split('T')[0];
+        if (startDate && d < startDate) return false;
+        if (endDate && d > endDate) return false;
+        return true;
+      });
+    }
+    return list;
+  }, [data.expenses, selectedFarm, startDate, endDate]);
 
   const farmFilteredSales = React.useMemo(() => {
-    if (!selectedFarm) return data.salesTracking;
-    const stockIds = data.stock.filter(s => s.location === selectedFarm).map(s => s.id);
-    return data.salesTracking.filter(s => stockIds.includes(s.cowId));
-  }, [data.salesTracking, data.stock, selectedFarm]);
+    let list = data.salesTracking;
+    if (selectedFarm) {
+      const stockIds = data.stock.filter(s => s.location === selectedFarm).map(s => s.id);
+      list = list.filter(s => stockIds.includes(s.cowId));
+    }
+    if (startDate || endDate) {
+      list = list.filter(s => {
+        if (!s.salesDate) return true;
+        const d = s.salesDate.split('T')[0];
+        if (startDate && d < startDate) return false;
+        if (endDate && d > endDate) return false;
+        return true;
+      });
+    }
+    return list;
+  }, [data.salesTracking, data.stock, selectedFarm, startDate, endDate]);
 
   const farmFilteredStock = React.useMemo(() => {
     if (!selectedFarm) return data.stock;
@@ -350,29 +379,38 @@ export default function FinanceTab({
       ) : ledgerView === 'expenses' ? (
         /* Expenses Table Ledger */
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+          <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
             <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-mono">Expense Transactions</h4>
-            <Button
-              type="button"
-              onClick={() => {
-                exportToExcel({
-                  filename: `LiveStock_Expense_Ledger_${new Date().toISOString().split('T')[0]}.xlsx`,
-                  sheetName: 'Expenses Ledger',
-                  data: farmFilteredExpenses,
-                  columns: [
-                    { header: 'Expense ID', key: 'id' },
-                    { header: 'Category', key: 'category' },
-                    { header: 'Transaction Date', key: 'date', formatter: (val) => val ? new Date(val).toLocaleDateString() : 'N/A' },
-                    { header: 'Description Detail', key: 'description' },
-                    { header: 'Farm Location', key: 'farmLocation', formatter: (val) => val || 'Global' },
-                    { header: 'Amount (៛)', key: 'amount', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` }
-                  ]
-                });
-              }}
-              className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
-            >
-              <Download className="h-3.5 w-3.5" /> Export Excel
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <DateRangeFilterBar
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onResetDates={() => { setStartDate(''); setEndDate(''); }}
+              />
+              <Button
+                type="button"
+                onClick={() => {
+                  exportToExcel({
+                    filename: `LiveStock_Expense_Ledger_${new Date().toISOString().split('T')[0]}.xlsx`,
+                    sheetName: 'Expenses Ledger',
+                    data: farmFilteredExpenses,
+                    columns: [
+                      { header: 'Expense ID', key: 'id' },
+                      { header: 'Category', key: 'category' },
+                      { header: 'Transaction Date', key: 'date', formatter: (val) => val ? new Date(val).toLocaleDateString() : 'N/A' },
+                      { header: 'Description Detail', key: 'description' },
+                      { header: 'Farm Location', key: 'farmLocation', formatter: (val) => val || 'Global' },
+                      { header: 'Amount (៛)', key: 'amount', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` }
+                    ]
+                  });
+                }}
+                className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+              >
+                <Download className="h-3.5 w-3.5" /> Export Excel
+              </Button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
@@ -483,7 +521,14 @@ export default function FinanceTab({
           <div>
             <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
               <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-mono">Gross Sales Revenue Ledger</h4>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <DateRangeFilterBar
+                  startDate={startDate}
+                  endDate={endDate}
+                  onStartDateChange={setStartDate}
+                  onEndDateChange={setEndDate}
+                  onResetDates={() => { setStartDate(''); setEndDate(''); }}
+                />
                 <Button
                   type="button"
                   onClick={() => {

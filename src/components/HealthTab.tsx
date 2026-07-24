@@ -13,6 +13,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
 import { exportToExcel } from '@/lib/excel-export';
+import { DateRangeFilterBar } from './common/DateRangeFilterBar';
 
 interface HealthTabProps {
   data: ERPLivestockData;
@@ -29,12 +30,17 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
   const [selectedCohortId, setSelectedCohortId] = useState<string>('all');
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
 
+  // Date Range Filter State
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCohortId, selectedFarm, pageSize]);
+  }, [selectedCohortId, selectedFarm, startDate, endDate, pageSize]);
 
   const userFarmLocation = currentUser?.farmLocation;
   const activeFarm = selectedFarm || userFarmLocation;
@@ -51,21 +57,35 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
     return map;
   }, [data.stock, data.healthLogs]);
 
-  // Filter health logs by selected or user farm
+  // Filter health logs by selected farm and date range
   const farmFilteredHealthLogs = React.useMemo(() => {
-    if (!activeFarm) return data.healthLogs;
-    const matchesFarm = (loc?: string) => {
-      if (!loc) return false;
-      const l = loc.trim().toLowerCase();
-      const f = activeFarm.trim().toLowerCase();
-      if (l === f) return true;
-      if ((f === 'រទាំង' || f.includes('snr')) && (l === 'រទាំង' || l.includes('snr'))) return true;
-      return false;
-    };
+    let list = data.healthLogs;
+    if (activeFarm) {
+      const matchesFarm = (loc?: string) => {
+        if (!loc) return false;
+        const l = loc.trim().toLowerCase();
+        const f = activeFarm.trim().toLowerCase();
+        if (l === f) return true;
+        if ((f === 'រទាំង' || f.includes('snr')) && (l === 'រទាំង' || l.includes('snr'))) return true;
+        return false;
+      };
 
-    const stockIds = data.stock.filter(s => matchesFarm(s.location)).map(s => s.id);
-    return data.healthLogs.filter(log => stockIds.includes(log.cowId));
-  }, [data.healthLogs, data.stock, selectedFarm, userFarmLocation]);
+      const stockIds = data.stock.filter(s => matchesFarm(s.location)).map(s => s.id);
+      list = list.filter(log => stockIds.includes(log.cowId));
+    }
+
+    if (startDate || endDate) {
+      list = list.filter(log => {
+        if (!log.date) return true;
+        const d = log.date.split('T')[0];
+        if (startDate && d < startDate) return false;
+        if (endDate && d > endDate) return false;
+        return true;
+      });
+    }
+
+    return list;
+  }, [data.healthLogs, data.stock, selectedFarm, userFarmLocation, startDate, endDate]);
 
   // Active cows scoped strictly to current farm for farm owners
   const activeCows = React.useMemo(() => {
@@ -360,7 +380,7 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
             <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">Veterinary Treatment Ledger</h4>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <select
                 value={selectedCohortId}
                 onChange={e => setSelectedCohortId(e.target.value)}
@@ -371,6 +391,13 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
                   <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
                 ))}
               </select>
+              <DateRangeFilterBar
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onResetDates={() => { setStartDate(''); setEndDate(''); }}
+              />
               <Button
                 type="button"
                 onClick={() => {

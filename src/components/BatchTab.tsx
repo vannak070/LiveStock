@@ -15,6 +15,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
 import { exportToExcel } from '@/lib/excel-export';
+import { DateRangeFilterBar } from './common/DateRangeFilterBar';
 
 interface BatchTabProps {
   data: ERPLivestockData;
@@ -114,6 +115,10 @@ export default function BatchTab({
   // Local tab views inside default batch
   const [subView, setSubView] = useState<'members' | 'feed' | 'report'>('members');
   const [isScalingOpen, setIsScalingOpen] = useState(false);
+  
+  // ADG Growth Report Date Range Filter State
+  const [reportStartDate, setReportStartDate] = useState('');
+  const [reportEndDate, setReportEndDate] = useState('');
 
   // Dynamic Feeding Program Form States
   const DEFAULT_INGREDIENTS = [
@@ -1424,9 +1429,10 @@ export default function BatchTab({
               const diffTime = Math.abs(today.getTime() - batchStart.getTime());
               const daysInBatch = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
-              const reportData = fatteningCowsInHerd.map(cow => {
+              const rawReportData = fatteningCowsInHerd.map(cow => {
                 const cowRecords = data.weightTracking.filter(r => r.cowId === cow.id);
                 const sortedRecords = [...cowRecords].sort((a, b) => new Date(a.trackingDate || '').getTime() - new Date(b.trackingDate || '').getTime());
+                const latestRecordDate = sortedRecords.length > 0 ? sortedRecords[sortedRecords.length - 1].trackingDate : null;
 
                 // Check if any weight record has been logged for this cow in this batch
                 const hasWeightLogs = sortedRecords.length > 0;
@@ -1446,8 +1452,18 @@ export default function BatchTab({
                   gain,
                   adg,
                   hasWeightLogs,
-                  daysInBatch
+                  daysInBatch,
+                  latestRecordDate
                 };
+              });
+
+              const reportData = rawReportData.filter(item => {
+                if (!reportStartDate && !reportEndDate) return true;
+                const d = item.latestRecordDate ? item.latestRecordDate.split('T')[0] : (item.cow.purchaseDate ? item.cow.purchaseDate.split('T')[0] : null);
+                if (!d) return true;
+                if (reportStartDate && d < reportStartDate) return false;
+                if (reportEndDate && d > reportEndDate) return false;
+                return true;
               });
 
               const hasAnyWeightLogs = reportData.some(r => r.hasWeightLogs);
@@ -1494,32 +1510,41 @@ export default function BatchTab({
                   </div>
 
                   {/* Report Table */}
-                  <div className="flex justify-between items-center bg-slate-50 border border-slate-200/70 p-2.5 rounded-2xl">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50 border border-slate-200/70 p-2.5 rounded-2xl">
                     <span className="text-xs font-black uppercase tracking-wider text-slate-700 pl-1">
                       📊 ADG Growth Performance Report
                     </span>
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        exportToExcel({
-                          filename: `LiveStock_ADG_Growth_Report_${(defaultBatch?.name || 'Fattening').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`,
-                          sheetName: 'ADG Growth Performance',
-                          data: reportData,
-                          columns: [
-                            { header: 'Cow ID', key: 'cow.id' },
-                            { header: 'Breed', key: 'cow.breed' },
-                            { header: 'Initial Weight (kg)', key: 'initialWeight', formatter: (val) => format2Decimals(val) },
-                            { header: 'Current Weight (kg)', key: 'currentWeight', formatter: (val) => format2Decimals(val) },
-                            { header: 'Net Gain (kg)', key: 'gain', formatter: (val) => val >= 0 ? `+${format2Decimals(val)}` : format2Decimals(val) },
-                            { header: 'ADG (kg/day)', key: 'adg', formatter: (val) => format2Decimals(val) },
-                            { header: 'Performance Status', key: 'adg', formatter: (val) => val >= 1.0 ? 'Top Performer (Optimal)' : val >= 0.5 ? 'Normal Growth' : 'Under Performer (Low)' }
-                          ]
-                        });
-                      }}
-                      className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
-                    >
-                      <Download className="h-3.5 w-3.5" /> Export Excel
-                    </Button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <DateRangeFilterBar
+                        startDate={reportStartDate}
+                        endDate={reportEndDate}
+                        onStartDateChange={setReportStartDate}
+                        onEndDateChange={setReportEndDate}
+                        onResetDates={() => { setReportStartDate(''); setReportEndDate(''); }}
+                      />
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          exportToExcel({
+                            filename: `LiveStock_ADG_Growth_Report_${(defaultBatch?.name || 'Fattening').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`,
+                            sheetName: 'ADG Growth Performance',
+                            data: reportData,
+                            columns: [
+                              { header: 'Cow ID', key: 'cow.id' },
+                              { header: 'Breed', key: 'cow.breed' },
+                              { header: 'Initial Weight (kg)', key: 'initialWeight', formatter: (val) => format2Decimals(val) },
+                              { header: 'Current Weight (kg)', key: 'currentWeight', formatter: (val) => format2Decimals(val) },
+                              { header: 'Net Gain (kg)', key: 'gain', formatter: (val) => val >= 0 ? `+${format2Decimals(val)}` : format2Decimals(val) },
+                              { header: 'ADG (kg/day)', key: 'adg', formatter: (val) => format2Decimals(val) },
+                              { header: 'Performance Status', key: 'adg', formatter: (val) => val >= 1.0 ? 'Top Performer (Optimal)' : val >= 0.5 ? 'Normal Growth' : 'Under Performer (Low)' }
+                            ]
+                          });
+                        }}
+                        className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+                      >
+                        <Download className="h-3.5 w-3.5" /> Export Excel
+                      </Button>
+                    </div>
                   </div>
                   <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-xs">
                     <div className="overflow-x-auto">

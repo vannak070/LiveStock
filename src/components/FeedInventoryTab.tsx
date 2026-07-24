@@ -39,6 +39,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
 import { exportToExcel } from '@/lib/excel-export';
+import { DateRangeFilterBar } from './common/DateRangeFilterBar';
 
 interface FeedInventoryTabProps {
   data: ERPLivestockData;
@@ -286,6 +287,10 @@ export default function FeedInventoryTab({
     return matchesSearch && matchesCategory;
   });
 
+  // Date Range Filter State for Movement Ledger
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const filteredTransactions = transactions.filter(t => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch = !q || 
@@ -294,7 +299,15 @@ export default function FeedInventoryTab({
       (t.targetFarm && t.targetFarm.toLowerCase().includes(q)) ||
       (t.referenceNo && t.referenceNo.toLowerCase().includes(q));
     const matchesFarm = !effectiveFarm || t.sourceFarm === effectiveFarm || t.targetFarm === effectiveFarm;
-    return matchesSearch && matchesFarm;
+
+    let matchesDate = true;
+    if (t.date) {
+      const txDate = t.date.split('T')[0];
+      if (startDate && txDate < startDate) matchesDate = false;
+      if (endDate && txDate > endDate) matchesDate = false;
+    }
+
+    return matchesSearch && matchesFarm && matchesDate;
   });
 
   // Paginated Slices
@@ -819,33 +832,42 @@ export default function FeedInventoryTab({
       {/* SubView 3: Transaction Movement Ledger & Reports */}
       {subView === 'transactions' && (
         <div className="space-y-3">
-          <div className="flex justify-between items-center bg-slate-50 border border-slate-200/70 p-2.5 rounded-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50 border border-slate-200/70 p-2.5 rounded-2xl">
             <span className="text-xs font-black uppercase tracking-wider text-slate-700 pl-1">
               🚚 Feed Stock Movement Ledger
             </span>
-            <Button
-              type="button"
-              onClick={() => {
-                exportToExcel({
-                  filename: `LiveStock_Feed_Transactions_${new Date().toISOString().split('T')[0]}.xlsx`,
-                  sheetName: 'Stock Movement Ledger',
-                  data: filteredTransactions,
-                  columns: [
-                    { header: 'Ref # / Tx ID', key: 'referenceNo', formatter: (val, row) => val || row.id },
-                    { header: 'Date', key: 'date', formatter: (val) => val ? val.split('T')[0] : 'N/A' },
-                    { header: 'Type', key: 'type' },
-                    { header: 'Product Name', key: 'productName' },
-                    { header: 'Quantity (Bags)', key: 'quantityBags' },
-                    { header: 'Quantity (kg)', key: 'quantityKg', formatter: (val) => format2DecimalsWithCommas(val) },
-                    { header: 'Source / Target Farm', key: 'targetFarm', formatter: (val, row) => val || row.sourceFarm || 'Farm Warehouse' },
-                    { header: 'Total Cost (៛)', key: 'totalCost', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` }
-                  ]
-                });
-              }}
-              className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
-            >
-              <Download className="h-3.5 w-3.5" /> Export Excel
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <DateRangeFilterBar
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onResetDates={() => { setStartDate(''); setEndDate(''); }}
+              />
+              <Button
+                type="button"
+                onClick={() => {
+                  exportToExcel({
+                    filename: `LiveStock_Feed_Transactions_${new Date().toISOString().split('T')[0]}.xlsx`,
+                    sheetName: 'Stock Movement Ledger',
+                    data: filteredTransactions,
+                    columns: [
+                      { header: 'Ref # / Tx ID', key: 'referenceNo', formatter: (val, row) => val || row.id },
+                      { header: 'Date', key: 'date', formatter: (val) => val ? val.split('T')[0] : 'N/A' },
+                      { header: 'Type', key: 'type' },
+                      { header: 'Product Name', key: 'productName' },
+                      { header: 'Quantity (Bags)', key: 'quantityBags' },
+                      { header: 'Quantity (kg)', key: 'quantityKg', formatter: (val) => format2DecimalsWithCommas(val) },
+                      { header: 'Source / Target Farm', key: 'targetFarm', formatter: (val, row) => val || row.sourceFarm || 'Farm Warehouse' },
+                      { header: 'Total Cost (៛)', key: 'totalCost', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` }
+                    ]
+                  });
+                }}
+                className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+              >
+                <Download className="h-3.5 w-3.5" /> Export Excel
+              </Button>
+            </div>
           </div>
           <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
             <div className="overflow-x-auto">

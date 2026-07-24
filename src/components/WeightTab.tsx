@@ -12,6 +12,7 @@ import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission } from '@/lib/utils';
 import FarmFilterBar from './FarmFilterBar';
 import { exportToExcel } from '@/lib/excel-export';
+import { DateRangeFilterBar } from './common/DateRangeFilterBar';
 
 interface WeightTabProps {
   data: ERPLivestockData;
@@ -63,12 +64,28 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
     return cohorts.find(b => b.cowIds.includes(cowId));
   };
 
+  // Date Range Filter State
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   // Sort weight tracking logs chronologically (newest first)
   const farmFilteredWeightLogs = React.useMemo(() => {
-    if (!selectedFarm) return data.weightTracking;
-    const stockIds = data.stock.filter(s => s.location === selectedFarm).map(s => s.id);
-    return data.weightTracking.filter(log => stockIds.includes(log.cowId));
-  }, [data.weightTracking, data.stock, selectedFarm]);
+    let list = data.weightTracking;
+    if (selectedFarm) {
+      const stockIds = data.stock.filter(s => s.location === selectedFarm).map(s => s.id);
+      list = list.filter(log => stockIds.includes(log.cowId));
+    }
+    if (startDate || endDate) {
+      list = list.filter(log => {
+        if (!log.trackingDate) return true;
+        const d = log.trackingDate.split('T')[0];
+        if (startDate && d < startDate) return false;
+        if (endDate && d > endDate) return false;
+        return true;
+      });
+    }
+    return list;
+  }, [data.weightTracking, data.stock, selectedFarm, startDate, endDate]);
 
   const recentLogs = [...farmFilteredWeightLogs].sort((a, b) => {
     const timeA = a.trackingDate ? new Date(a.trackingDate).getTime() : 0;
@@ -290,7 +307,7 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
 
         {/* Right Column: Recent logs feed */}
         <div className="lg:col-span-1 bg-white border border-slate-100 p-6 rounded-2xl space-y-4 shadow-sm">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <ClipboardList className="h-4.5 w-4.5 text-emerald-600" />
               <div>
@@ -298,6 +315,14 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Chronological developmental logs</p>
               </div>
             </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <DateRangeFilterBar
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onResetDates={() => { setStartDate(''); setEndDate(''); }}
+              />
             <Button
               type="button"
               onClick={() => {
@@ -320,6 +345,7 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
             >
               <Download className="h-3 w-3" /> Export Excel
             </Button>
+            </div>
           </div>
 
           <div className="overflow-y-auto max-h-[360px] divide-y divide-slate-100 pr-1">

@@ -11,6 +11,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
 import { exportToExcel } from '@/lib/excel-export';
+import { DateRangeFilterBar } from './common/DateRangeFilterBar';
 
 interface InventoryTableProps {
   stock: StockItem[];
@@ -55,6 +56,10 @@ export default function InventoryTable({
   const [selectedBreed, setSelectedBreed] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState<'Active' | 'Sold' | 'All'>('Active');
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
+
+  // Date Range Filter State
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -103,14 +108,24 @@ export default function InventoryTable({
         (item.ownerName && item.ownerName.toLowerCase().includes(search.toLowerCase())) ||
         (item.location && item.location.toLowerCase().includes(search.toLowerCase()));
       const matchesBreed = selectedBreed === 'All' || item.breed === selectedBreed;
-      return matchesSearch && matchesBreed;
+
+      // Date Range Filter Check
+      let matchesDate = true;
+      const itemDateStr = item.purchaseDate || (item as any).createdAt;
+      if (itemDateStr) {
+        const itemDate = itemDateStr.split('T')[0];
+        if (startDate && itemDate < startDate) matchesDate = false;
+        if (endDate && itemDate > endDate) matchesDate = false;
+      }
+
+      return matchesSearch && matchesBreed && matchesDate;
     });
-  }, [sortedStock, search, selectedBreed]);
+  }, [sortedStock, search, selectedBreed, startDate, endDate]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedBreed, selectedStatus, selectedFarm, pageSize]);
+  }, [search, selectedBreed, selectedStatus, selectedFarm, startDate, endDate, pageSize]);
 
   // Compute pagination bounds
   const indexOfLastRow = currentPage * pageSize;
@@ -255,7 +270,7 @@ export default function InventoryTable({
           </div>
 
           {/* Reset Filters */}
-          {(search || selectedBreed !== 'All' || selectedStatus !== 'Active') && (
+          {(search || selectedBreed !== 'All' || selectedStatus !== 'Active' || startDate || endDate) && (
             <Button
               variant="outline"
               size="sm"
@@ -263,12 +278,23 @@ export default function InventoryTable({
                 setSearch('');
                 setSelectedBreed('All');
                 setSelectedStatus('Active');
+                setStartDate('');
+                setEndDate('');
               }}
               className="h-8 text-xs gap-1 rounded-xl border-slate-200"
             >
               <RefreshCcw className="h-3 w-3" /> Reset
             </Button>
           )}
+
+          {/* Date Range Filter */}
+          <DateRangeFilterBar
+            startDate={startDate}
+            endDate={endDate}
+            onStartDateChange={setStartDate}
+            onEndDateChange={setEndDate}
+            onResetDates={() => { setStartDate(''); setEndDate(''); }}
+          />
 
           {/* Export Excel Button */}
           <Button
@@ -326,6 +352,9 @@ export default function InventoryTable({
               <th className="py-4 px-5">
                 {t('inventory.purchasePrice')} <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
               </th>
+              <th className="py-4 px-5">
+                Purchase / Reg. Date <span className="w-1 h-1 rounded-full bg-amber-500 inline-block" />
+              </th>
               <th className="py-4 px-5">{t('inventory.healthStatus')}</th>
               <th className="py-4 px-5">{t('inventory.status')}</th>
               <th className="py-4 px-5 text-right">{t('common.actions')}</th>
@@ -370,6 +399,9 @@ export default function InventoryTable({
                     </td>
                     <td className="py-3.5 px-5 text-slate-800 font-semibold">
                       {cow.totalPrice > 0 ? `៛ ${format2DecimalsWithCommas(cow.totalPrice)}` : 'N/A'}
+                    </td>
+                    <td className="py-3.5 px-5 font-mono text-xs text-slate-500">
+                      {cow.purchaseDate ? cow.purchaseDate.split('T')[0] : (cow as any).createdAt ? (cow as any).createdAt.split('T')[0] : 'N/A'}
                     </td>
                   <td className="py-3.5 px-5">
                     <span className={`px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide border flex items-center gap-1.5 w-max ${
