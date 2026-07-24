@@ -67,8 +67,8 @@ export default function DashboardHome({ data, onNavigateToTab }: DashboardHomePr
   return (
     <div className="space-y-6">
 
-      {/* KPI Summary Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+      {/* KPI Summary Grid (3 Columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
 
         {/* Active Fattening Herd */}
         <Card className="bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onNavigateToTab('cow-inventory')}>
@@ -93,21 +93,6 @@ export default function DashboardHome({ data, onNavigateToTab }: DashboardHomePr
           </CardHeader>
           <CardContent>
             <p className="text-[10px] text-teal-600 font-bold">Total batches: {data.batches.length}</p>
-          </CardContent>
-        </Card>
-
-        {/* Avg Weight Gain */}
-        <Card className="bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="pb-2">
-            <CardDescription className="text-xs uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1.5">
-              <Scale className="h-3.5 w-3.5 text-amber-600" /> Avg Fattening Gain
-            </CardDescription>
-            <CardTitle className={`text-2xl font-black mt-1 ${avgGain >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
-              {avgGain >= 0 ? '+' : ''}{avgGain.toFixed(1)} kg
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-[10px] text-slate-400 font-bold">Per head, last 30 weight updates</p>
           </CardContent>
         </Card>
 
@@ -157,70 +142,35 @@ export default function DashboardHome({ data, onNavigateToTab }: DashboardHomePr
         </div>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Avg Weight Gain Line Chart */}
-        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm space-y-4">
-          <div>
-            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-emerald-600" />
-              Daily Avg Weight Gain Trend (kg)
-            </h4>
-            <p className="text-xs text-slate-400 mt-0.5">Average growth per head across recent daily weigh-ins</p>
-          </div>
-          <div className="h-[220px]">
-            {growthChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={growthChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="date" stroke="#94a3b8" fontSize={9} tickLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '10px', fontSize: '11px' }}
-                    itemStyle={{ color: '#059669', fontWeight: 'bold' }}
-                  />
-                  <Line type="monotone" dataKey="avgGain" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} name="Avg Gain (kg)" />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-xs font-semibold">
-                No weight data recorded yet.
-              </div>
-            )}
-          </div>
+      {/* Monthly Sales Revenue Chart */}
+      <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm space-y-4">
+        <div>
+          <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-emerald-600" />
+            Monthly Sales Revenue (Thousands ៛)
+          </h4>
+          <p className="text-xs text-slate-400 mt-0.5">Revenue generated from fattened cattle sold per month</p>
         </div>
-
-        {/* Monthly Sales Revenue Bar Chart */}
-        <div className="bg-white border border-slate-100 p-6 rounded-2xl shadow-sm space-y-4">
-          <div>
-            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-emerald-600" />
-              Monthly Sales Revenue (Thousands ៛)
-            </h4>
-            <p className="text-xs text-slate-400 mt-0.5">Revenue generated from fattened cattle sold per month</p>
-          </div>
-          <div className="h-[220px]">
-            {revenueChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} tickLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '10px', fontSize: '11px' }}
-                    itemStyle={{ color: '#059669', fontWeight: 'bold' }}
-                    formatter={(v: any) => [`${v}K ៛`, 'Revenue']}
-                  />
-                  <Bar dataKey="revenue" fill="#10b981" radius={[6, 6, 0, 0]} name="Revenue (K ៛)" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-full flex items-center justify-center text-slate-400 text-xs font-semibold">
-                No sales data available yet.
-              </div>
-            )}
-          </div>
+        <div className="h-[240px]">
+          {revenueChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '10px', fontSize: '11px' }}
+                  itemStyle={{ color: '#059669', fontWeight: 'bold' }}
+                  formatter={(v: any) => [`${v}K ៛`, 'Revenue']}
+                />
+                <Bar dataKey="revenue" fill="#10b981" radius={[6, 6, 0, 0]} name="Revenue (K ៛)" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-slate-400 text-xs font-semibold">
+              No sales data available yet.
+            </div>
+          )}
         </div>
       </div>
 
