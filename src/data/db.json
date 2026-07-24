@@ -2015,75 +2015,827 @@
       "id": "EXP-UUFOFZTD8"
     },
     {
-      "id": "EXP-20260407-001",
-      "category": "ផ្សេងៗ",
-      "amount": 119000,
+      "id": "EXP-113-001",
       "date": "2026-04-07",
       "description": "ជួសជុលម៉ូតូ",
+      "amount": 119000,
+      "category": "ផ្សេងៗ",
       "farmLocation": "SNR Farm"
     },
     {
-      "id": "EXP-20260407-002",
-      "category": "ផ្សេងៗ",
-      "amount": 40000,
+      "id": "EXP-113-002",
       "date": "2026-04-07",
       "description": "ម៉ែត្រវាស់គោ",
+      "amount": 40000,
+      "category": "ផ្សេងៗ",
       "farmLocation": "SNR Farm"
     },
     {
-      "id": "EXP-20260407-003",
-      "category": "ផ្សេងៗ",
-      "amount": 8000,
+      "id": "EXP-113-003",
       "date": "2026-04-07",
       "description": "កាត់ទូរស័ព្ទ បង់ភ័ក",
+      "amount": 8000,
+      "category": "ផ្សេងៗ",
       "farmLocation": "SNR Farm"
     },
     {
-      "id": "EXP-20260407-004",
-      "category": "ផ្សេងៗ",
-      "amount": 40000,
+      "id": "EXP-113-004",
       "date": "2026-04-07",
       "description": "រត់ឯកសារ និងផ្សេងៗ",
+      "amount": 40000,
+      "category": "ផ្សេងៗ",
       "farmLocation": "SNR Farm"
     },
     {
-      "id": "EXP-20260407-005",
-      "category": "ផ្សេងៗ",
-      "amount": 100000,
+      "id": "EXP-113-005",
       "date": "2026-04-07",
       "description": "ប៊ឺង និងផ្លែឈើ",
+      "amount": 100000,
+      "category": "ផ្សេងៗ",
       "farmLocation": "SNR Farm"
     },
     {
-      "id": "EXP-20260407-006",
-      "category": "ផ្សេងៗ",
-      "amount": 30000,
+      "id": "EXP-113-006",
       "date": "2026-04-07",
       "description": "ទុយោទឹក",
+      "amount": 30000,
+      "category": "ផ្សេងៗ",
       "farmLocation": "SNR Farm"
     },
     {
-      "id": "EXP-20260420-001",
-      "category": "ផ្សេងៗ",
-      "amount": 450000,
+      "id": "EXP-113-007",
       "date": "2026-04-20",
       "description": "សាហុយ",
+      "amount": 450000,
+      "category": "ផ្សេងៗ",
       "farmLocation": "SNR Farm"
     },
     {
-      "id": "EXP-20260420-002",
-      "category": "ផ្សេងៗ",
-      "amount": 150000,
+      "id": "EXP-113-008",
       "date": "2026-04-20",
       "description": "សេវាក្រូគោ",
+      "amount": 150000,
+      "category": "ផ្សេងៗ",
       "farmLocation": "SNR Farm"
     },
     {
-      "id": "EXP-20260420-003",
-      "category": "ចំណី",
-      "amount": 146000,
+      "id": "EXP-113-009",
       "date": "2026-04-20",
       "description": "កន្ទក់",
+      "amount": 146000,
+      "category": "ចំណី",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-010",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 400000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-011",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 120000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-013",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 10000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-019",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 6000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-015",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 150000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-025",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 40000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-039",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 20000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-020",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 22000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-027",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 5000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-022",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 53500,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-026",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 5500,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-028",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 11000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-029",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 242000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-030",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 15000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-031",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 100000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-032",
+      "date": "2026-06-01",
+      "description": "ថ្លៃភ្លើង",
+      "amount": 61600,
+      "category": "ទឹក-ភ្លើង",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-033",
+      "date": "2026-06-01",
+      "description": "កូនដងក",
+      "amount": 35000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-034",
+      "date": "2026-06-01",
+      "description": "សំណង់ឌី",
+      "amount": 932000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-035",
+      "date": "2026-06-01",
+      "description": "តូលាង",
+      "amount": 257000,
+      "category": "ទឹក-ភ្លើង",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-036",
+      "date": "2026-06-01",
+      "description": "ដូរប្រេង ម៉ាស៊ីន",
+      "amount": 20000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-037",
+      "date": "2026-06-01",
+      "description": "សាំង",
+      "amount": 16500,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-038",
+      "date": "2026-06-01",
+      "description": "ផ្សេងៗ",
+      "amount": 300000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-040",
+      "date": "2026-06-01",
+      "description": "U90",
+      "amount": 26000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-041",
+      "date": "2026-06-01",
+      "description": "Banner",
+      "amount": 72000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-042",
+      "date": "2026-06-01",
+      "description": "ចាក់ថ្នាំគោ",
+      "amount": 100000,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-043",
+      "date": "2026-06-01",
+      "description": "ចំបើង",
+      "amount": 1050000,
+      "category": "ចំបើង",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-044",
+      "date": "2026-06-01",
+      "description": "ខ្សែ គោ",
+      "amount": 8000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-045",
+      "date": "2026-06-01",
+      "description": "ម៉ូទ័រ",
+      "amount": 600000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-046",
+      "date": "2026-06-01",
+      "description": "ថ្នាំ EM",
+      "amount": 40000,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-047",
+      "date": "2026-06-01",
+      "description": "កាមេរ៉ាផងបងភ័ក",
+      "amount": 280000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-048",
+      "date": "2026-06-01",
+      "description": "ថ្នាំ អកគោ",
+      "amount": 290000,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-049",
+      "date": "2026-06-01",
+      "description": "សាំង ៣លីត្រ",
+      "amount": 15000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-050",
+      "date": "2026-06-01",
+      "description": "ចំបើង ២៥០ដុំ",
+      "amount": 875000,
+      "category": "ចំបើង",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-051",
+      "date": "2026-06-01",
+      "description": "សាំង",
+      "amount": 20000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-052",
+      "date": "2026-06-01",
+      "description": "ទឹកក្រូច",
+      "amount": 12000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-053",
+      "date": "2026-06-01",
+      "description": "ស្រាស",
+      "amount": 15000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-054",
+      "date": "2026-06-01",
+      "description": "កង្ហារ ៦គ្រាប់",
+      "amount": 267000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-055",
+      "date": "2026-06-01",
+      "description": "សំណង់ឌី",
+      "amount": 164000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-056",
+      "date": "2026-06-01",
+      "description": "សំណង់ឌី",
+      "amount": 19000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-057",
+      "date": "2026-06-01",
+      "description": "សំណង់ឌី",
+      "amount": 35000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-058",
+      "date": "2026-06-01",
+      "description": "ទិញធុងដាក់ផ្អែម",
+      "amount": 650000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-059",
+      "date": "2026-06-01",
+      "description": "ពោត ៤៨ វ",
+      "amount": 336000,
+      "category": "ពោត",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-060",
+      "date": "2026-06-01",
+      "description": "បង់ភ័ក",
+      "amount": 20000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-061",
+      "date": "2026-06-01",
+      "description": "ថ្លៃជាង",
+      "amount": 400000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-062",
+      "date": "2026-06-01",
+      "description": "ខ្សែក្លើង",
+      "amount": 80000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-063",
+      "date": "2026-06-01",
+      "description": "ចំណាយបង់ភ័ក",
+      "amount": 2000000,
+      "category": "ប្រាក់ខែ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-064",
+      "date": "2026-06-01",
+      "description": "ថ្លៃដែក",
+      "amount": 3012000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-065",
+      "date": "2026-06-01",
+      "description": "សំណង់ឌី",
+      "amount": 1584000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-066",
+      "date": "2026-06-01",
+      "description": "ថ្លៃធុង",
+      "amount": 600000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-067",
+      "date": "2026-06-01",
+      "description": "សំណង់ឌី",
+      "amount": 189000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-069",
+      "date": "2026-06-01",
+      "description": "ពោត ៥០ វ",
+      "amount": 350000,
+      "category": "ពោត",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-071",
+      "date": "2026-06-01",
+      "description": "ម៉ាស៊ីនកិនផ្អែម",
+      "amount": 2800000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-072",
+      "date": "2026-06-01",
+      "description": "ជណ្តើរឡើងគោ",
+      "amount": 1564000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-073",
+      "date": "2026-07-01",
+      "description": "ជួសជុលម៉ូតូ",
+      "amount": 300000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-074",
+      "date": "2026-07-02",
+      "description": "ថ្លៃសាំង ក្មេងៗ និងជាង",
+      "amount": 50000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-075",
+      "date": "2026-07-03",
+      "description": "ថ្នាំគោ ឺ",
+      "amount": 50000,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-076",
+      "date": "2026-07-06",
+      "description": "សាំង",
+      "amount": 9000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-077",
+      "date": "2026-07-06",
+      "description": "យទឹកកម្មករ កាប់ពោត",
+      "amount": 50000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-078",
+      "date": "2026-07-06",
+      "description": "សាំង",
+      "amount": 60000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-079",
+      "date": "2026-07-06",
+      "description": "បង់ភ័ក (ថ្លៃដើមពោត)",
+      "amount": 100000,
+      "category": "ពោត",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-080",
+      "date": "2026-07-06",
+      "description": "ថ្លៃជាង(អាស៊ី)",
+      "amount": 100000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-081",
+      "date": "2026-07-06",
+      "description": "គ្រឿងសំណង់ឌី",
+      "amount": 124000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-082",
+      "date": "2026-07-06",
+      "description": "ថ្លៃជាងពូរុ(ំ៣ថ្លៃកន្លះ)",
+      "amount": 170000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-083",
+      "date": "2026-07-07",
+      "description": "ថ្លៃស័ង្កសី",
+      "amount": 2297640,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-084",
+      "date": "2026-07-07",
+      "description": "គ្រឿងសំណង់ឌី",
+      "amount": 62000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-085",
+      "date": "2026-07-07",
+      "description": "ថ្លៃដើមដើមពោត",
+      "amount": 220000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-086",
+      "date": "2026-07-07",
+      "description": "ការប្រាក់ ARDB",
+      "amount": 1653320,
+      "category": "ការប្រាក់ធនាគារ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-087",
+      "date": "2026-07-07",
+      "description": "សាំង",
+      "amount": 67000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-088",
+      "date": "2026-07-08",
+      "description": "សាច់ស្អុយ",
+      "amount": 160000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-089",
+      "date": "2026-07-08",
+      "description": "អីវ៉ាន់ជាង និងកម្មករ",
+      "amount": 17000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-090",
+      "date": "2026-07-08",
+      "description": "ថ្លែលង់ដាក់ពោត",
+      "amount": 50000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-091",
+      "date": "2026-07-08",
+      "description": "គ្រឿងសំណង់ឌី",
+      "amount": 472000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-092",
+      "date": "2026-07-08",
+      "description": "ស័ង្កសី",
+      "amount": 447000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-093",
+      "date": "2026-07-09",
+      "description": "ទុយោ",
+      "amount": 55000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-094",
+      "date": "2026-07-09",
+      "description": "ថ្លែលង់ដាក់ពោត",
+      "amount": 105000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-095",
+      "date": "2026-07-09",
+      "description": "ថ្នាំចាក់គោ",
+      "amount": 80000,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-096",
+      "date": "2026-07-11",
+      "description": "ថ្នាំចាក់គោ",
+      "amount": 50000,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-097",
+      "date": "2026-07-12",
+      "description": "ថ្លៃជាងសទេះបង់ភ័ក",
+      "amount": 2613480,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-098",
+      "date": "2026-07-13",
+      "description": "ថ្លៃគ្រាប់ពោត",
+      "amount": 100000,
+      "category": "ពោត",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-099",
+      "date": "2026-07-13",
+      "description": "ថ្លែកម្មករ (អាសោម)",
+      "amount": 100000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-100",
+      "date": "2026-07-13",
+      "description": "ថ្លៃភ្លើងសទេះបង់ភ័ក",
+      "amount": 76800,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-101",
+      "date": "2026-07-13",
+      "description": "សាំង",
+      "amount": 13000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-102",
+      "date": "2026-07-13",
+      "description": "ថ្លៃភ្លើងសទេះបង់ភ័ក",
+      "amount": 43900,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-103",
+      "date": "2026-07-14",
+      "description": "សាំង",
+      "amount": 4500,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-104",
+      "date": "2026-07-14",
+      "description": "ភេសជ្ជៈជាង",
+      "amount": 11000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-105",
+      "date": "2026-07-14",
+      "description": "ឧបករណ៍ហោងទឹក",
+      "amount": 80000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-106",
+      "date": "2026-07-14",
+      "description": "សំណង់ឌី",
+      "amount": 382000,
+      "category": "ទ្រព្យសកម្ម",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-107",
+      "date": "2026-07-15",
+      "description": "សាំង",
+      "amount": 21000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-108",
+      "date": "2026-07-15",
+      "description": "ថ្លៃថ្នាំចាក់គោ",
+      "amount": 238800,
+      "category": "វ៉ាក់សាំង និងថ្នាំ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-109",
+      "date": "2026-07-15",
+      "description": "ភេសជ្ជៈជាង",
+      "amount": 21000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-110",
+      "date": "2026-07-16",
+      "description": "ថ្លៃដើមពោត និងកម្លាំងកម្មករ",
+      "amount": 580000,
+      "category": "ចំបើង",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-111",
+      "date": "2026-07-16",
+      "description": "សាំង",
+      "amount": 33000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-112",
+      "date": "2026-07-16",
+      "description": "ថ្លែលង់ដាក់ពោត",
+      "amount": 110000,
+      "category": "ផ្សេងៗ",
+      "farmLocation": "SNR Farm"
+    },
+    {
+      "id": "EXP-113-113",
+      "date": "2026-07-17",
+      "description": "ថ្លៃដើមពោត និងកម្លាំងកម្មករ",
+      "amount": 300000,
+      "category": "ពោត",
       "farmLocation": "SNR Farm"
     }
   ],
