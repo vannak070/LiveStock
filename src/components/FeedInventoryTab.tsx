@@ -59,6 +59,7 @@ export default function FeedInventoryTab({
   const [subView, setSubView] = useState<'balances' | 'products' | 'transactions'>('balances');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [balanceViewMode, setBalanceViewMode] = useState<'consolidated' | 'specific_batch'>('specific_batch');
 
   // Modal States
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -198,32 +199,43 @@ export default function FeedInventoryTab({
           minThresholdKg: thresholdKg
         };
 
-        if (activeBatchesForFarm.length > 0) {
-          // Separate each active batch into its own dedicated row
-          activeBatchesForFarm.forEach(bItem => {
+        if (balanceViewMode === 'consolidated') {
+          // CONSOLIDATED MODE: Single summary row per farm location, combining active batches
+          if (!effectiveFarm || farmName === effectiveFarm || b.bags > 0 || activeBatchesForFarm.length > 0) {
             result.push({
               ...baseItem,
-              id: `${prod.id}___${farmName}___${bItem.id}`,
-              activeBatchName: bItem.name,
-              activeBatches: [bItem.name]
-            });
-          });
-        } else {
-          // If no active batch under farm, render 1 row
-          if (!effectiveFarm || farmName === effectiveFarm || b.bags > 0) {
-            result.push({
-              ...baseItem,
-              id: `${prod.id}___${farmName}___nobatch`,
+              id: `${prod.id}___${farmName}___consolidated`,
               activeBatchName: undefined,
-              activeBatches: []
+              activeBatches: activeBatchesForFarm.map(b => b.name)
             });
+          }
+        } else {
+          // SPECIFIC BATCH MODE: Separate rows for each active batch
+          if (activeBatchesForFarm.length > 0) {
+            activeBatchesForFarm.forEach(bItem => {
+              result.push({
+                ...baseItem,
+                id: `${prod.id}___${farmName}___${bItem.id}`,
+                activeBatchName: bItem.name,
+                activeBatches: [bItem.name]
+              });
+            });
+          } else {
+            if (!effectiveFarm || farmName === effectiveFarm || b.bags > 0) {
+              result.push({
+                ...baseItem,
+                id: `${prod.id}___${farmName}___nobatch`,
+                activeBatchName: undefined,
+                activeBatches: []
+              });
+            }
           }
         }
       });
     });
 
     return result;
-  }, [products, transactions, effectiveFarm, farms, data.batches]);
+  }, [products, transactions, effectiveFarm, farms, data.batches, balanceViewMode]);
 
   // Count stock balances per farm for FarmFilterBar
   const countByFarm = useMemo(() => {
@@ -483,41 +495,89 @@ export default function FeedInventoryTab({
 
       {/* SubView 1: Real-time Stock Balance Table */}
       {subView === 'balances' && (
-        <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-black text-[9.5px] uppercase tracking-wider">
-                  <th className="py-3.5 px-5">Feed Product</th>
-                  <th className="py-3.5 px-5">Warehouse / Farm</th>
-                  <th className="py-3.5 px-5">Active Batch</th>
-                  <th className="py-3.5 px-5">Stock On-Hand (Bags)</th>
-                  <th className="py-3.5 px-5">Total Biomass (kg)</th>
-                  <th className="py-3.5 px-5">Unit Cost</th>
-                  <th className="py-3.5 px-5">Total Valuation</th>
-                  <th className="py-3.5 px-5">Stock Status</th>
-                  <th className="py-3.5 px-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                {filteredBalances.length > 0 ? (
-                  filteredBalances.map((item, idx) => (
-                    <tr key={item.id || `${item.productId}-${item.farmLocation}-${idx}`} className="hover:bg-slate-50/40 transition-colors">
-                      <td className="py-3.5 px-5 font-black text-slate-900">{item.productName}</td>
-                      <td className="py-3.5 px-5 font-bold text-slate-800">
-                        <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-700">
-                          🏢 {item.farmLocation}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-5 font-bold">
-                        {item.activeBatchName ? (
-                          <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold shadow-2xs">
-                            📦 {item.activeBatchName}
+        <div className="space-y-3">
+          {/* Display Mode Toggle Control Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50 border border-slate-200/70 p-2.5 rounded-2xl">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider pl-1">
+                Stock Allocation Display Mode:
+              </span>
+            </div>
+            <div className="flex bg-slate-200/70 p-1 rounded-xl text-xs font-bold w-fit">
+              <button
+                type="button"
+                onClick={() => setBalanceViewMode('consolidated')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  balanceViewMode === 'consolidated'
+                    ? 'bg-white text-emerald-800 shadow-xs font-black'
+                    : 'text-slate-600 hover:text-slate-900 font-semibold'
+                }`}
+              >
+                🏢 Consolidate by Farm
+              </button>
+              <button
+                type="button"
+                onClick={() => setBalanceViewMode('specific_batch')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  balanceViewMode === 'specific_batch'
+                    ? 'bg-white text-emerald-800 shadow-xs font-black'
+                    : 'text-slate-600 hover:text-slate-900 font-semibold'
+                }`}
+              >
+                🎯 Specific Batch Breakdown
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-black text-[9.5px] uppercase tracking-wider">
+                    <th className="py-3.5 px-5">Feed Product</th>
+                    <th className="py-3.5 px-5">Warehouse / Farm</th>
+                    <th className="py-3.5 px-5">{balanceViewMode === 'specific_batch' ? 'Active Batch' : 'Active Batches under Farm'}</th>
+                    <th className="py-3.5 px-5">Stock On-Hand (Bags)</th>
+                    <th className="py-3.5 px-5">Total Biomass (kg)</th>
+                    <th className="py-3.5 px-5">Unit Cost</th>
+                    <th className="py-3.5 px-5">Total Valuation</th>
+                    <th className="py-3.5 px-5">Stock Status</th>
+                    <th className="py-3.5 px-5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                  {filteredBalances.length > 0 ? (
+                    filteredBalances.map((item, idx) => (
+                      <tr key={item.id || `${item.productId}-${item.farmLocation}-${idx}`} className="hover:bg-slate-50/40 transition-colors">
+                        <td className="py-3.5 px-5 font-black text-slate-900">{item.productName}</td>
+                        <td className="py-3.5 px-5 font-bold text-slate-800">
+                          <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-700">
+                            🏢 {item.farmLocation}
                           </span>
-                        ) : (
-                          <span className="text-[11px] text-slate-400 font-medium">—</span>
-                        )}
-                      </td>
+                        </td>
+                        <td className="py-3.5 px-5 font-bold">
+                          {balanceViewMode === 'specific_batch' ? (
+                            item.activeBatchName ? (
+                              <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold shadow-2xs">
+                                📦 {item.activeBatchName}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 font-medium">—</span>
+                            )
+                          ) : (
+                            item.activeBatches && item.activeBatches.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {item.activeBatches.map((bName, bIdx) => (
+                                  <span key={bIdx} className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/80 px-2 py-0.5 rounded-md text-[11px] font-bold shadow-2xs">
+                                    📦 {bName}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 font-medium">—</span>
+                            )
+                          )}
+                        </td>
                       <td className="py-3.5 px-5 font-mono font-black text-slate-900 text-sm">
                         {item.balanceBags.toLocaleString()} <span className="text-xs text-slate-400 font-bold">bags</span>
                       </td>
@@ -565,6 +625,7 @@ export default function FeedInventoryTab({
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       )}
 
