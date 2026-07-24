@@ -805,90 +805,182 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
       )}
 
       {/* 5. Financials & Sales BI */}
-      {subTab === 'financial' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Operating Expense Breakdown Pie Chart */}
-            <div className="lg:col-span-1">
-              <Card className="bg-white border border-slate-100 shadow-xs h-full">
-                <CardHeader>
-                  <CardTitle className="text-sm font-bold text-slate-800">Operational Cost Allocation</CardTitle>
-                  <CardDescription className="text-xs text-slate-400">Total expense amounts grouped by category</CardDescription>
-                </CardHeader>
-                <CardContent className="h-[250px] relative">
-                  {expenseBreakdown.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={expenseBreakdown}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {expenseBreakdown.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px' }}
-                          itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                          formatter={(val: any) => val ? `៛ ${Number(val).toLocaleString()}` : '៛ 0'}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-slate-400 text-xs">No costs logged.</div>
-                  )}
-                  <div className="mt-4 space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
-                    {expenseBreakdown.map((eb, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-[11px] font-bold">
-                        <div className="flex items-center gap-1.5">
-                          <span className="h-2 w-2 rounded-full inline-block" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                          <span className="text-slate-600">{eb.name}</span>
-                        </div>
-                        <span className="text-slate-900">៛ {eb.value.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+      {subTab === 'financial' && (() => {
+        const salesList = farmScopedData.salesTracking;
+        const totalSalesRevenue = salesList.reduce((acc, s) => acc + (s.totalPrice || 0), 0);
+        const totalSalesCount = salesList.length;
+        const totalSalesWeight = salesList.reduce((acc, s) => acc + (s.weight || 0), 0);
+        const avgSaleWeight = totalSalesCount > 0 ? (totalSalesWeight / totalSalesCount).toFixed(1) : '0';
+        const totalExpenseSum = expenseBreakdown.reduce((sum, eb) => sum + eb.value, 0);
 
-            {/* Historical Sales Ledger */}
-            <div className="lg:col-span-2">
-              <Card className="bg-white border border-slate-100 shadow-xs h-full">
-                <CardHeader>
-                  <CardTitle className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                    <ShoppingBag className="h-5 w-5 text-emerald-600" />
-                    Historical Cattle Sales Ledger ({data.salesTracking.length} Transactions)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="max-h-[360px] overflow-y-auto">
-                  <div className="space-y-2">
-                    {data.salesTracking.map((s, idx) => (
-                      <div key={idx} className="p-3 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between text-xs font-semibold">
-                        <div>
-                          <p className="font-bold text-slate-800">Cow ID: {s.cowId} • {s.breed}</p>
-                          <p className="text-[10px] text-slate-400">{s.salesDate ? new Date(s.salesDate).toLocaleDateString() : 'N/A'} • {s.weight} kg @ ៛ {s.unitPrice.toLocaleString()}/kg</p>
+        return (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Operating Expense Breakdown Pie Chart */}
+              <div className="lg:col-span-1">
+                <Card className="bg-white border border-slate-100 shadow-xs h-full flex flex-col justify-between">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                        <PieChartIcon className="h-4 w-4 text-emerald-600" />
+                        Operational Cost Allocation
+                      </CardTitle>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                        {expenseBreakdown.length} Categories
+                      </span>
+                    </div>
+                    <CardDescription className="text-xs text-slate-400">Expense amounts grouped by category</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 flex flex-col justify-between pt-0 space-y-4">
+                    {/* Donut Chart Container */}
+                    <div className="h-[210px] w-full relative flex items-center justify-center pt-2">
+                      {expenseBreakdown.length > 0 ? (
+                        <>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={expenseBreakdown}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={65}
+                                outerRadius={85}
+                                paddingAngle={4}
+                                dataKey="value"
+                              >
+                                {expenseBreakdown.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip
+                                contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                                itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                                formatter={(val: any) => val ? `៛ ${Number(val).toLocaleString()}` : '៛ 0'}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          {/* Center Donut Metric */}
+                          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Expense</span>
+                            <span className="text-xs font-black text-slate-800 font-mono mt-0.5">
+                              ៛ {totalExpenseSum.toLocaleString()}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="h-full flex items-center justify-center text-slate-400 text-xs">No cost records logged.</div>
+                      )}
+                    </div>
+
+                    {/* Scrollable Legend List */}
+                    <div className="space-y-2 max-h-[190px] overflow-y-auto pr-1 border-t border-slate-100 pt-3">
+                      {expenseBreakdown.map((eb, idx) => {
+                        const pct = totalExpenseSum > 0 ? ((eb.value / totalExpenseSum) * 100).toFixed(1) : '0';
+                        return (
+                          <div key={idx} className="flex items-center justify-between text-xs font-semibold p-2 rounded-xl bg-slate-50/70 border border-slate-100 hover:bg-slate-100/80 transition-colors">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
+                              <span className="font-bold text-slate-700 truncate">{eb.name}</span>
+                              <span className="text-[10px] font-extrabold text-slate-400 bg-white px-1.5 py-0.5 rounded-md border border-slate-200 shrink-0">{pct}%</span>
+                            </div>
+                            <span className="font-mono font-extrabold text-slate-800 shrink-0 ml-2">៛ {eb.value.toLocaleString()}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Historical Cattle Sales Ledger */}
+              <div className="lg:col-span-2">
+                <Card className="bg-white border border-slate-100 shadow-xs h-full flex flex-col justify-between">
+                  <CardHeader className="border-b border-slate-100 pb-4">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                          <ShoppingBag className="h-5 w-5" />
                         </div>
-                        <div className="text-right">
-                          <p className="font-extrabold text-emerald-600">៛ {s.totalPrice.toLocaleString()}</p>
+                        <div>
+                          <CardTitle className="text-sm font-extrabold text-slate-800">
+                            Historical Cattle Sales Ledger
+                          </CardTitle>
+                          <CardDescription className="text-xs text-slate-400">
+                            Realized gross revenue from cattle sales transactions ({totalSalesCount} Completed)
+                          </CardDescription>
                         </div>
                       </div>
-                    ))}
-                    {data.salesTracking.length === 0 && (
-                      <p className="text-center py-10 text-xs text-slate-400 font-bold">No sales records found.</p>
+                    </div>
+
+                    {/* Sales KPI Mini Summary Header Bar */}
+                    <div className="grid grid-cols-3 gap-3 pt-3">
+                      <div className="bg-emerald-50/60 border border-emerald-100 p-2.5 rounded-xl">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 block">Total Revenue</span>
+                        <span className="text-sm font-black text-emerald-700 font-mono">៛ {totalSalesRevenue.toLocaleString()}</span>
+                      </div>
+                      <div className="bg-blue-50/60 border border-blue-100 p-2.5 rounded-xl">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-blue-600 block">Avg Sale Weight</span>
+                        <span className="text-sm font-black text-blue-700 font-mono">{avgSaleWeight} kg</span>
+                      </div>
+                      <div className="bg-purple-50/60 border border-purple-100 p-2.5 rounded-xl">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 block">Cattle Sold</span>
+                        <span className="text-sm font-black text-purple-700 font-mono">{totalSalesCount} Head</span>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="flex-1 p-4">
+                    {salesList.length > 0 ? (
+                      <div className="max-h-[340px] overflow-y-auto space-y-2 pr-1">
+                        {salesList.map((s, idx) => (
+                          <div key={idx} className="p-3 bg-slate-50/80 border border-slate-100 rounded-xl flex items-center justify-between text-xs hover:bg-slate-100/60 transition-colors">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900 font-mono">Cow ID: {s.cowId}</span>
+                                {s.breed && <span className="text-[10px] font-bold bg-white text-slate-600 px-2 py-0.5 rounded-md border border-slate-200">{s.breed}</span>}
+                                {s.saleType && (
+                                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border ${
+                                    s.saleType === 'Scale' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                                  }`}>
+                                    {s.saleType}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500 font-medium">
+                                📅 {s.salesDate ? new Date(s.salesDate).toLocaleDateString() : 'N/A'} • ⚖️ {s.weight} kg @ ៛ {s.unitPrice.toLocaleString()}/kg • 👤 {s.buyer || 'Direct Buyer'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs font-black text-emerald-600 font-mono block">៛ {s.totalPrice.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      /* High-End Illustrative Empty State */
+                      <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
+                        <div className="h-16 w-16 rounded-3xl bg-emerald-50/80 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-xs">
+                          <ShoppingBag className="h-8 w-8 stroke-[1.75]" />
+                        </div>
+                        <div className="space-y-1 max-w-sm">
+                          <h5 className="text-sm font-extrabold text-slate-800">No Cattle Sales Recorded</h5>
+                          <p className="text-xs text-slate-400 leading-relaxed">
+                            There are currently no completed cattle sales transactions logged for this farm location.
+                          </p>
+                        </div>
+                        <div className="pt-2">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 rounded-xl shadow-2xs">
+                            💡 Sales recorded under Operation Ledger will automatically display here
+                          </span>
+                        </div>
+                      </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* SubTab 6: Revenue & Profitability Prediction Engine */}
       {subTab === 'prediction' && (
