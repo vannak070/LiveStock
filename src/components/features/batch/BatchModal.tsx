@@ -66,9 +66,17 @@ export const BatchModal: React.FC<BatchModalProps> = ({
     }
   }, [isOpen, initialBatch, currentUser, farms]);
 
+  const [validationError, setValidationError] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError('');
     if (!name.trim()) return;
+
+    if (!isEditMode && selectedCowIds.length < 3) {
+      setValidationError('កម្មវិធីបំប៉នតម្រូវឱ្យជ្រើសរើសគោយ៉ាងហោចណាស់ ៣ ក្បាលឡើងទៅ។ (Creating a batch requires selecting at least 3 cows.)');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -135,6 +143,12 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-4 text-left">
+          {validationError && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold p-3 rounded-xl flex items-center gap-2">
+              <span>⚠️ {validationError}</span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="batch_id" className="text-xs font-bold text-slate-700">Batch Code</Label>
@@ -237,6 +251,15 @@ export const BatchModal: React.FC<BatchModalProps> = ({
                 <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <UserPlus className="h-4 w-4 text-emerald-600" />
                   ជ្រើសរើសគោបញ្ចូលក្រុមដំបូង ({selectedCowIds.length} Selected)
+                  {selectedCowIds.length < 3 ? (
+                    <span className="text-[10px] font-black text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
+                      ⚠️ Min 3 cows required
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                      ✓ Ready ({selectedCowIds.length} cows)
+                    </span>
+                  )}
                 </Label>
                 <span className="text-[10px] text-slate-400 font-medium">
                   {unassignedCows.length} Available Cows

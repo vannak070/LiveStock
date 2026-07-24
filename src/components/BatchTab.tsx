@@ -352,6 +352,10 @@ export default function BatchTab({
     setLaunchError('');
     if (!launchName.trim()) { setLaunchError('Program name is required.'); return; }
     if (!launchBatchId.trim()) { setLaunchError('Batch code is required.'); return; }
+    if (launchCowIds.length < 3) {
+      setLaunchError('កម្មវិធីបំប៉នតម្រូវឱ្យជ្រើសរើសគោយ៉ាងហោចណាស់ ៣ ក្បាលឡើងទៅ។ (A fattening batch requires at least 3 cows.)');
+      return;
+    }
     setIsInitializingHerd(true);
     try {
       const defaultFeeding = {
@@ -1386,13 +1390,16 @@ export default function BatchTab({
                 const cowRecords = data.weightTracking.filter(r => r.cowId === cow.id);
                 const sortedRecords = [...cowRecords].sort((a, b) => new Date(a.trackingDate || '').getTime() - new Date(b.trackingDate || '').getTime());
 
-                const initialWeight = sortedRecords.length > 0
+                // Check if any weight record has been logged for this cow in this batch
+                const hasWeightLogs = sortedRecords.length > 0;
+
+                const initialWeight = hasWeightLogs
                   ? (sortedRecords[0].oldWeight || sortedRecords[0].currentWeight)
                   : cow.weight;
 
                 const currentWeight = cow.weight;
-                const gain = currentWeight - initialWeight;
-                const adg = gain / daysInBatch;
+                const gain = hasWeightLogs ? (currentWeight - initialWeight) : 0;
+                const adg = hasWeightLogs && daysInBatch > 0 ? (gain / daysInBatch) : 0;
 
                 return {
                   cow,
@@ -1400,15 +1407,18 @@ export default function BatchTab({
                   currentWeight,
                   gain,
                   adg,
+                  hasWeightLogs,
                   daysInBatch
                 };
               });
 
-              const averageADG = reportData.length > 0
+              const hasAnyWeightLogs = reportData.some(r => r.hasWeightLogs);
+
+              const averageADG = hasAnyWeightLogs && reportData.length > 0
                 ? reportData.reduce((sum, r) => sum + r.adg, 0) / reportData.length
                 : 0;
 
-              const sortedReportByADG = [...reportData].sort((a, b) => b.adg - a.adg);
+              const sortedReportByADG = [...reportData.filter(r => r.hasWeightLogs)].sort((a, b) => b.adg - a.adg);
               const topPerformer = sortedReportByADG.length > 0 ? sortedReportByADG[0] : null;
               const underPerformer = sortedReportByADG.length > 0 ? sortedReportByADG[sortedReportByADG.length - 1] : null;
 
@@ -1425,18 +1435,24 @@ export default function BatchTab({
                       <p className="text-[9px] uppercase font-bold text-emerald-700 tracking-wider">Herd Average ADG</p>
                       <p className="text-xl font-black text-emerald-800 mt-1">{averageADG.toFixed(2)} <span className="text-xs font-bold">kg / day</span></p>
                     </div>
-                    {topPerformer && (
-                      <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl shadow-xs">
-                        <p className="text-[9px] uppercase font-bold text-blue-700 tracking-wider">Top Performer (លូតលាស់ល្អបំផុត)</p>
+
+                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl shadow-xs">
+                      <p className="text-[9px] uppercase font-bold text-blue-700 tracking-wider">Top Performer (លូតលាស់ល្អបំផុត)</p>
+                      {topPerformer ? (
                         <p className="text-xl font-black text-blue-800 mt-1">{topPerformer.cow.id} <span className="text-xs font-bold text-blue-650">({topPerformer.adg.toFixed(2)} kg/d)</span></p>
-                      </div>
-                    )}
-                    {underPerformer && (
-                      <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl shadow-xs">
-                        <p className="text-[9px] uppercase font-bold text-rose-700 tracking-wider">Under Performer (លូតលាស់ខ្សោយបំផុត)</p>
+                      ) : (
+                        <p className="text-xs font-extrabold text-blue-600 mt-2.5">Pending Weight Check</p>
+                      )}
+                    </div>
+
+                    <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl shadow-xs">
+                      <p className="text-[9px] uppercase font-bold text-rose-700 tracking-wider">Under Performer (លូតលាស់ខ្សោយបំផុត)</p>
+                      {underPerformer ? (
                         <p className="text-xl font-black text-rose-800 mt-1">{underPerformer.cow.id} <span className="text-xs font-bold text-rose-650">({underPerformer.adg.toFixed(2)} kg/d)</span></p>
-                      </div>
-                    )}
+                      ) : (
+                        <p className="text-xs font-extrabold text-rose-600 mt-2.5">Pending Weight Check</p>
+                      )}
+                    </div>
                   </div>
 
                   {/* Report Table */}
