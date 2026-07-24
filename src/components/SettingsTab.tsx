@@ -9,6 +9,7 @@ import { updateSettingsAction } from '@/app/actions';
 import { ConfirmModal } from './ui/confirm-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { useLanguage } from '@/context/LanguageContext';
+import { TablePagination } from './common/TablePagination';
 
 interface SettingsTabProps {
   settings: MasterSetup;
@@ -28,6 +29,9 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [subTab, setSubTab] = useState<'livestock' | 'financial' | 'users'>('livestock');
+
+  const [userPage, setUserPage] = useState(1);
+  const [userPageSize, setUserPageSize] = useState(10);
 
   const isFarmOwner = currentUser?.role === 'Farm Owner';
 
@@ -634,83 +638,104 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {(settings.users || [])
-                      .filter(u => {
+                    {(() => {
+                      const allUsers = (settings.users || []).filter(u => {
                         if (isFarmOwner) {
                           return u.farmLocation === currentUser.farmLocation && (u.role === 'Farm Staff' || u.role === 'Veterinarian');
                         }
                         return true;
-                      })
-                      .map(user => {
+                      });
+                      const paginatedUsers = allUsers.slice((userPage - 1) * userPageSize, userPage * userPageSize);
+
+                      if (paginatedUsers.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={6} className="py-8 text-center text-slate-400 font-semibold">
+                              No system users found.
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return paginatedUsers.map(user => {
                         const enabledCount = user.permissions?.length || (DEFAULT_ROLE_PERMISSIONS[user.role]?.length || 0);
-                      return (
-                        <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="py-3.5 pl-3">
-                            <p className="font-bold text-slate-800">{user.name}</p>
-                            <p className="text-[10px] text-slate-400">{user.email}</p>
-                          </td>
-                          <td className="py-3.5">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
-                              user.role === 'Super Admin' ? 'bg-red-50 text-red-700 border-red-200' :
-                              user.role === 'Admin' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              user.role === 'Company' ? 'bg-teal-50 text-teal-700 border-teal-200' :
-                              user.role === 'Farm Owner' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                              user.role === 'Farm Staff' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
-                              user.role === 'Veterinarian' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                              'bg-slate-100 text-slate-650 border-slate-200'
-                            }`}>
-                              {user.role}
-                            </span>
-                          </td>
-                          <td className="py-3.5">
-                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                              user.farmLocation ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-slate-50 text-slate-400 border-slate-100'
-                            }`}>
-                              {user.farmLocation || 'Global (All Farms)'}
-                            </span>
-                          </td>
-                          <td className="py-3.5">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-bold">
-                              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                              {enabledCount} / {ALL_PERMISSIONS.length} Functions
-                            </span>
-                          </td>
-                          <td className="py-3.5">
-                            {user.role === 'Super Admin' ? (
-                              <span className="text-[10px] font-bold text-red-500">Active (Locked)</span>
-                            ) : (
+                        return (
+                          <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="py-3.5 pl-3">
+                              <p className="font-bold text-slate-800">{user.name}</p>
+                              <p className="text-[10px] text-slate-400">{user.email}</p>
+                            </td>
+                            <td className="py-3.5">
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+                                user.role === 'Super Admin' ? 'bg-red-50 text-red-700 border-red-200' :
+                                user.role === 'Admin' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                                user.role === 'Company' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                                user.role === 'Farm Owner' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                                user.role === 'Farm Staff' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' :
+                                user.role === 'Veterinarian' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                'bg-slate-100 text-slate-650 border-slate-200'
+                              }`}>
+                                {user.role}
+                              </span>
+                            </td>
+                            <td className="py-3.5">
+                              <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${
+                                user.farmLocation ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-slate-50 text-slate-400 border-slate-100'
+                              }`}>
+                                {user.farmLocation || 'Global (All Farms)'}
+                              </span>
+                            </td>
+                            <td className="py-3.5">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-bold">
+                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                {enabledCount} / {ALL_PERMISSIONS.length} Functions
+                              </span>
+                            </td>
+                            <td className="py-3.5">
+                              {user.role === 'Super Admin' ? (
+                                <span className="text-[10px] font-bold text-red-500">Active (Locked)</span>
+                              ) : (
+                                <button
+                                  onClick={() => handleToggleUserStatus(user.id)}
+                                  className={`text-[10px] font-bold transition-colors cursor-pointer ${
+                                    user.status === 'Active' ? 'text-emerald-600 hover:text-emerald-700 hover:underline' : 'text-slate-400 hover:text-slate-500 hover:underline'
+                                  }`}
+                                >
+                                  {user.status}
+                                </button>
+                              )}
+                            </td>
+                            <td className="py-3.5 text-right pr-3 space-x-1">
                               <button
-                                onClick={() => handleToggleUserStatus(user.id)}
-                                className={`text-[10px] font-bold transition-colors cursor-pointer ${
-                                  user.status === 'Active' ? 'text-emerald-600 hover:text-emerald-700 hover:underline' : 'text-slate-400 hover:text-slate-500 hover:underline'
-                                }`}
+                                onClick={() => handleStartEditUser(user)}
+                                className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
                               >
-                                {user.status}
+                                Edit Account
                               </button>
-                            )}
-                          </td>
-                          <td className="py-3.5 text-right pr-3 space-x-1">
-                            <button
-                              onClick={() => handleStartEditUser(user)}
-                              className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                            >
-                              Edit Account
-                            </button>
-                            {user.role !== 'Super Admin' && (
-                              <button
-                                onClick={() => handleRemoveUser(user.id)}
-                                className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
-                              >
-                                Delete
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                              {user.role !== 'Super Admin' && (
+                                <button
+                                  onClick={() => handleRemoveUser(user.id)}
+                                  className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      });
+                    })()}
                   </tbody>
                 </table>
               </div>
+              <TablePagination
+                currentPage={userPage}
+                totalItems={(settings.users || []).filter(u => isFarmOwner ? (u.farmLocation === currentUser.farmLocation && (u.role === 'Farm Staff' || u.role === 'Veterinarian')) : true).length}
+                pageSize={userPageSize}
+                onPageChange={setUserPage}
+                onPageSizeChange={setUserPageSize}
+                itemLabel="users"
+              />
             </CardContent>
           </Card>
         </div>

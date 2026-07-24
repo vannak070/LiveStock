@@ -11,6 +11,7 @@ import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
+import { TablePagination } from './common/TablePagination';
 
 interface HealthTabProps {
   data: ERPLivestockData;
@@ -26,6 +27,13 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
   const [isLogging, setIsLogging] = useState(false);
   const [selectedCohortId, setSelectedCohortId] = useState<string>('all');
   const [selectedFarm, setSelectedFarm] = useState<string | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCohortId, selectedFarm, pageSize]);
 
   const userFarmLocation = currentUser?.farmLocation;
   const activeFarm = selectedFarm || userFarmLocation;
@@ -377,8 +385,8 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 text-slate-700 font-medium">
-                {filteredHealthLogs.length > 0 ? (
-                  filteredHealthLogs.map((log) => {
+                {filteredHealthLogs.slice((currentPage - 1) * pageSize, currentPage * pageSize).length > 0 ? (
+                  filteredHealthLogs.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((log) => {
                     const cohort = getCowCohort(log.cowId);
                     return (
                       <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
@@ -471,6 +479,14 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
               </tbody>
             </table>
           </div>
+          <TablePagination
+            currentPage={currentPage}
+            totalItems={filteredHealthLogs.length}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="logs"
+          />
         </div>
       )}
 

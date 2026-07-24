@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
+import { TablePagination } from './common/TablePagination';
 
 interface FinanceTabProps {
   data: ERPLivestockData;
@@ -72,8 +73,17 @@ export default function FinanceTab({
   const [amount, setAmount] = useState(150000); // default riel amount
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 8;
+  const [expensePage, setExpensePage] = useState(1);
+  const [expensePageSize, setExpensePageSize] = useState(10);
+
+  const [salesPage, setSalesPage] = useState(1);
+  const [salesPageSize, setSalesPageSize] = useState(10);
+
+  // Reset page when farm filter changes
+  React.useEffect(() => {
+    setExpensePage(1);
+    setSalesPage(1);
+  }, [selectedFarm, expensePageSize, salesPageSize]);
 
   // Farm-filtered data for display
   const farmFilteredExpenses = React.useMemo(() => {
@@ -354,8 +364,8 @@ export default function FinanceTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 text-slate-700 font-medium">
-                {farmFilteredExpenses.length > 0 ? (
-                  farmFilteredExpenses.map((expense) => (
+                {farmFilteredExpenses.slice((expensePage - 1) * expensePageSize, expensePage * expensePageSize).length > 0 ? (
+                  farmFilteredExpenses.slice((expensePage - 1) * expensePageSize, expensePage * expensePageSize).map((expense) => (
                     <tr key={expense.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3.5 px-4">
                         <span className="px-2 py-0.5 rounded-lg font-bold border border-slate-200 text-slate-650 bg-slate-50 text-[10px] uppercase">
@@ -436,6 +446,14 @@ export default function FinanceTab({
               </tbody>
             </table>
           </div>
+          <TablePagination
+            currentPage={expensePage}
+            totalItems={farmFilteredExpenses.length}
+            pageSize={expensePageSize}
+            onPageChange={setExpensePage}
+            onPageSizeChange={setExpensePageSize}
+            itemLabel="records"
+          />
         </div>
       ) : (
         /* Revenue of Sales Ledger */
@@ -472,7 +490,7 @@ export default function FinanceTab({
                   {farmFilteredSales.length > 0 ? (
                     [...farmFilteredSales]
                       .sort((a, b) => new Date(b.salesDate || '').getTime() - new Date(a.salesDate || '').getTime())
-                      .slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                      .slice((salesPage - 1) * salesPageSize, salesPage * salesPageSize)
                       .map((sale, idx) => {
                         const deducedSaleType = sale.saleType || (sale.weight <= 2 || sale.totalPrice === sale.unitPrice ? 'Lumpsum' : 'Scale');
                         const deducedBuyer = sale.buyer || 'Local Market';
@@ -583,38 +601,15 @@ export default function FinanceTab({
                 </tbody>
               </table>
             </div>
+            <TablePagination
+              currentPage={salesPage}
+              totalItems={farmFilteredSales.length}
+              pageSize={salesPageSize}
+              onPageChange={setSalesPage}
+              onPageSizeChange={setSalesPageSize}
+              itemLabel="sales"
+            />
           </div>
-
-          {/* Pagination Controls */}
-          {data.salesTracking.length > 0 && (
-            <div className="p-4 bg-slate-50/30 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
-              <p>
-                Showing <span className="font-bold text-slate-800">{Math.min(data.salesTracking.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)}</span> to{' '}
-                <span className="font-bold text-slate-800">{Math.min(data.salesTracking.length, currentPage * ITEMS_PER_PAGE)}</span> of{' '}
-                <span className="font-bold text-slate-800">{data.salesTracking.length}</span> records
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  className="rounded-lg text-[10px] font-bold uppercase tracking-wider h-8"
-                >
-                  Prev
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentPage * ITEMS_PER_PAGE >= data.salesTracking.length}
-                  onClick={() => setCurrentPage(prev => Math.min(Math.ceil(data.salesTracking.length / ITEMS_PER_PAGE), prev + 1))}
-                  className="rounded-lg text-[10px] font-bold uppercase tracking-wider h-8"
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       )}
       {editingSalesRecord && (

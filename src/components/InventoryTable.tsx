@@ -9,6 +9,7 @@ import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
+import { TablePagination } from './common/TablePagination';
 
 interface InventoryTableProps {
   stock: StockItem[];
@@ -56,7 +57,7 @@ export default function InventoryTable({
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 20;
+  const [pageSize, setPageSize] = useState(10);
 
   // Count per farm (from all stock)
   const countByFarm = React.useMemo(() => {
@@ -108,13 +109,11 @@ export default function InventoryTable({
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, selectedBreed, selectedStatus, selectedFarm]);
+  }, [search, selectedBreed, selectedStatus, selectedFarm, pageSize]);
 
   // Compute pagination bounds
-  const totalRows = filteredStock.length;
-  const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
-  const indexOfLastRow = currentPage * rowsPerPage;
-  const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+  const indexOfLastRow = currentPage * pageSize;
+  const indexOfFirstRow = indexOfLastRow - pageSize;
   const paginatedStock = filteredStock.slice(indexOfFirstRow, indexOfLastRow);
 
   const getFarmName = (locationCodeOrId?: string) => {
@@ -456,40 +455,15 @@ export default function InventoryTable({
         </table>
       </div>
 
-      {/* Pagination Controls */}
-      {totalRows > rowsPerPage && (
-        <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl shadow-sm">
-          <div className="text-xs text-slate-400 font-semibold">
-            Showing <span className="text-slate-800 font-bold">{indexOfFirstRow + 1}</span> to{' '}
-            <span className="text-slate-800 font-bold">{Math.min(indexOfLastRow, totalRows)}</span> of{' '}
-            <span className="text-slate-800 font-bold">{totalRows}</span> entries
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-              className="h-8 w-8 p-0 rounded-xl border-slate-200"
-            >
-              <ChevronLeft className="h-4 w-4 text-slate-650" />
-            </Button>
-            <div className="text-xs text-slate-500 font-bold">
-              Page <span className="text-slate-900 font-extrabold">{currentPage}</span> of{' '}
-              <span className="text-slate-900 font-extrabold">{totalPages}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-              className="h-8 w-8 p-0 rounded-xl border-slate-200"
-            >
-              <ChevronRight className="h-4 w-4 text-slate-650" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Table Pagination */}
+      <TablePagination
+        currentPage={currentPage}
+        totalItems={filteredStock.length}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={setPageSize}
+        itemLabel="cows"
+      />
       {confirmModal.isOpen && (
         <ConfirmModal
           isOpen={confirmModal.isOpen}

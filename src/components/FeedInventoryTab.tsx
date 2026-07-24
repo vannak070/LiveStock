@@ -36,6 +36,7 @@ import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
+import { TablePagination } from './common/TablePagination';
 
 interface FeedInventoryTabProps {
   data: ERPLivestockData;
@@ -60,6 +61,23 @@ export default function FeedInventoryTab({
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [balanceViewMode, setBalanceViewMode] = useState<'consolidated' | 'specific_batch'>('specific_batch');
+
+  // Pagination States for SubViews
+  const [balancePage, setBalancePage] = useState(1);
+  const [balancePageSize, setBalancePageSize] = useState(10);
+
+  const [productPage, setProductPage] = useState(1);
+  const [productPageSize, setProductPageSize] = useState(10);
+
+  const [txPage, setTxPage] = useState(1);
+  const [txPageSize, setTxPageSize] = useState(10);
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setBalancePage(1);
+    setProductPage(1);
+    setTxPage(1);
+  }, [searchQuery, categoryFilter, selectedFarm, balanceViewMode, balancePageSize, productPageSize, txPageSize]);
 
   // Modal States
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -276,6 +294,22 @@ export default function FeedInventoryTab({
     const matchesFarm = !effectiveFarm || t.sourceFarm === effectiveFarm || t.targetFarm === effectiveFarm;
     return matchesSearch && matchesFarm;
   });
+
+  // Paginated Slices
+  const paginatedBalances = useMemo(() => {
+    const start = (balancePage - 1) * balancePageSize;
+    return filteredBalances.slice(start, start + balancePageSize);
+  }, [filteredBalances, balancePage, balancePageSize]);
+
+  const paginatedProducts = useMemo(() => {
+    const start = (productPage - 1) * productPageSize;
+    return filteredProducts.slice(start, start + productPageSize);
+  }, [filteredProducts, productPage, productPageSize]);
+
+  const paginatedTransactions = useMemo(() => {
+    const start = (txPage - 1) * txPageSize;
+    return filteredTransactions.slice(start, start + txPageSize);
+  }, [filteredTransactions, txPage, txPageSize]);
 
   // Low stock alerts list
   const lowStockAlerts = balances.filter(b => b.isLowStock && b.balanceBags <= b.minThresholdBags);
@@ -546,8 +580,8 @@ export default function FeedInventoryTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {filteredBalances.length > 0 ? (
-                    filteredBalances.map((item, idx) => (
+                  {paginatedBalances.length > 0 ? (
+                    paginatedBalances.map((item, idx) => (
                       <tr key={item.id || `${item.productId}-${item.farmLocation}-${idx}`} className="hover:bg-slate-50/40 transition-colors">
                         <td className="py-3.5 px-5 font-black text-slate-900">{item.productName}</td>
                         <td className="py-3.5 px-5 font-bold text-slate-800">
@@ -625,6 +659,14 @@ export default function FeedInventoryTab({
               </tbody>
             </table>
           </div>
+          <TablePagination
+            currentPage={balancePage}
+            totalItems={filteredBalances.length}
+            pageSize={balancePageSize}
+            onPageChange={setBalancePage}
+            onPageSizeChange={setBalancePageSize}
+            itemLabel="items"
+          />
         </div>
         </div>
       )}
@@ -647,8 +689,8 @@ export default function FeedInventoryTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map(prod => (
+                {paginatedProducts.length > 0 ? (
+                  paginatedProducts.map(prod => (
                     <tr key={prod.id} className="hover:bg-slate-50/40 transition-colors">
                       <td className="py-3.5 px-5 font-mono font-bold text-slate-800">{prod.id}</td>
                       <td className="py-3.5 px-5 font-black text-slate-900">{prod.name}</td>
@@ -706,6 +748,14 @@ export default function FeedInventoryTab({
               </tbody>
             </table>
           </div>
+          <TablePagination
+            currentPage={productPage}
+            totalItems={filteredProducts.length}
+            pageSize={productPageSize}
+            onPageChange={setProductPage}
+            onPageSizeChange={setProductPageSize}
+            itemLabel="products"
+          />
         </div>
       )}
 
@@ -726,8 +776,8 @@ export default function FeedInventoryTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map(tx => (
+                {paginatedTransactions.length > 0 ? (
+                  paginatedTransactions.map(tx => (
                     <tr key={tx.id} className="hover:bg-slate-50/40 transition-colors">
                       <td className="py-3.5 px-5 font-mono font-bold text-slate-800">{tx.referenceNo || tx.id}</td>
                       <td className="py-3.5 px-5 text-slate-500">{tx.date ? tx.date.split('T')[0] : 'N/A'}</td>
@@ -763,6 +813,14 @@ export default function FeedInventoryTab({
               </tbody>
             </table>
           </div>
+          <TablePagination
+            currentPage={txPage}
+            totalItems={filteredTransactions.length}
+            pageSize={txPageSize}
+            onPageChange={setTxPage}
+            onPageSizeChange={setTxPageSize}
+            itemLabel="transactions"
+          />
         </div>
       )}
 

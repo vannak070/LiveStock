@@ -13,6 +13,7 @@ import { BatchModal } from './features/batch/BatchModal';
 import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
+import { TablePagination } from './common/TablePagination';
 
 interface BatchTabProps {
   data: ERPLivestockData;
@@ -126,6 +127,12 @@ export default function BatchTab({
   const [feedProgStatus, setFeedProgStatus] = useState<'Active' | 'Paused' | 'Completed'>('Active');
   const [feedProgNote, setFeedProgNote] = useState('');
   const [isSavingFeedProg, setIsSavingFeedProg] = useState(false);
+  // Pagination States for Batch Tables
+  const [herdMemberPage, setHerdMemberPage] = useState(1);
+  const [herdMemberPageSize, setHerdMemberPageSize] = useState(10);
+
+  const [reportPage, setReportPage] = useState(1);
+  const [reportPageSize, setReportPageSize] = useState(10);
 
   // Weight scaling form states
   const [scaleInputs, setScaleInputs] = useState<Record<string, { weight: number; healthStatus: string }>>({});
@@ -961,8 +968,8 @@ export default function BatchTab({
                         </tr>
                       </thead>
                       <tbody>
-                        {fatteningCowsInHerd.length > 0 ? (
-                          fatteningCowsInHerd.map(cow => (
+                        {fatteningCowsInHerd.slice((herdMemberPage - 1) * herdMemberPageSize, herdMemberPage * herdMemberPageSize).length > 0 ? (
+                          fatteningCowsInHerd.slice((herdMemberPage - 1) * herdMemberPageSize, herdMemberPage * herdMemberPageSize).map(cow => (
                             <tr key={cow.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
                               <td className="py-3.5 px-4 font-black text-slate-800">{cow.id}</td>
                               <td className="py-3.5 px-4 text-slate-750">{cow.breed}</td>
@@ -1006,6 +1013,14 @@ export default function BatchTab({
                       </tbody>
                     </table>
                   </div>
+                  <TablePagination
+                    currentPage={herdMemberPage}
+                    totalItems={fatteningCowsInHerd.length}
+                    pageSize={herdMemberPageSize}
+                    onPageChange={setHerdMemberPage}
+                    onPageSizeChange={setHerdMemberPageSize}
+                    itemLabel="cows"
+                  />
                 </div>
               </div>
 
@@ -1470,8 +1485,8 @@ export default function BatchTab({
                           </tr>
                         </thead>
                         <tbody>
-                          {reportData.length > 0 ? (
-                            reportData.map(({ cow, initialWeight, currentWeight, gain, adg }) => (
+                          {reportData.slice((reportPage - 1) * reportPageSize, reportPage * reportPageSize).length > 0 ? (
+                            reportData.slice((reportPage - 1) * reportPageSize, reportPage * reportPageSize).map(({ cow, initialWeight, currentWeight, gain, adg }) => (
                               <tr key={cow.id} className="border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
                                 <td className="py-3 px-4 font-black text-slate-800">{cow.id}</td>
                                 <td className="py-3 px-4 text-slate-500">{cow.breed}</td>
@@ -1505,6 +1520,14 @@ export default function BatchTab({
                         </tbody>
                       </table>
                     </div>
+                    <TablePagination
+                      currentPage={reportPage}
+                      totalItems={reportData.length}
+                      pageSize={reportPageSize}
+                      onPageChange={setReportPage}
+                      onPageSizeChange={setReportPageSize}
+                      itemLabel="cows"
+                    />
                   </div>
                 </div>
               );
