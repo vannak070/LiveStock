@@ -912,7 +912,7 @@ export default function BatchTab({
             <div className="bg-white border border-slate-100 p-4.5 rounded-2xl shadow-xs">
               <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Expected Selling Price</p>
               <p className="text-2xl font-black text-emerald-600 mt-1">
-                {defaultBatch?.expectedSellingPrice ? `៛ ${format2DecimalsWithCommas(defaultBatch.expectedSellingPrice)}` : 'Not Set'}
+                {defaultBatch?.expectedSellingPrice ? `៛ ${format2DecimalsWithCommas(defaultBatch.expectedSellingPrice)} / kg` : 'Not Set'}
               </p>
             </div>
             <div className="bg-gradient-to-br from-emerald-50/20 to-teal-50/25 border border-emerald-100/50 p-4.5 rounded-2xl shadow-xs animate-pulse">

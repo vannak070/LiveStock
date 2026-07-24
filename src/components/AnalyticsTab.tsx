@@ -47,6 +47,30 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
     };
   }, [data, selectedFarm]);
 
+  // Compute default expected selling price based on selected batch or highest price among all batches
+  const defaultSellingPrice = useMemo(() => {
+    const batches = farmScopedData.batches || [];
+    const validPrices = batches
+      .map(b => Number(b.expectedSellingPrice))
+      .filter(p => !isNaN(p) && p > 0);
+
+    const highestPrice = validPrices.length > 0 ? Math.max(...validPrices) : 18000;
+
+    if (predictionBatchId !== 'all') {
+      const selected = batches.find(b => b.id === predictionBatchId);
+      if (selected && selected.expectedSellingPrice && Number(selected.expectedSellingPrice) > 0) {
+        return Number(selected.expectedSellingPrice);
+      }
+    }
+
+    return highestPrice;
+  }, [farmScopedData.batches, predictionBatchId]);
+
+  // Sync expectedSellingPricePerKg whenever defaultSellingPrice changes (user can still freely override it)
+  React.useEffect(() => {
+    setExpectedSellingPricePerKg(String(defaultSellingPrice));
+  }, [defaultSellingPrice]);
+
   // Count cattle per farm for the filter bar
   const countByFarm = useMemo(() => {
     const map: Record<string, number> = {};
