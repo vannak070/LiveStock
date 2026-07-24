@@ -131,6 +131,7 @@ export default function BatchTab({
   const [scaleInputs, setScaleInputs] = useState<Record<string, { weight: number; healthStatus: string }>>({});
   const [scalingDate, setScalingDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmittingWeights, setIsSubmittingWeights] = useState(false);
+  const [scaleSearchQuery, setScaleSearchQuery] = useState('');
 
   // Sampling States
   const [isSamplingMode, setIsSamplingMode] = useState(false);
@@ -1680,59 +1681,96 @@ export default function BatchTab({
                   </div>
                 ) : (
                   /* Weigh All mode */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-1">
-                    {activeCows.filter(c => defaultBatch.cowIds.includes(c.id)).map(cow => {
-                      const currentVal = scaleInputs[cow.id] || { weight: cow.weight, healthStatus: cow.healthStatus };
-                      return (
-                        <div key={cow.id} className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black text-slate-800">{cow.id} ({cow.breed})</span>
-                            <span className="text-[10px] text-slate-400 font-bold">ទម្ងន់ចាស់: <span className="font-mono text-slate-700 font-extrabold">{cow.weight} kg</span></span>
-                          </div>
+                  <div className="space-y-3">
+                    {/* Search / Filter Cow Bar */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                        <Input
+                          placeholder="Filter by Cow ID / Code (e.g. CC-013)..."
+                          value={scaleSearchQuery}
+                          onChange={e => setScaleSearchQuery(e.target.value)}
+                          className="h-8 pl-9 text-xs font-semibold rounded-lg bg-white border border-slate-200"
+                        />
+                      </div>
+                      <div className="text-[11px] font-bold text-slate-500 whitespace-nowrap px-1">
+                        Showing <span className="font-mono text-emerald-600 font-extrabold">{
+                          activeCows.filter(c => defaultBatch.cowIds.includes(c.id) && (
+                            !scaleSearchQuery ||
+                            c.id.toLowerCase().includes(scaleSearchQuery.toLowerCase().trim()) ||
+                            c.breed.toLowerCase().includes(scaleSearchQuery.toLowerCase().trim()) ||
+                            c.no.includes(scaleSearchQuery.trim())
+                          )).length
+                        }</span> / {activeCows.filter(c => defaultBatch.cowIds.includes(c.id)).length} cows
+                      </div>
+                    </div>
 
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label htmlFor={`w_${cow.id}`} className="text-[9px] font-bold uppercase text-slate-400">ទម្ងន់ថ្មី (New Wt)</Label>
-                              <Input
-                                type="number"
-                                id={`w_${cow.id}`}
-                                required
-                                min={1}
-                                max={1500}
-                                className="h-8 text-xs font-semibold font-mono text-slate-800 mt-0.5"
-                                value={currentVal.weight}
-                                onChange={e => setScaleInputs(prev => ({
-                                  ...prev,
-                                  [cow.id]: { ...prev[cow.id], weight: parseFloat(e.target.value) || 0 }
-                                }))}
-                              />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto pr-1">
+                      {activeCows
+                        .filter(c => defaultBatch.cowIds.includes(c.id))
+                        .filter(c =>
+                          !scaleSearchQuery ||
+                          c.id.toLowerCase().includes(scaleSearchQuery.toLowerCase().trim()) ||
+                          c.breed.toLowerCase().includes(scaleSearchQuery.toLowerCase().trim()) ||
+                          c.no.includes(scaleSearchQuery.trim())
+                        )
+                        .map(cow => {
+                          const currentVal = scaleInputs[cow.id] || { weight: cow.weight, healthStatus: cow.healthStatus };
+                          return (
+                            <div key={cow.id} className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2.5 hover:border-emerald-200 transition-colors">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                                  {cow.id} ({cow.breed})
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-bold">ទម្ងន់ចាស់: <span className="font-mono text-slate-700 font-extrabold">{cow.weight} kg</span></span>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <Label htmlFor={`w_${cow.id}`} className="text-[9px] font-bold uppercase text-slate-400">ទម្ងន់ថ្មី (New Wt)</Label>
+                                  <Input
+                                    type="number"
+                                    id={`w_${cow.id}`}
+                                    required
+                                    min={1}
+                                    max={1500}
+                                    step="0.1"
+                                    className="h-8 text-xs font-semibold font-mono text-slate-800 mt-0.5"
+                                    value={currentVal.weight}
+                                    onChange={e => setScaleInputs(prev => ({
+                                      ...prev,
+                                      [cow.id]: { ...prev[cow.id], weight: parseFloat(e.target.value) || 0 }
+                                    }))}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`h_${cow.id}`} className="text-[9px] font-bold uppercase text-slate-400">សុខភាព (Health)</Label>
+                                  <select
+                                    id={`h_${cow.id}`}
+                                    className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 mt-0.5 cursor-pointer font-bold"
+                                    value={currentVal.healthStatus}
+                                    onChange={e => setScaleInputs(prev => ({
+                                      ...prev,
+                                      [cow.id]: { ...prev[cow.id], healthStatus: e.target.value }
+                                    }))}
+                                  >
+                                    <option value="Good">👍 Good</option>
+                                    <option value="Fair">😐 Fair</option>
+                                    <option value="Poor">⚠️ Poor</option>
+                                    <option value="Dead">💀 Dead</option>
+                                  </select>
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <Label htmlFor={`h_${cow.id}`} className="text-[9px] font-bold uppercase text-slate-400">សុខភាព (Health)</Label>
-                              <select
-                                id={`h_${cow.id}`}
-                                className="flex h-8 w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 mt-0.5 cursor-pointer font-bold"
-                                value={currentVal.healthStatus}
-                                onChange={e => setScaleInputs(prev => ({
-                                  ...prev,
-                                  [cow.id]: { ...prev[cow.id], healthStatus: e.target.value }
-                                }))}
-                              >
-                                <option value="Good">👍 Good</option>
-                                <option value="Fair">😐 Fair</option>
-                                <option value="Poor">⚠️ Poor</option>
-                                <option value="Dead">💀 Dead</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    {activeCows.filter(c => defaultBatch.cowIds.includes(c.id)).length === 0 && (
-                      <p className="col-span-2 py-8 text-center text-slate-400 font-semibold text-xs bg-slate-50 border border-slate-100 rounded-xl">
-                        No cows allocated in the fattening program.
-                      </p>
-                    )}
+                          );
+                        })}
+                      {activeCows.filter(c => defaultBatch.cowIds.includes(c.id)).length === 0 && (
+                        <p className="col-span-2 py-8 text-center text-slate-400 font-semibold text-xs bg-slate-50 border border-slate-100 rounded-xl">
+                          No cows allocated in the fattening program.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
 
