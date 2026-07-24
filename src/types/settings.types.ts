@@ -104,6 +104,14 @@ export const PERMISSION_MODULES: PermissionCategory[] = [
     ]
   },
   {
+    id: 'feed',
+    label: '📦 Cattle Feed Stock Management',
+    items: [
+      { key: 'feed_view', label: 'View Cattle Feed Inventory', description: 'Access feed balances, product catalog, and transaction logs.' },
+      { key: 'feed_manage', label: 'Manage Cattle Feed Stock', description: 'Add/edit/delete feed products, log procurement stock-in, and manage categories.' }
+    ]
+  },
+  {
     id: 'settings',
     label: '⚙️ ERP Master Setup',
     items: [
@@ -119,9 +127,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   'Super Admin': ALL_PERMISSIONS,
   'Admin': ALL_PERMISSIONS,
   'Company': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage'), 'settings_manage'],
-  'Farm Owner': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage' && p !== 'farms_manage'), 'settings_manage'],
-  'Farm Staff': ['dashboard_view', 'stock_view', 'batch_view', 'weight_view', 'weight_record', 'health_view', 'health_record'],
-  'Veterinarian': ['dashboard_view', 'stock_view', 'stock_edit', 'weight_view', 'weight_record', 'health_view', 'health_record', 'health_delete']
+  'Farm Owner': ALL_PERMISSIONS.filter(p => p !== 'settings_manage' && p !== 'farms_manage' && p !== 'feed_manage'),
+  'Farm Staff': ['dashboard_view', 'stock_view', 'batch_view', 'weight_view', 'weight_record', 'health_view', 'health_record', 'feed_view'],
+  'Veterinarian': ['dashboard_view', 'stock_view', 'stock_edit', 'weight_view', 'weight_record', 'health_view', 'health_record', 'health_delete', 'feed_view']
 };
 
 export interface CustomRoleDefinition {

@@ -293,12 +293,14 @@ export default function FeedInventoryTab({
               </Button>
             )}
 
-            <Button
-              onClick={() => openTxModal('STOCK_IN')}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold py-2 px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowDownLeft className="h-4 w-4" /> 📥 Stock In (Procurement)
-            </Button>
+            {hasPermission(currentUser, 'feed_manage') && (
+              <Button
+                onClick={() => openTxModal('STOCK_IN')}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold py-2 px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <ArrowDownLeft className="h-4 w-4" /> 📥 Stock In (Procurement)
+              </Button>
+            )}
           </div>
         </div>
 
@@ -345,12 +347,14 @@ export default function FeedInventoryTab({
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => openTxModal('STOCK_IN')}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-1.5 px-3.5 rounded-xl flex-shrink-0 cursor-pointer"
-            >
-              + Replenish Stock
-            </Button>
+            {hasPermission(currentUser, 'feed_manage') && (
+              <Button
+                onClick={() => openTxModal('STOCK_IN')}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-1.5 px-3.5 rounded-xl flex-shrink-0 cursor-pointer"
+              >
+                + Replenish Stock
+              </Button>
+            )}
           </div>
         )}
 
@@ -442,14 +446,16 @@ export default function FeedInventoryTab({
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
-            <button
-              type="button"
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="h-9 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
-              title="Manage Feed Categories"
-            >
-              <Settings className="h-3.5 w-3.5 text-slate-500" />
-            </button>
+            {hasPermission(currentUser, 'feed_manage') && (
+              <button
+                type="button"
+                onClick={() => setIsCategoryModalOpen(true)}
+                className="h-9 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                title="Manage Feed Categories"
+              >
+                <Settings className="h-3.5 w-3.5 text-slate-500" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -519,12 +525,16 @@ export default function FeedInventoryTab({
                         )}
                       </td>
                       <td className="py-3.5 px-5 text-right space-x-1">
-                        <Button
-                          onClick={() => openTxModal('STOCK_IN')}
-                          className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[10px] font-bold py-1 px-2.5 border border-emerald-200/60 cursor-pointer"
-                        >
-                          + Add Stock
-                        </Button>
+                        {hasPermission(currentUser, 'feed_manage') ? (
+                          <Button
+                            onClick={() => openTxModal('STOCK_IN')}
+                            className="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-[10px] font-bold py-1 px-2.5 border border-emerald-200/60 cursor-pointer"
+                          >
+                            + Add Stock
+                          </Button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Read Only</span>
+                        )}
                       </td>
                     </tr>
                   ))
