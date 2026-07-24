@@ -13,13 +13,15 @@ interface FeedProductModalProps {
   onClose: () => void;
   onSubmit: (product: FeedProductItem) => Promise<void>;
   initialProduct?: FeedProductItem | null;
+  categories?: string[];
 }
 
 export const FeedProductModal: React.FC<FeedProductModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  initialProduct = null
+  initialProduct = null,
+  categories = ['Concentrate', 'Silage', 'Roughage', 'Supplement', 'Medicine', 'Other']
 }) => {
   const isEditMode = !!initialProduct;
 
@@ -201,12 +203,9 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
                 onChange={e => setCategory(e.target.value)}
                 className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
               >
-                <option value="Concentrate">Concentrate Feed (ចំណីសំរេច)</option>
-                <option value="Silage">Silage (ស្មៅ/ពោត ផ្អាប់)</option>
-                <option value="Roughage">Roughage (ចំបើង)</option>
-                <option value="Supplement">Supplement & Mineral (វីតាមីន/សារធាតុរ៉ែ)</option>
-                <option value="Medicine">Vaccines & Medicine</option>
-                <option value="Other">Other Feed Category</option>
+                {categories.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
               </select>
             </div>
 

@@ -434,11 +434,9 @@ export default function FeedInventoryTab({
             className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
           >
             <option value="">🌾 All Categories</option>
-            <option value="Concentrate">Concentrate Feed</option>
-            <option value="Silage">Silage</option>
-            <option value="Roughage">Roughage</option>
-            <option value="Supplement">Supplement</option>
-            <option value="Medicine">Medicine</option>
+            {(data.settings?.feedTypes || ['Concentrate', 'Silage', 'Roughage', 'Supplement', 'Medicine']).map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -673,6 +671,7 @@ export default function FeedInventoryTab({
         onClose={() => { setIsProductModalOpen(false); setEditingProduct(null); }}
         onSubmit={onSaveProduct}
         initialProduct={editingProduct}
+        categories={data.settings?.feedTypes}
       />
 
       {/* Transaction Modal */}
