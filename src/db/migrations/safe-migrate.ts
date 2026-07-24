@@ -10,6 +10,8 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
+import fs from 'fs';
+import path from 'path';
 import { pool, connectWithRetry } from '../../config/database';
 
 async function safeMigrate() {
@@ -168,6 +170,34 @@ async function safeMigrate() {
       );
     `);
     await client.query(`ALTER TABLE expenses ADD COLUMN IF NOT EXISTS farm_location VARCHAR(100);`);
+
+    // Seed expenses from src/data/db.json safely (ON CONFLICT DO NOTHING)
+    try {
+      const dbJsonPath = path.join(__dirname, '../../data/db.json');
+      if (fs.existsSync(dbJsonPath)) {
+        const raw = fs.readFileSync(dbJsonPath, 'utf-8');
+        const dbData = JSON.parse(raw);
+        if (Array.isArray(dbData.expenses) && dbData.expenses.length > 0) {
+          for (const exp of dbData.expenses) {
+            await client.query(`
+              INSERT INTO expenses (id, category, amount, date, description, farm_location)
+              VALUES ($1, $2, $3, $4, $5, $6)
+              ON CONFLICT (id) DO NOTHING;
+            `, [
+              exp.id,
+              exp.category,
+              exp.amount || 0,
+              exp.date ? new Date(exp.date) : new Date(),
+              exp.description || '',
+              exp.farmLocation || null
+            ]);
+          }
+          console.log(`[✓] Synced ${dbData.expenses.length} expense entries to database.`);
+        }
+      }
+    } catch (e) {
+      console.warn('[!] Note on expense sync:', e);
+    }
     console.log('[✓] expenses');
 
     // ── 10. feed_products & feed_transactions ─────────────────────────────────
