@@ -119,7 +119,7 @@ export default function BatchTab({
     { id: '2', name: 'Corn / Grass Silage', portionPerHead: '15.0', unitCost: '350' },
     { id: '3', name: 'Rice Straw Roughage', portionPerHead: '2.0', unitCost: '150' },
   ];
-  const [feedIngredients, setFeedIngredients] = useState<Array<{ id: string; name: string; portionPerHead: string; unitCost: string }>>(DEFAULT_INGREDIENTS);
+  const [feedIngredients, setFeedIngredients] = useState<Array<{ id: string; productId?: string; name: string; portionPerHead: string; unitCost: string }>>(DEFAULT_INGREDIENTS);
   const [feedProgFrequency, setFeedProgFrequency] = useState('Twice Daily');
   const [feedProgStartDate, setFeedProgStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [feedProgEndDate, setFeedProgEndDate] = useState('');
@@ -166,18 +166,39 @@ export default function BatchTab({
     }
   }, [currentUser]);
 
-  // Sync feed program states when defaultBatch changes
+  // Helper to find matching feed product from Cattle Feed Stock catalog set by admin
+  const findMatchingFeedProduct = (name: string, productId?: string) => {
+    const products = data.feedProducts || [];
+    if (productId) {
+      const match = products.find(p => p.id === productId);
+      if (match) return match;
+    }
+    if (!name) return null;
+    const nameLower = name.toLowerCase().trim();
+    return products.find(p =>
+      p.id.toLowerCase() === nameLower ||
+      p.name.toLowerCase() === nameLower ||
+      p.name.toLowerCase().includes(nameLower) ||
+      nameLower.includes(p.name.toLowerCase())
+    ) || null;
+  };
+
+  // Sync feed program states when defaultBatch or data.feedProducts changes
   useEffect(() => {
     if (defaultBatch?.feedingProgram) {
       const prog = defaultBatch.feedingProgram;
       if (prog.ingredients && prog.ingredients.length > 0) {
         setFeedIngredients(
-          prog.ingredients.map((ing, idx) => ({
-            id: String(idx + 1) + '-' + Date.now(),
-            name: ing.name,
-            portionPerHead: String(ing.portionPerHead ?? 0),
-            unitCost: String(ing.unitCost ?? 0)
-          }))
+          prog.ingredients.map((ing, idx) => {
+            const matched = findMatchingFeedProduct(ing.name);
+            return {
+              id: String(idx + 1) + '-' + Date.now(),
+              productId: matched?.id || '',
+              name: ing.name,
+              portionPerHead: String(ing.portionPerHead ?? 0),
+              unitCost: matched ? String(matched.unitCost) : String(ing.unitCost ?? 0)
+            };
+          })
         );
       } else {
         setFeedIngredients(DEFAULT_INGREDIENTS);
@@ -190,7 +211,7 @@ export default function BatchTab({
     } else {
       setFeedIngredients(DEFAULT_INGREDIENTS);
     }
-  }, [defaultBatch]);
+  }, [defaultBatch, data.feedProducts]);
 
   // Sync scaling inputs when dialog opens
   const openScalingDialog = () => {
@@ -461,8 +482,41 @@ export default function BatchTab({
     setFeedIngredients(prev => prev.filter(item => item.id !== id));
   };
 
-  const handleIngredientChange = (id: string, field: 'name' | 'portionPerHead' | 'unitCost', value: string) => {
-    setFeedIngredients(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  const handleIngredientChange = (id: string, field: 'productId' | 'name' | 'portionPerHead' | 'unitCost', value: string) => {
+    setFeedIngredients(prev => prev.map(item => {
+      if (item.id !== id) return item;
+
+      if (field === 'productId') {
+        if (value === 'custom') {
+          return { ...item, productId: '', name: '', unitCost: item.unitCost };
+        }
+        const matched = (data.feedProducts || []).find(p => p.id === value);
+        if (matched) {
+          return {
+            ...item,
+            productId: matched.id,
+            name: matched.name,
+            unitCost: String(matched.unitCost)
+          };
+        }
+        return { ...item, productId: value };
+      }
+
+      if (field === 'name') {
+        const matched = findMatchingFeedProduct(value);
+        if (matched) {
+          return {
+            ...item,
+            name: value,
+            productId: matched.id,
+            unitCost: String(matched.unitCost)
+          };
+        }
+        return { ...item, name: value };
+      }
+
+      return { ...item, [field]: value };
+    }));
   };
 
   // Submit feeding program updates
@@ -473,11 +527,15 @@ export default function BatchTab({
     try {
       const validIngredients = feedIngredients
         .filter(item => item.name.trim().length > 0)
-        .map(item => ({
-          name: item.name.trim(),
-          portionPerHead: Number(item.portionPerHead) || 0,
-          unitCost: Number(item.unitCost) || 0
-        }));
+        .map(item => {
+          const matched = findMatchingFeedProduct(item.name, item.productId);
+          const finalUnitCost = matched ? matched.unitCost : (Number(item.unitCost) || 0);
+          return {
+            name: item.name.trim(),
+            portionPerHead: Number(item.portionPerHead) || 0,
+            unitCost: finalUnitCost
+          };
+        });
 
       const feedingConfig = {
         ingredients: validIngredients,
@@ -519,10 +577,11 @@ export default function BatchTab({
   const totalBiomass = fatteningCowsInHerd.reduce((sum, c) => sum + c.weight, 0);
   const avgBiomass = fatteningCowsInHerd.length > 0 ? Math.round(totalBiomass / fatteningCowsInHerd.length) : 0;
 
-  // Calculate daily feed cost per head dynamically
+  // Calculate daily feed cost per head dynamically from admin catalog
   const dailyFeedCostPerHead = feedIngredients.reduce((sum, item) => {
+    const matched = findMatchingFeedProduct(item.name, item.productId);
     const portion = Number(item.portionPerHead) || 0;
-    const cost = Number(item.unitCost) || 0;
+    const cost = matched ? matched.unitCost : (Number(item.unitCost) || 0);
     return sum + (portion * cost);
   }, 0);
   const totalHerdDailyFeedCost = dailyFeedCostPerHead * fatteningCowsInHerd.length;
@@ -1098,9 +1157,11 @@ export default function BatchTab({
                     </div>
 
                     {feedIngredients.map((item, idx) => {
+                      const matchedProd = findMatchingFeedProduct(item.name, item.productId);
+                      const effectiveCost = matchedProd ? matchedProd.unitCost : (Number(item.unitCost) || 0);
                       const itemPortion = Number(item.portionPerHead) || 0;
-                      const itemCost = Number(item.unitCost) || 0;
-                      const itemDailyCost = itemPortion * itemCost;
+                      const itemDailyCost = itemPortion * effectiveCost;
+                      const catalogProducts = data.feedProducts || [];
 
                       return (
                         <div key={item.id} className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2">
@@ -1109,14 +1170,36 @@ export default function BatchTab({
                               <span className="h-5 w-5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black flex items-center justify-center flex-shrink-0">
                                 {idx + 1}
                               </span>
-                              <input
-                                type="text"
-                                value={item.name}
-                                onChange={e => handleIngredientChange(item.id, 'name', e.target.value)}
-                                placeholder="e.g. ចំណីសំរេច, ស្មៅ, គ្រាប់ពោត, ចំបើង..."
-                                className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
-                              />
+
+                              {/* Catalog Selector Dropdown */}
+                              <select
+                                value={matchedProd?.id || (item.name ? 'custom' : '')}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  if (val === 'custom') {
+                                    handleIngredientChange(item.id, 'productId', 'custom');
+                                    handleIngredientChange(item.id, 'name', '');
+                                  } else {
+                                    const p = catalogProducts.find(prod => prod.id === val);
+                                    if (p) {
+                                      handleIngredientChange(item.id, 'productId', p.id);
+                                      handleIngredientChange(item.id, 'name', p.name);
+                                      handleIngredientChange(item.id, 'unitCost', String(p.unitCost));
+                                    }
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-extrabold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                              >
+                                <option value="">-- Select Feed Product from Admin Catalog --</option>
+                                {catalogProducts.map(p => (
+                                  <option key={p.id} value={p.id}>
+                                    🌾 {p.name} ({p.category}) — ៛ {format2DecimalsWithCommas(p.unitCost)} / kg
+                                  </option>
+                                ))}
+                                <option value="custom">✍️ Custom / Non-Catalog Ingredient Name...</option>
+                              </select>
                             </div>
+
                             {feedIngredients.length > 1 && (
                               <button
                                 type="button"
@@ -1128,6 +1211,19 @@ export default function BatchTab({
                               </button>
                             )}
                           </div>
+
+                          {/* Custom Name Input if 'custom' option selected or non-catalog */}
+                          {(!matchedProd && (item.name === '' || item.productId === 'custom' || !catalogProducts.some(p => p.name === item.name))) && (
+                            <div className="pt-1">
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={e => handleIngredientChange(item.id, 'name', e.target.value)}
+                                placeholder="Enter custom feed name (e.g. ចំបើង, ស្មៅสด)..."
+                                className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+                              />
+                            </div>
+                          )}
 
                           <div className="grid grid-cols-3 gap-3 pt-1">
                             <div>
@@ -1141,18 +1237,27 @@ export default function BatchTab({
                               />
                             </div>
                             <div>
-                              <Label className="text-[9px] font-bold uppercase text-slate-400">Unit Cost (៛ / kg)</Label>
+                              <div className="flex items-center justify-between">
+                                <Label className="text-[9px] font-bold uppercase text-slate-400">Unit Cost (៛ / kg)</Label>
+                                {matchedProd && (
+                                  <span className="text-[8px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1 py-0.5 rounded uppercase">
+                                    ✓ Admin Catalog
+                                  </span>
+                                )}
+                              </div>
                               <Input
                                 type="number"
-                                value={item.unitCost}
+                                value={matchedProd ? matchedProd.unitCost : item.unitCost}
+                                readOnly={!!matchedProd}
                                 onChange={e => handleIngredientChange(item.id, 'unitCost', e.target.value)}
-                                className="h-8 text-xs font-semibold mt-0.5"
+                                className={`h-8 text-xs font-semibold mt-0.5 ${matchedProd ? 'bg-slate-100/90 text-slate-700 font-mono font-bold cursor-not-allowed border-slate-200' : ''}`}
+                                placeholder="Cost/kg"
                               />
                             </div>
                             <div>
                               <Label className="text-[9px] font-bold uppercase text-slate-400">Daily Cost / Head</Label>
                               <div className="h-8 flex items-center px-2.5 bg-white border border-slate-200 rounded-md font-mono text-xs font-bold text-emerald-700 mt-0.5">
-                                ៛ {itemDailyCost.toLocaleString()}
+                                ៛ {format2DecimalsWithCommas(itemDailyCost)}
                               </div>
                             </div>
                           </div>
