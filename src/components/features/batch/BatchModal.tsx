@@ -56,7 +56,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         setSelectedCowIds([]);
       } else {
         const randomSuffix = Math.floor(100 + Math.random() * 900);
-        setId(`BAT-${new Date().getFullYear()}-${randomSuffix}`);
+        setId(`CCB-${new Date().getFullYear()}-${randomSuffix}`);
         setName('ហ្វូងបំប៉នថ្មី (New Fattening Herd)');
         setType('Fattening Program');
         setStartDate(new Date().toISOString().split('T')[0]);
@@ -95,7 +95,7 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         notes: 'Default fattening ration.'
       };
 
-      const finalId = id.trim() || `BAT-${Date.now().toString(36).toUpperCase()}`;
+      const finalId = id.trim() || `CCB-${Date.now().toString(36).toUpperCase()}`;
       await onSubmit({
         id: finalId,
         name: name.trim(),
@@ -155,15 +155,17 @@ export const BatchModal: React.FC<BatchModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="batch_id" className="text-xs font-bold text-slate-700">Batch Code</Label>
+              <Label htmlFor="batch_id" className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>Batch Code</span>
+                <span className="text-[10px] text-slate-400 font-semibold">(Auto-generated)</span>
+              </Label>
               <Input
                 id="batch_id"
                 value={id}
-                onChange={e => setId(e.target.value)}
-                placeholder="e.g. FAT-2026-01"
-                required
-                disabled={isEditMode}
-                className="font-mono text-xs disabled:bg-slate-100"
+                readOnly
+                disabled
+                placeholder="e.g. CCB-2026-891"
+                className="font-mono text-xs font-bold bg-slate-100/90 text-slate-600 border-slate-200 cursor-not-allowed select-none"
               />
             </div>
 
