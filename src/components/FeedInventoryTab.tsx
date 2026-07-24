@@ -26,10 +26,12 @@ import {
   Calendar,
   CheckCircle2,
   Trash2,
-  Edit3
+  Edit3,
+  Settings
 } from 'lucide-react';
 import { FeedProductModal } from './features/feed/FeedProductModal';
 import { FeedTransactionModal } from './features/feed/FeedTransactionModal';
+import { FeedCategoryModal } from './features/feed/FeedCategoryModal';
 import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
@@ -63,6 +65,7 @@ export default function FeedInventoryTab({
   const [editingProduct, setEditingProduct] = useState<FeedProductItem | null>(null);
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
   const [txType, setTxType] = useState<'STOCK_IN' | 'STOCK_OUT'>('STOCK_IN');
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -428,16 +431,26 @@ export default function FeedInventoryTab({
               className="h-9 pl-9 text-xs font-semibold rounded-xl bg-white border border-slate-200"
             />
           </div>
-          <select
-            value={categoryFilter}
-            onChange={e => setCategoryFilter(e.target.value)}
-            className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-          >
-            <option value="">🌾 All Categories</option>
-            {(data.settings?.feedTypes || ['Concentrate', 'Silage', 'Roughage', 'Supplement', 'Medicine']).map(c => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
+          <div className="flex items-center gap-1.5">
+            <select
+              value={categoryFilter}
+              onChange={e => setCategoryFilter(e.target.value)}
+              className="h-9 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+            >
+              <option value="">🌾 All Categories</option>
+              {(data.settings?.feedTypes || ['Concentrate', 'Silage', 'Roughage', 'Supplement', 'Medicine']).map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setIsCategoryModalOpen(true)}
+              className="h-9 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+              title="Manage Feed Categories"
+            >
+              <Settings className="h-3.5 w-3.5 text-slate-500" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -672,6 +685,14 @@ export default function FeedInventoryTab({
         onSubmit={onSaveProduct}
         initialProduct={editingProduct}
         categories={data.settings?.feedTypes}
+        onManageCategories={() => setIsCategoryModalOpen(true)}
+      />
+
+      {/* Feed Category Manager Modal */}
+      <FeedCategoryModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        settings={data.settings}
       />
 
       {/* Transaction Modal */}

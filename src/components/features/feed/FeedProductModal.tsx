@@ -14,6 +14,7 @@ interface FeedProductModalProps {
   onSubmit: (product: FeedProductItem) => Promise<void>;
   initialProduct?: FeedProductItem | null;
   categories?: string[];
+  onManageCategories?: () => void;
 }
 
 export const FeedProductModal: React.FC<FeedProductModalProps> = ({
@@ -21,7 +22,8 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
   onClose,
   onSubmit,
   initialProduct = null,
-  categories = ['Concentrate', 'Silage', 'Roughage', 'Supplement', 'Medicine', 'Other']
+  categories = ['Concentrate', 'Silage', 'Roughage', 'Supplement', 'Medicine', 'Other'],
+  onManageCategories
 }) => {
   const isEditMode = !!initialProduct;
 
@@ -196,7 +198,18 @@ export const FeedProductModal: React.FC<FeedProductModalProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <Label htmlFor="prod_cat" className="text-xs font-bold text-slate-700">Category</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="prod_cat" className="text-xs font-bold text-slate-700">Category</Label>
+                {onManageCategories && (
+                  <button
+                    type="button"
+                    onClick={onManageCategories}
+                    className="text-[10px] text-emerald-600 hover:underline font-extrabold cursor-pointer"
+                  >
+                    + Edit Categories
+                  </button>
+                )}
+              </div>
               <select
                 id="prod_cat"
                 value={category}
