@@ -32,8 +32,9 @@ export const FeedTransactionModal: React.FC<FeedTransactionModalProps> = ({
   const [type, setType] = useState<FeedTransactionType>(defaultType);
   const [productId, setProductId] = useState('');
   const [quantityBags, setQuantityBags] = useState('50');
-  const [sourceFarm, setSourceFarm] = useState('Central Warehouse');
-  const [targetFarm, setTargetFarm] = useState(currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : 'Central Warehouse'));
+  const defaultFarmName = currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : '');
+  const [sourceFarm, setSourceFarm] = useState(defaultFarmName);
+  const [targetFarm, setTargetFarm] = useState(defaultFarmName);
   const [referenceNo, setReferenceNo] = useState('');
   const [notes, setNotes] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -46,8 +47,9 @@ export const FeedTransactionModal: React.FC<FeedTransactionModalProps> = ({
       if (products.length > 0) {
         setProductId(products[0].id);
       }
-      setSourceFarm(currentUser?.farmLocation || 'Central Warehouse');
-      setTargetFarm(currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : 'Central Warehouse'));
+      const initialFarm = currentUser?.farmLocation || (farms.length > 0 ? farms[0].name : '');
+      setSourceFarm(initialFarm);
+      setTargetFarm(initialFarm);
       setReferenceNo(`TX-${Date.now().toString().slice(-6)}`);
       setNotes('');
       setDate(new Date().toISOString().split('T')[0]);
@@ -202,7 +204,6 @@ export const FeedTransactionModal: React.FC<FeedTransactionModalProps> = ({
                   {farms.map(f => (
                     <option key={f.id} value={f.name}>{f.name}</option>
                   ))}
-                  <option value="Central Warehouse">Central Warehouse</option>
                 </select>
               </div>
             )}

@@ -27,7 +27,7 @@ export interface FeedStockTransaction {
   quantityKg: number;
   unitCost: number;
   totalCost: number;
-  sourceFarm?: string; // Central Warehouse or specific farm
+  sourceFarm?: string; // Source farm location or supplier
   targetFarm?: string; // Target farm location for transfers or stock-in
   referenceNo?: string;
   recordedBy?: string;

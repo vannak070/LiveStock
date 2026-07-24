@@ -125,10 +125,11 @@ export default function FeedInventoryTab({
     transactions.forEach(tx => {
       const prod = products.find(p => p.id === tx.productId);
       const wtPerUnit = prod?.weightPerUnit || 30;
+      const defaultFarmName = farms[0]?.name || 'Farm';
 
       // Handle Stock In
       if (tx.type === 'STOCK_IN') {
-        const target = tx.targetFarm || 'Central Warehouse';
+        const target = tx.targetFarm || defaultFarmName;
         const key = `${tx.productId}___${target}`;
         if (!balanceMap[key]) balanceMap[key] = { bags: 0, kg: 0 };
         balanceMap[key].bags += tx.quantityBags || 0;
@@ -137,7 +138,7 @@ export default function FeedInventoryTab({
 
       // Handle Stock Out
       if (tx.type === 'STOCK_OUT') {
-        const source = tx.targetFarm || tx.sourceFarm || 'Central Warehouse';
+        const source = tx.targetFarm || tx.sourceFarm || defaultFarmName;
         const key = `${tx.productId}___${source}`;
         if (!balanceMap[key]) balanceMap[key] = { bags: 0, kg: 0 };
         balanceMap[key].bags -= tx.quantityBags || 0;
@@ -150,7 +151,6 @@ export default function FeedInventoryTab({
     products.forEach(prod => {
       // If farm is filtered, compute for that farm; otherwise aggregate across all farms
       const targetFarms = effectiveFarm ? [effectiveFarm] : Array.from(new Set([
-        'Central Warehouse',
         ...farms.map(f => f.name),
         ...transactions.map(t => t.targetFarm).filter(Boolean) as string[]
       ]));
