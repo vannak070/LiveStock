@@ -336,7 +336,7 @@ export default function FeedInventoryTab({
                 ⚡ Automated Daily Feed Stock Out Active ({batchRationUsage.activeHeadcount} Active Cattle)
               </h4>
               <p className="text-[11px] text-emerald-800 font-semibold mt-0.5">
-                Stock out is calculated automatically each day based on active Daily Feed Ration specs: <strong className="text-emerald-950 font-black">{batchRationUsage.totalDailyRationKg.toLocaleString()} kg/day</strong> ({batchRationUsage.totalDailyRationBags.toFixed(2)} bags/day) across {batchRationUsage.activeBatchesCount} active fattening programs. Manual stock out is disabled.
+                Stock out is calculated automatically each day based on active Daily Feed Ration specs: <strong className="text-emerald-950 font-black">{format2DecimalsWithCommas(batchRationUsage.totalDailyRationKg)} kg/day</strong> ({format2DecimalsWithCommas(batchRationUsage.totalDailyRationBags)} bags/day) across {batchRationUsage.activeBatchesCount} active fattening programs. Manual stock out is disabled.
               </p>
             </div>
           </div>

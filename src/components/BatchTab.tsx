@@ -1325,18 +1325,18 @@ export default function BatchTab({
                       return (
                         <div key={item.id} className="flex justify-between border-b border-slate-50 pb-1.5">
                           <span className="truncate pr-2 font-semibold text-slate-700">{item.name || 'Unnamed Feed'}</span>
-                          <span className="font-mono font-bold text-slate-800 flex-shrink-0">៛ {costPerHead.toLocaleString()} / head</span>
+                          <span className="font-mono font-bold text-slate-800 flex-shrink-0">៛ {format2DecimalsWithCommas(costPerHead)} / head</span>
                         </div>
                       );
                     })}
 
                     <div className="flex justify-between font-black text-slate-800 text-sm bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100/50">
                       <span className="text-emerald-800 font-bold">Total / Head / Day</span>
-                      <span className="text-emerald-800 font-bold">៛ {dailyFeedCostPerHead.toLocaleString()}</span>
+                      <span className="text-emerald-800 font-bold">៛ {format2DecimalsWithCommas(dailyFeedCostPerHead)}</span>
                     </div>
                     <div className="flex justify-between font-black text-slate-800 text-sm bg-teal-50/50 p-2.5 rounded-xl border border-teal-100/50">
                       <span className="text-teal-800 font-bold">Herd Daily Cost ({fatteningCowsInHerd.length} head)</span>
-                      <span className="text-teal-800 font-bold">៛ {totalHerdDailyFeedCost.toLocaleString()}</span>
+                      <span className="text-teal-800 font-bold">៛ {format2DecimalsWithCommas(totalHerdDailyFeedCost)}</span>
                     </div>
 
                     {/* DSR-16 Feed Stock & Ration Link Card */}
@@ -1358,11 +1358,11 @@ export default function BatchTab({
                         }`}>
                           <div className="flex items-center justify-between font-black">
                             <span>📦 Live DSR-16 Feed Stock</span>
-                            <span className="font-mono text-emerald-700">{dsrOnHandBags.toLocaleString()} bags ({dsrOnHandBags * 30} kg)</span>
+                            <span className="font-mono text-emerald-700">{format2DecimalsWithCommas(dsrOnHandBags)} bags ({format2DecimalsWithCommas(dsrOnHandBags * 30)} kg)</span>
                           </div>
                           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
                             <span>Daily Herd Ration Rate:</span>
-                            <span className="font-mono font-bold text-slate-700">{dailyHerdDsrKg.toFixed(1)} kg/day ({dailyHerdDsrBags.toFixed(2)} bags/d)</span>
+                            <span className="font-mono font-bold text-slate-700">{format2DecimalsWithCommas(dailyHerdDsrKg)} kg/day ({format2DecimalsWithCommas(dailyHerdDsrBags)} bags/d)</span>
                           </div>
                           <div className="flex items-center justify-between text-[11px] font-extrabold pt-1 border-t border-slate-200/60">
                             <span>Feed Stock Coverage:</span>
