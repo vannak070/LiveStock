@@ -102,35 +102,15 @@ export const FeedTransactionModal: React.FC<FeedTransactionModalProps> = ({
       <DialogContent className="max-w-xl bg-white p-6 rounded-2xl border border-slate-100 shadow-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-left pb-4 border-b border-slate-100">
           <DialogTitle className="text-lg font-black text-slate-900 flex items-center gap-2">
-            {type === 'STOCK_IN' && <ArrowDownLeft className="h-5 w-5 text-emerald-600" />}
-            {type === 'STOCK_OUT' && <ArrowUpRight className="h-5 w-5 text-rose-600" />}
-            {type === 'STOCK_IN' && 'Stock In (Procurement / Delivery)'}
-            {type === 'STOCK_OUT' && 'Stock Out (Daily Feed Usage)'}
+            <ArrowDownLeft className="h-5 w-5 text-emerald-600" />
+            Feed Stock In (Procurement / Inbound Delivery)
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            {type === 'STOCK_IN' && 'Log inbound feed purchases into Farm Stock.'}
-            {type === 'STOCK_OUT' && 'Log daily feeding consumption or issue feed to cattle cohorts.'}
+            Log inbound feed purchases into Farm Stock. Daily stock out is automatically calculated based on active feed rations.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-4 text-left">
-          {/* Transaction Type Selector Toggle */}
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold w-fit">
-            <button
-              type="button"
-              onClick={() => setType('STOCK_IN')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${type === 'STOCK_IN' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              📥 Stock In
-            </button>
-            <button
-              type="button"
-              onClick={() => setType('STOCK_OUT')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${type === 'STOCK_OUT' ? 'bg-white text-rose-700 shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
-            >
-              📤 Stock Out
-            </button>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">

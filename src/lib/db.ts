@@ -60,6 +60,8 @@ function writeJsonDbData(data: ERPLivestockData): void {
 import { feedRepository } from '../repositories/feed.repository';
 import { FeedProductItem, FeedStockTransaction } from './types';
 
+import { processDailyFeedStockOuts } from './daily-feed-cron';
+
 /**
  * Aggregates all ERP domain data from PostgreSQL (or instant JSON fallback if PostgreSQL is unreachable)
  */
@@ -94,7 +96,7 @@ export async function getDbData(): Promise<ERPLivestockData> {
       sexes: settings.sexes || []
     };
 
-    return {
+    const erpData: ERPLivestockData = {
       stock,
       weightTracking,
       salesTracking,
@@ -106,6 +108,11 @@ export async function getDbData(): Promise<ERPLivestockData> {
       feedProducts: feedProducts && feedProducts.length > 0 ? feedProducts : (jsonDb.feedProducts || []),
       feedTransactions: feedTransactions && feedTransactions.length > 0 ? feedTransactions : (jsonDb.feedTransactions || [])
     };
+
+    // Auto-calculate daily feed stock outs based on Daily Feed Ration
+    await processDailyFeedStockOuts(erpData).catch(e => console.warn('[Daily Feed Cron] Non-blocking error:', e));
+
+    return erpData;
   } catch (err) {
     console.warn('[getDbData] PostgreSQL read error, falling back to db.json:', err);
     return getJsonDbData();

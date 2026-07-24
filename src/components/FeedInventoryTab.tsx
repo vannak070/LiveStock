@@ -274,30 +274,23 @@ export default function FeedInventoryTab({
               onClick={() => openTxModal('STOCK_IN')}
               className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold py-2 px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
-              <ArrowDownLeft className="h-4 w-4" /> 📥 Stock In
-            </Button>
-
-            <Button
-              onClick={() => openTxModal('STOCK_OUT')}
-              className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold py-2 px-3.5 shadow-xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowUpRight className="h-4 w-4" /> 📤 Stock Out
+              <ArrowDownLeft className="h-4 w-4" /> 📥 Stock In (Procurement)
             </Button>
           </div>
         </div>
 
-        {/* Batch Daily Feed Ration & Stock Relationship Card */}
-        <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-left shadow-2xs">
+        {/* Automated Daily Stock Out Banner */}
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-left shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
               <Scale className="h-5 w-5" />
             </div>
             <div>
               <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
-                ⚡ Batch Daily Feed Ration Link Active ({batchRationUsage.activeHeadcount} Active Cattle)
+                ⚡ Automated Daily Feed Stock Out Active ({batchRationUsage.activeHeadcount} Active Cattle)
               </h4>
               <p className="text-[11px] text-emerald-800 font-semibold mt-0.5">
-                Daily Feed Consumption Rate: <strong className="text-emerald-950 font-black">{batchRationUsage.totalDailyRationKg.toLocaleString()} kg/day</strong> ({batchRationUsage.totalDailyRationBags.toFixed(2)} bags/day) across {batchRationUsage.activeBatchesCount} active fattening programs.
+                Stock out is calculated automatically each day based on active Daily Feed Ration specs: <strong className="text-emerald-950 font-black">{batchRationUsage.totalDailyRationKg.toLocaleString()} kg/day</strong> ({batchRationUsage.totalDailyRationBags.toFixed(2)} bags/day) across {batchRationUsage.activeBatchesCount} active fattening programs. Manual stock out is disabled.
               </p>
             </div>
           </div>
