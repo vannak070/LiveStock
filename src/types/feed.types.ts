@@ -36,9 +36,11 @@ export interface FeedStockTransaction {
 }
 
 export interface FeedBalanceItem {
+  id?: string;
   productId: string;
   productName: string;
   farmLocation: string;
+  activeBatchName?: string;
   activeBatches?: string[];
   balanceBags: number;
   balanceKg: number;

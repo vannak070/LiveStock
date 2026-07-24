@@ -178,28 +178,46 @@ export default function FeedInventoryTab({
 
         // Active batches assigned under this farm
         const activeBatchesForFarm = (data.batches || [])
-          .filter(b => b.status === 'Active' && (!b.farmLocation || b.farmLocation === farmName))
-          .map(b => b.name);
+          .filter(b => b.status === 'Active' && (!b.farmLocation || b.farmLocation === farmName));
 
         // Minimum threshold check (50 bags / 1,500 kg default)
         const thresholdBags = prod.minThresholdBags || 50;
         const thresholdKg = prod.minThresholdKg || (thresholdBags * (prod.weightPerUnit || 30));
         const isLow = b.bags <= thresholdBags || b.kg <= thresholdKg;
 
-        if (!effectiveFarm || farmName === effectiveFarm || b.bags > 0 || activeBatchesForFarm.length > 0) {
-          result.push({
-            productId: prod.id,
-            productName: prod.name,
-            farmLocation: farmName,
-            activeBatches: activeBatchesForFarm,
-            balanceBags: Math.max(0, b.bags),
-            balanceKg: Math.max(0, b.kg),
-            unitCost: prod.unitCost,
-            totalValuation: Math.max(0, b.kg) * prod.unitCost,
-            isLowStock: isLow,
-            minThresholdBags: thresholdBags,
-            minThresholdKg: thresholdKg
+        const baseItem = {
+          productId: prod.id,
+          productName: prod.name,
+          farmLocation: farmName,
+          balanceBags: Math.max(0, b.bags),
+          balanceKg: Math.max(0, b.kg),
+          unitCost: prod.unitCost,
+          totalValuation: Math.max(0, b.kg) * prod.unitCost,
+          isLowStock: isLow,
+          minThresholdBags: thresholdBags,
+          minThresholdKg: thresholdKg
+        };
+
+        if (activeBatchesForFarm.length > 0) {
+          // Separate each active batch into its own dedicated row
+          activeBatchesForFarm.forEach(bItem => {
+            result.push({
+              ...baseItem,
+              id: `${prod.id}___${farmName}___${bItem.id}`,
+              activeBatchName: bItem.name,
+              activeBatches: [bItem.name]
+            });
           });
+        } else {
+          // If no active batch under farm, render 1 row
+          if (!effectiveFarm || farmName === effectiveFarm || b.bags > 0) {
+            result.push({
+              ...baseItem,
+              id: `${prod.id}___${farmName}___nobatch`,
+              activeBatchName: undefined,
+              activeBatches: []
+            });
+          }
         }
       });
     });
@@ -221,7 +239,10 @@ export default function FeedInventoryTab({
   // Filtered lists
   const filteredBalances = balances.filter(b => {
     const q = searchQuery.toLowerCase().trim();
-    const matchesSearch = !q || b.productName.toLowerCase().includes(q) || b.farmLocation.toLowerCase().includes(q);
+    const matchesSearch = !q || 
+      b.productName.toLowerCase().includes(q) || 
+      b.farmLocation.toLowerCase().includes(q) ||
+      (b.activeBatchName && b.activeBatchName.toLowerCase().includes(q));
     const matchesCategory = !categoryFilter || products.find(p => p.id === b.productId)?.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -469,7 +490,7 @@ export default function FeedInventoryTab({
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-black text-[9.5px] uppercase tracking-wider">
                   <th className="py-3.5 px-5">Feed Product</th>
                   <th className="py-3.5 px-5">Warehouse / Farm</th>
-                  <th className="py-3.5 px-5">Active Batches under Farm</th>
+                  <th className="py-3.5 px-5">Active Batch</th>
                   <th className="py-3.5 px-5">Stock On-Hand (Bags)</th>
                   <th className="py-3.5 px-5">Total Biomass (kg)</th>
                   <th className="py-3.5 px-5">Unit Cost</th>
@@ -481,22 +502,18 @@ export default function FeedInventoryTab({
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
                 {filteredBalances.length > 0 ? (
                   filteredBalances.map((item, idx) => (
-                    <tr key={`${item.productId}-${item.farmLocation}-${idx}`} className="hover:bg-slate-50/40 transition-colors">
+                    <tr key={item.id || `${item.productId}-${item.farmLocation}-${idx}`} className="hover:bg-slate-50/40 transition-colors">
                       <td className="py-3.5 px-5 font-black text-slate-900">{item.productName}</td>
                       <td className="py-3.5 px-5 font-bold text-slate-800">
                         <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-700">
                           🏢 {item.farmLocation}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5">
-                        {item.activeBatches && item.activeBatches.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {item.activeBatches.map((bName, bIdx) => (
-                              <span key={bIdx} className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/80 px-2 py-0.5 rounded-md text-[11px] font-bold shadow-2xs">
-                                📦 {bName}
-                              </span>
-                            ))}
-                          </div>
+                      <td className="py-3.5 px-5 font-bold">
+                        {item.activeBatchName ? (
+                          <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold shadow-2xs">
+                            📦 {item.activeBatchName}
+                          </span>
                         ) : (
                           <span className="text-[11px] text-slate-400 font-medium">—</span>
                         )}
