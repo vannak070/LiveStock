@@ -255,7 +255,7 @@ export default function FinanceTab({
 
         <div className="bg-white border border-slate-100 p-4 rounded-xl flex items-center justify-between shadow-sm cursor-pointer hover:border-rose-250 transition-colors" onClick={() => { setLedgerView('expenses'); }}>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Feed & Operational Expense</p>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Operation Expense</p>
             <h4 className="text-lg font-black text-rose-500 mt-1">៛ {format2DecimalsWithCommas(totalExpenses)}</h4>
           </div>
           <div className="h-9 w-9 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center">
@@ -292,7 +292,7 @@ export default function FinanceTab({
                 : 'border-transparent text-slate-400 hover:text-slate-650'
             }`}
           >
-            Feed & Operations Ledger
+            Operation Ledger
           </button>
           <button
             type="button"
