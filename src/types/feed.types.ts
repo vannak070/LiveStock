@@ -39,6 +39,7 @@ export interface FeedBalanceItem {
   productId: string;
   productName: string;
   farmLocation: string;
+  activeBatches?: string[];
   balanceBags: number;
   balanceKg: number;
   unitCost: number;

@@ -118,18 +118,25 @@ export default function FeedInventoryTab({
     };
   }, [data.batches, effectiveFarm]);
 
+  // Helper to extract clean farm location name
+  const resolveRealFarmName = (farmStr?: string): string | null => {
+    if (!farmStr) return null;
+    if (farmStr.startsWith('Daily Feed') || farmStr === 'Supplier' || farmStr === 'Central Warehouse') return null;
+    return farmStr;
+  };
+
   // Compute real-time stock balances per product and per farm location
   const balances: FeedBalanceItem[] = useMemo(() => {
     const balanceMap: Record<string, { bags: number; kg: number }> = {};
+    const defaultFarmName = farms[0]?.name || (data.batches || [])[0]?.farmLocation || 'SNR Farm';
 
     transactions.forEach(tx => {
       const prod = products.find(p => p.id === tx.productId);
       const wtPerUnit = prod?.weightPerUnit || 30;
-      const defaultFarmName = farms[0]?.name || 'Farm';
 
       // Handle Stock In
       if (tx.type === 'STOCK_IN') {
-        const target = tx.targetFarm || defaultFarmName;
+        const target = resolveRealFarmName(tx.targetFarm) || resolveRealFarmName(tx.sourceFarm) || defaultFarmName;
         const key = `${tx.productId}___${target}`;
         if (!balanceMap[key]) balanceMap[key] = { bags: 0, kg: 0 };
         balanceMap[key].bags += tx.quantityBags || 0;
@@ -138,7 +145,7 @@ export default function FeedInventoryTab({
 
       // Handle Stock Out
       if (tx.type === 'STOCK_OUT') {
-        const source = tx.targetFarm || tx.sourceFarm || defaultFarmName;
+        const source = resolveRealFarmName(tx.sourceFarm) || resolveRealFarmName(tx.targetFarm) || defaultFarmName;
         const key = `${tx.productId}___${source}`;
         if (!balanceMap[key]) balanceMap[key] = { bags: 0, kg: 0 };
         balanceMap[key].bags -= tx.quantityBags || 0;
@@ -148,27 +155,40 @@ export default function FeedInventoryTab({
 
     const result: FeedBalanceItem[] = [];
 
+    // Collect all real farm names
+    const realFarmNames = Array.from(new Set([
+      ...farms.map(f => f.name),
+      ...(data.batches || []).map(b => b.farmLocation).filter(Boolean) as string[],
+      ...transactions.map(t => resolveRealFarmName(t.sourceFarm)).filter(Boolean) as string[],
+      ...transactions.map(t => resolveRealFarmName(t.targetFarm)).filter(Boolean) as string[]
+    ])).filter(Boolean);
+
+    if (realFarmNames.length === 0) realFarmNames.push(defaultFarmName);
+
     products.forEach(prod => {
-      // If farm is filtered, compute for that farm; otherwise aggregate across all farms
-      const targetFarms = effectiveFarm ? [effectiveFarm] : Array.from(new Set([
-        ...farms.map(f => f.name),
-        ...transactions.map(t => t.targetFarm).filter(Boolean) as string[]
-      ]));
+      // If farm is filtered, compute for that farm; otherwise aggregate across real farm locations
+      const targetFarms = effectiveFarm ? [effectiveFarm] : realFarmNames;
 
       targetFarms.forEach(farmName => {
         const key = `${prod.id}___${farmName}`;
         const b = balanceMap[key] || { bags: 0, kg: 0 };
+
+        // Active batches assigned under this farm
+        const activeBatchesForFarm = (data.batches || [])
+          .filter(b => b.status === 'Active' && (!b.farmLocation || b.farmLocation === farmName))
+          .map(b => b.name);
 
         // Minimum threshold check (50 bags / 1,500 kg default)
         const thresholdBags = prod.minThresholdBags || 50;
         const thresholdKg = prod.minThresholdKg || (thresholdBags * (prod.weightPerUnit || 30));
         const isLow = b.bags <= thresholdBags || b.kg <= thresholdKg;
 
-        if (!effectiveFarm || farmName === effectiveFarm || b.bags > 0) {
+        if (!effectiveFarm || farmName === effectiveFarm || b.bags > 0 || activeBatchesForFarm.length > 0) {
           result.push({
             productId: prod.id,
             productName: prod.name,
             farmLocation: farmName,
+            activeBatches: activeBatchesForFarm,
             balanceBags: Math.max(0, b.bags),
             balanceKg: Math.max(0, b.kg),
             unitCost: prod.unitCost,
@@ -182,7 +202,7 @@ export default function FeedInventoryTab({
     });
 
     return result;
-  }, [products, transactions, effectiveFarm, farms]);
+  }, [products, transactions, effectiveFarm, farms, data.batches]);
 
   // Count stock balances per farm for FarmFilterBar
   const countByFarm = useMemo(() => {
@@ -432,6 +452,7 @@ export default function FeedInventoryTab({
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-black text-[9.5px] uppercase tracking-wider">
                   <th className="py-3.5 px-5">Feed Product</th>
                   <th className="py-3.5 px-5">Warehouse / Farm</th>
+                  <th className="py-3.5 px-5">Active Batches under Farm</th>
                   <th className="py-3.5 px-5">Stock On-Hand (Bags)</th>
                   <th className="py-3.5 px-5">Total Biomass (kg)</th>
                   <th className="py-3.5 px-5">Unit Cost</th>
@@ -449,6 +470,19 @@ export default function FeedInventoryTab({
                         <span className="inline-flex items-center gap-1 bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg text-xs font-extrabold text-slate-700">
                           🏢 {item.farmLocation}
                         </span>
+                      </td>
+                      <td className="py-3.5 px-5">
+                        {item.activeBatches && item.activeBatches.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {item.activeBatches.map((bName, bIdx) => (
+                              <span key={bIdx} className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/80 px-2 py-0.5 rounded-md text-[11px] font-bold shadow-2xs">
+                                📦 {bName}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 font-medium">—</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-5 font-mono font-black text-slate-900 text-sm">
                         {item.balanceBags.toLocaleString()} <span className="text-xs text-slate-400 font-bold">bags</span>
