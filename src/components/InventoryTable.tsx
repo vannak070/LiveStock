@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Edit3, DollarSign, RefreshCcw, ChevronLeft, ChevronRight, Activity, Trash2 } from 'lucide-react';
+import { Search, Eye, Edit3, DollarSign, RefreshCcw, ChevronLeft, ChevronRight, Activity, Trash2, Download } from 'lucide-react';
 import { StockItem, WeightRecord } from '@/lib/xlsx-parser';
 import { FarmItem } from '@/lib/types';
 import { Button } from './ui/button';
@@ -10,6 +10,7 @@ import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
+import { exportToExcel } from '@/lib/excel-export';
 
 interface InventoryTableProps {
   stock: StockItem[];
@@ -268,6 +269,34 @@ export default function InventoryTable({
               <RefreshCcw className="h-3 w-3" /> Reset
             </Button>
           )}
+
+          {/* Export Excel Button */}
+          <Button
+            type="button"
+            onClick={() => {
+              exportToExcel({
+                filename: `LiveStock_Cattle_Herd_${new Date().toISOString().split('T')[0]}.xlsx`,
+                sheetName: 'Cattle Herd Inventory',
+                data: filteredStock,
+                columns: [
+                  { header: 'Cattle ID', key: 'id' },
+                  { header: 'Farm Location', key: 'location', formatter: (val) => getFarmName(val) },
+                  { header: 'Breed', key: 'breed' },
+                  { header: 'Sex', key: 'sex' },
+                  { header: 'Initial Weight (kg)', key: 'id', formatter: (_, row) => getCowWeights(row).initialWeight },
+                  { header: 'Current Weight (kg)', key: 'id', formatter: (_, row) => getCowWeights(row).currentWeight },
+                  { header: 'Weight Gain (kg)', key: 'id', formatter: (_, row) => getCowWeights(row).weightGain },
+                  { header: 'Purchase Price (៛)', key: 'totalPrice', formatter: (val) => val ? `៛ ${format2DecimalsWithCommas(val)}` : 'N/A' },
+                  { header: 'Health Status', key: 'healthStatus' },
+                  { header: 'Stock Status', key: 'status' },
+                  { header: 'Purchase Date', key: 'purchaseDate', formatter: (val) => val ? new Date(val).toLocaleDateString() : 'N/A' }
+                ]
+              });
+            }}
+            className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer ml-auto"
+          >
+            <Download className="h-3.5 w-3.5" /> Export Excel
+          </Button>
         </div>
       </div>
 

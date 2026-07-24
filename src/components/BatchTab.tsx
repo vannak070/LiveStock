@@ -6,7 +6,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
-import { Users, UserMinus, UserPlus, Calendar, Info, Layers, Trash2, ShieldAlert, TrendingUp, Plus, FileText, CheckCircle2, Heart, Scale, Sparkles, Search } from 'lucide-react';
+import { Users, UserMinus, UserPlus, Calendar, Info, Layers, Trash2, ShieldAlert, TrendingUp, Plus, FileText, CheckCircle2, Heart, Scale, Sparkles, Search, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { ConfirmModal } from './ui/confirm-modal';
 import { BatchModal } from './features/batch/BatchModal';
@@ -14,6 +14,7 @@ import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
+import { exportToExcel } from '@/lib/excel-export';
 
 interface BatchTabProps {
   data: ERPLivestockData;
@@ -951,9 +952,31 @@ export default function BatchTab({
             <div className={`grid grid-cols-1 ${hasPermission(currentUser, 'batch_edit') ? 'lg:grid-cols-3' : 'lg:grid-cols-1'} gap-6`}>
               {/* Herd List (2 cols) */}
               <div className={hasPermission(currentUser, 'batch_edit') ? 'lg:col-span-2 space-y-4' : 'space-y-4'}>
-                <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
-                  បញ្ជីឈ្មោះគោបំប៉នបច្ចុប្បន្ន (FATTENING HERD MEMBERS)
-                </h4>
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 text-left">
+                    បញ្ជីឈ្មោះគោបំប៉នបច្ចុប្បន្ន (FATTENING HERD MEMBERS)
+                  </h4>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      exportToExcel({
+                        filename: `LiveStock_Batch_${(defaultBatch?.name || 'Fattening').replace(/\s+/g, '_')}_Members_${new Date().toISOString().split('T')[0]}.xlsx`,
+                        sheetName: 'Fattening Herd Members',
+                        data: fatteningCowsInHerd,
+                        columns: [
+                          { header: 'Cow ID', key: 'id' },
+                          { header: 'Breed', key: 'breed' },
+                          { header: 'Current Weight (kg)', key: 'weight' },
+                          { header: 'Health Status', key: 'healthStatus' },
+                          { header: 'Batch Name', key: 'id', formatter: () => defaultBatch?.name || 'Fattening Batch' }
+                        ]
+                      });
+                    }}
+                    className="h-7 text-xs gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+                  >
+                    <Download className="h-3 w-3" /> Export Excel
+                  </Button>
+                </div>
 
                 <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-xs">
                   <div className="overflow-x-auto">
@@ -1471,6 +1494,33 @@ export default function BatchTab({
                   </div>
 
                   {/* Report Table */}
+                  <div className="flex justify-between items-center bg-slate-50 border border-slate-200/70 p-2.5 rounded-2xl">
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-700 pl-1">
+                      📊 ADG Growth Performance Report
+                    </span>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        exportToExcel({
+                          filename: `LiveStock_ADG_Growth_Report_${(defaultBatch?.name || 'Fattening').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`,
+                          sheetName: 'ADG Growth Performance',
+                          data: reportData,
+                          columns: [
+                            { header: 'Cow ID', key: 'cow.id' },
+                            { header: 'Breed', key: 'cow.breed' },
+                            { header: 'Initial Weight (kg)', key: 'initialWeight', formatter: (val) => format2Decimals(val) },
+                            { header: 'Current Weight (kg)', key: 'currentWeight', formatter: (val) => format2Decimals(val) },
+                            { header: 'Net Gain (kg)', key: 'gain', formatter: (val) => val >= 0 ? `+${format2Decimals(val)}` : format2Decimals(val) },
+                            { header: 'ADG (kg/day)', key: 'adg', formatter: (val) => format2Decimals(val) },
+                            { header: 'Performance Status', key: 'adg', formatter: (val) => val >= 1.0 ? 'Top Performer (Optimal)' : val >= 0.5 ? 'Normal Growth' : 'Under Performer (Low)' }
+                          ]
+                        });
+                      }}
+                      className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Export Excel
+                    </Button>
+                  </div>
                   <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden shadow-xs">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-xs border-collapse">

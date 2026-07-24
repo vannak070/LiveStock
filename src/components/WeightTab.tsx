@@ -4,13 +4,14 @@ import React, { useState } from 'react';
 import { ERPLivestockData, FarmItem } from '@/lib/types';
 import { Button } from './ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
-import { Scale, TrendingUp, ClipboardList, Calendar, AlertTriangle, CheckCircle, Clock, Edit2, Trash2 } from 'lucide-react';
+import { Scale, TrendingUp, ClipboardList, Calendar, AlertTriangle, CheckCircle, Clock, Edit2, Trash2, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { ConfirmModal } from './ui/confirm-modal';
 import { hasPermission } from '@/lib/utils';
 import FarmFilterBar from './FarmFilterBar';
+import { exportToExcel } from '@/lib/excel-export';
 
 interface WeightTabProps {
   data: ERPLivestockData;
@@ -289,12 +290,36 @@ export default function WeightTab({ data, onOpenLogWeight, onDeleteWeightRecord,
 
         {/* Right Column: Recent logs feed */}
         <div className="lg:col-span-1 bg-white border border-slate-100 p-6 rounded-2xl space-y-4 shadow-sm">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <ClipboardList className="h-4.5 w-4.5 text-emerald-600" />
-            <div>
-              <h4 className="text-base font-bold text-slate-800">Recent Growth Logs</h4>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Chronological developmental logs</p>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4.5 w-4.5 text-emerald-600" />
+              <div>
+                <h4 className="text-base font-bold text-slate-800">Recent Growth Logs</h4>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Chronological developmental logs</p>
+              </div>
             </div>
+            <Button
+              type="button"
+              onClick={() => {
+                exportToExcel({
+                  filename: `LiveStock_Weight_Tracking_History_${new Date().toISOString().split('T')[0]}.xlsx`,
+                  sheetName: 'Weight Tracking History',
+                  data: filteredRecentLogs,
+                  columns: [
+                    { header: 'Cow ID', key: 'cowId' },
+                    { header: 'Breed', key: 'breed' },
+                    { header: 'Tracking Date', key: 'trackingDate', formatter: (val) => val ? new Date(val).toLocaleDateString() : 'N/A' },
+                    { header: 'Previous Weight (kg)', key: 'oldWeight' },
+                    { header: 'Current Weight (kg)', key: 'currentWeight' },
+                    { header: 'Weight Change (%)', key: 'gainLoss', formatter: (val) => `${val > 0 ? '+' : ''}${(val * 100).toFixed(1)}%` },
+                    { header: 'Health Status', key: 'status' }
+                  ]
+                });
+              }}
+              className="h-7 text-xs gap-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
+            >
+              <Download className="h-3 w-3" /> Export Excel
+            </Button>
           </div>
 
           <div className="overflow-y-auto max-h-[360px] divide-y divide-slate-100 pr-1">

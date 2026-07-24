@@ -7,13 +7,14 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
-import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, ClipboardList, TrendingUp, ShoppingBag, Edit3, Trash2 } from 'lucide-react';
+import { DollarSign, FileText, ArrowUpRight, ArrowDownRight, ClipboardList, TrendingUp, ShoppingBag, Edit3, Trash2, Download } from 'lucide-react';
 import { ConfirmModal } from './ui/confirm-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
+import { exportToExcel } from '@/lib/excel-export';
 
 interface FinanceTabProps {
   data: ERPLivestockData;
@@ -351,6 +352,27 @@ export default function FinanceTab({
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
             <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-mono">Expense Transactions</h4>
+            <Button
+              type="button"
+              onClick={() => {
+                exportToExcel({
+                  filename: `LiveStock_Expense_Ledger_${new Date().toISOString().split('T')[0]}.xlsx`,
+                  sheetName: 'Expenses Ledger',
+                  data: farmFilteredExpenses,
+                  columns: [
+                    { header: 'Expense ID', key: 'id' },
+                    { header: 'Category', key: 'category' },
+                    { header: 'Transaction Date', key: 'date', formatter: (val) => val ? new Date(val).toLocaleDateString() : 'N/A' },
+                    { header: 'Description Detail', key: 'description' },
+                    { header: 'Farm Location', key: 'farmLocation', formatter: (val) => val || 'Global' },
+                    { header: 'Amount (៛)', key: 'amount', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` }
+                  ]
+                });
+              }}
+              className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+            >
+              <Download className="h-3.5 w-3.5" /> Export Excel
+            </Button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
@@ -459,16 +481,42 @@ export default function FinanceTab({
         /* Revenue of Sales Ledger */
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col justify-between">
           <div>
-            <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+            <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
               <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-800 font-mono">Gross Sales Revenue Ledger</h4>
-              {onRecordSaleClick && (
+              <div className="flex items-center gap-2">
                 <Button
-                  onClick={onRecordSaleClick}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs py-1.5 px-4 shadow-sm cursor-pointer"
+                  type="button"
+                  onClick={() => {
+                    exportToExcel({
+                      filename: `LiveStock_Sales_Revenue_Ledger_${new Date().toISOString().split('T')[0]}.xlsx`,
+                      sheetName: 'Sales Revenue Ledger',
+                      data: farmFilteredSales,
+                      columns: [
+                        { header: 'Cattle ID', key: 'cowId' },
+                        { header: 'Sex', key: 'cowId', formatter: (_, row) => data.stock.find(s => s.id === row.cowId)?.sex || 'N/A' },
+                        { header: 'Sales Date', key: 'salesDate', formatter: (val) => val ? new Date(val).toLocaleDateString() : 'N/A' },
+                        { header: 'Breed', key: 'breed' },
+                        { header: 'Sales Type', key: 'saleType', formatter: (val, row) => val || (row.weight <= 2 || row.totalPrice === row.unitPrice ? 'Lumpsum' : 'Scale') },
+                        { header: 'Buyer', key: 'buyer', formatter: (val) => val || 'Local Market' },
+                        { header: 'Sale Weight (kg)', key: 'weight' },
+                        { header: 'Unit Price (៛/kg)', key: 'unitPrice', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` },
+                        { header: 'Gross Income (៛)', key: 'totalPrice', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` }
+                      ]
+                    });
+                  }}
+                  className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
                 >
-                  ➕ កត់ត្រាការលក់ (Record Sales)
+                  <Download className="h-3.5 w-3.5" /> Export Excel
                 </Button>
-              )}
+                {onRecordSaleClick && (
+                  <Button
+                    onClick={onRecordSaleClick}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs py-1.5 px-4 shadow-sm cursor-pointer h-8"
+                  >
+                    ➕ កត់ត្រាការលក់ (Record Sales)
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">

@@ -27,7 +27,8 @@ import {
   CheckCircle2,
   Trash2,
   Edit3,
-  Settings
+  Settings,
+  Download
 } from 'lucide-react';
 import { FeedProductModal } from './features/feed/FeedProductModal';
 import { FeedTransactionModal } from './features/feed/FeedTransactionModal';
@@ -37,6 +38,7 @@ import { hasPermission, format2Decimals, format2DecimalsWithCommas } from '@/lib
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
+import { exportToExcel } from '@/lib/excel-export';
 
 interface FeedInventoryTabProps {
   data: ERPLivestockData;
@@ -561,6 +563,30 @@ export default function FeedInventoryTab({
                 🎯 Specific Batch Breakdown
               </button>
             </div>
+            <Button
+              type="button"
+              onClick={() => {
+                exportToExcel({
+                  filename: `LiveStock_Feed_Stock_Balances_${new Date().toISOString().split('T')[0]}.xlsx`,
+                  sheetName: 'Feed Stock Balances',
+                  data: filteredBalances,
+                  columns: [
+                    { header: 'Product ID', key: 'productId' },
+                    { header: 'Feed Product Name', key: 'productName' },
+                    { header: 'Warehouse / Farm Location', key: 'farmLocation' },
+                    { header: 'Active Batches under Farm', key: 'activeBatches', formatter: (val, row) => row.activeBatchName || (val ? val.join(', ') : 'N/A') },
+                    { header: 'Stock On-Hand (Bags)', key: 'balanceBags' },
+                    { header: 'Total Biomass (kg)', key: 'balanceKg', formatter: (val) => format2DecimalsWithCommas(val) },
+                    { header: 'Unit Cost (៛/kg)', key: 'unitCost', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` },
+                    { header: 'Total Valuation (៛)', key: 'totalValuation', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` },
+                    { header: 'Stock Status', key: 'isLowStock', formatter: (val) => val ? 'Low Stock Warning' : 'In Stock' }
+                  ]
+                });
+              }}
+              className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+            >
+              <Download className="h-3.5 w-3.5" /> Export Excel
+            </Button>
           </div>
 
           <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
@@ -673,8 +699,38 @@ export default function FeedInventoryTab({
 
       {/* SubView 2: Product Master Catalog Table */}
       {subView === 'products' && (
-        <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center bg-slate-50 border border-slate-200/70 p-2.5 rounded-2xl">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-700 pl-1">
+              📦 Feed Product Master Catalog
+            </span>
+            <Button
+              type="button"
+              onClick={() => {
+                exportToExcel({
+                  filename: `LiveStock_Feed_Master_Catalog_${new Date().toISOString().split('T')[0]}.xlsx`,
+                  sheetName: 'Feed Master Catalog',
+                  data: filteredProducts,
+                  columns: [
+                    { header: 'Product Code/ID', key: 'id' },
+                    { header: 'Product Name', key: 'name' },
+                    { header: 'Category', key: 'category' },
+                    { header: 'Unit', key: 'unit' },
+                    { header: 'Weight Per Unit (kg)', key: 'weightPerUnit' },
+                    { header: 'Cost Per Bag (៛)', key: 'costPerBag', formatter: (val, row) => `៛ ${format2DecimalsWithCommas(val || row.unitCost * row.weightPerUnit)}` },
+                    { header: 'Unit Cost (៛/kg)', key: 'unitCost', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` },
+                    { header: 'Min Warning Threshold (Bags)', key: 'minThresholdBags' },
+                    { header: 'Supplier', key: 'supplier' }
+                  ]
+                });
+              }}
+              className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+            >
+              <Download className="h-3.5 w-3.5" /> Export Excel
+            </Button>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-black text-[9.5px] uppercase tracking-wider">
@@ -757,12 +813,42 @@ export default function FeedInventoryTab({
             itemLabel="products"
           />
         </div>
+        </div>
       )}
 
       {/* SubView 3: Transaction Movement Ledger & Reports */}
       {subView === 'transactions' && (
-        <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center bg-slate-50 border border-slate-200/70 p-2.5 rounded-2xl">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-700 pl-1">
+              🚚 Feed Stock Movement Ledger
+            </span>
+            <Button
+              type="button"
+              onClick={() => {
+                exportToExcel({
+                  filename: `LiveStock_Feed_Transactions_${new Date().toISOString().split('T')[0]}.xlsx`,
+                  sheetName: 'Stock Movement Ledger',
+                  data: filteredTransactions,
+                  columns: [
+                    { header: 'Ref # / Tx ID', key: 'referenceNo', formatter: (val, row) => val || row.id },
+                    { header: 'Date', key: 'date', formatter: (val) => val ? val.split('T')[0] : 'N/A' },
+                    { header: 'Type', key: 'type' },
+                    { header: 'Product Name', key: 'productName' },
+                    { header: 'Quantity (Bags)', key: 'quantityBags' },
+                    { header: 'Quantity (kg)', key: 'quantityKg', formatter: (val) => format2DecimalsWithCommas(val) },
+                    { header: 'Source / Target Farm', key: 'targetFarm', formatter: (val, row) => val || row.sourceFarm || 'Farm Warehouse' },
+                    { header: 'Total Cost (៛)', key: 'totalCost', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` }
+                  ]
+                });
+              }}
+              className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+            >
+              <Download className="h-3.5 w-3.5" /> Export Excel
+            </Button>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xs">
+            <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-black text-[9.5px] uppercase tracking-wider">
@@ -821,6 +907,7 @@ export default function FeedInventoryTab({
             onPageSizeChange={setTxPageSize}
             itemLabel="transactions"
           />
+        </div>
         </div>
       )}
 

@@ -6,12 +6,13 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card';
-import { ShieldCheck, Heart, User, Calendar, Activity, DollarSign, Edit2, Trash2 } from 'lucide-react';
+import { ShieldCheck, Heart, User, Calendar, Activity, DollarSign, Edit2, Trash2, Download } from 'lucide-react';
 import { ConfirmModal } from './ui/confirm-modal';
-import { hasPermission } from '@/lib/utils';
+import { hasPermission, format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
 import FarmFilterBar from './FarmFilterBar';
 import { TablePagination } from './common/TablePagination';
+import { exportToExcel } from '@/lib/excel-export';
 
 interface HealthTabProps {
   data: ERPLivestockData;
@@ -357,18 +358,43 @@ export default function HealthTab({ data, onAddHealthLog, onDeleteHealthLog, onU
       ) : (
         /* Health Logs Table Ledger */
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
+          <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
             <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">Veterinary Treatment Ledger</h4>
-            <select
-              value={selectedCohortId}
-              onChange={e => setSelectedCohortId(e.target.value)}
-              className="h-8 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-            >
-              <option value="all">Filter: All Groups (ទាំងអស់)</option>
-              {cohorts.map(c => (
-                <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedCohortId}
+                onChange={e => setSelectedCohortId(e.target.value)}
+                className="h-8 rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+              >
+                <option value="all">Filter: All Groups (ទាំងអស់)</option>
+                {cohorts.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.id})</option>
+                ))}
+              </select>
+              <Button
+                type="button"
+                onClick={() => {
+                  exportToExcel({
+                    filename: `LiveStock_Health_Medical_Logs_${new Date().toISOString().split('T')[0]}.xlsx`,
+                    sheetName: 'Health Medical Logs',
+                    data: filteredHealthLogs,
+                    columns: [
+                      { header: 'Log ID', key: 'id' },
+                      { header: 'Cow ID', key: 'cowId' },
+                      { header: 'Event Type', key: 'type' },
+                      { header: 'Vaccine / Diagnostic Name', key: 'name' },
+                      { header: 'Tracking Date', key: 'date', formatter: (val) => val ? new Date(val).toLocaleDateString() : 'N/A' },
+                      { header: 'Administered By', key: 'administeredBy' },
+                      { header: 'Cost (៛)', key: 'cost', formatter: (val) => `៛ ${format2DecimalsWithCommas(val)}` },
+                      { header: 'Medical Notes', key: 'notes', formatter: (val) => val || '-' }
+                    ]
+                  });
+                }}
+                className="h-8 text-xs gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-2xs cursor-pointer"
+              >
+                <Download className="h-3.5 w-3.5" /> Export Excel
+              </Button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
