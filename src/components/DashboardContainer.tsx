@@ -49,6 +49,7 @@ import { ERPLivestockData, FeedProductItem, FeedStockTransaction } from '@/lib/t
 import { SalesRecord } from '@/lib/xlsx-parser';
 import { hasPermission } from '@/lib/utils';
 import { PermissionKey } from '@/types/settings.types';
+import { apiFetch, ApiError } from '@/lib/api/api-client';
 
 interface DashboardContainerProps {
   initialData: ERPLivestockData;
@@ -445,60 +446,45 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
   const [loginError, setLoginError] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  // Session is a signed token now, not the cached user record — restoring
+  // it means asking the server who it belongs to via /auth/me, never
+  // trusting whatever was cached client-side.
   React.useEffect(() => {
-    const savedUser = localStorage.getItem('snr_farm_user');
-    if (savedUser) {
-      try {
-        const parsed = JSON.parse(savedUser);
-        // Verify user still exists and is active in db settings
-        const freshUser = dbData.settings.users.find(u => u.id === parsed.id && u.status === 'Active');
-        if (freshUser) {
-          setCurrentUser(freshUser);
-        } else {
-          localStorage.removeItem('snr_farm_user');
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    const token = localStorage.getItem('snr_farm_token');
+    if (!token) {
+      setIsAuthLoaded(true);
+      return;
     }
-    setIsAuthLoaded(true);
-  }, [dbData.settings.users]);
+    apiFetch<typeof dbData.settings.users[number]>('/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(user => setCurrentUser(user))
+      .catch(() => localStorage.removeItem('snr_farm_token'))
+      .finally(() => setIsAuthLoaded(true));
+  }, []);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
     setIsSubmitting(true);
 
-    const user = dbData.settings.users.find(
-      u => u.email.toLowerCase() === emailInput.trim().toLowerCase()
-    );
-
-    if (!user) {
-      setLoginError('Invalid corporate email or password.');
+    try {
+      const { token, user } = await apiFetch<{ token: string; user: typeof dbData.settings.users[number] }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: emailInput.trim(), password: passwordInput })
+      });
+      localStorage.setItem('snr_farm_token', token);
+      setCurrentUser(user);
+    } catch (err) {
+      setLoginError(err instanceof ApiError ? err.message : 'Invalid corporate email or password.');
+    } finally {
       setIsSubmitting(false);
-      return;
     }
-
-    if (user.status !== 'Active') {
-      setLoginError('This user account is inactive. Please contact the administrator.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (user.password !== passwordInput) {
-      setLoginError('Invalid corporate email or password.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    setCurrentUser(user);
-    localStorage.setItem('snr_farm_user', JSON.stringify(user));
-    setIsSubmitting(false);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('snr_farm_user');
+    localStorage.removeItem('snr_farm_token');
   };
 
   React.useEffect(() => {

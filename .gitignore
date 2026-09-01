@@ -44,3 +44,6 @@ backups/*.json
 
 # Stray nested project folder (has its own separate .git) — never track this.
 /kaksedthan/
+
+# Design mockup export (large embedded-asset HTML, not part of the app)
+/Cam Cow Reports.html

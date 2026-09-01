@@ -1,5 +1,6 @@
 import { query } from '../config/database';
 import { generateTempPassword } from '../lib/generate-temp-password';
+import { hashPassword } from '../lib/password';
 import { MasterSetup, UserRoleItem, CustomRoleDefinition, DEFAULT_ROLE_PERMISSIONS, FarmItem } from '../lib/types';
 import { PoolClient } from 'pg';
 
@@ -22,9 +23,10 @@ const DEFAULT_ROLES: CustomRoleDefinition[] = [
 
 // NOTE: these seed the initial staff roster (names/emails/roles) the first
 // time the `users` table is empty. Passwords are generated fresh each time
-// (never a fixed shared default) and logged once at seed time — see the
-// console.log in getSettings() below. Change them via Settings after first login.
-function buildDefaultUsers(): UserRoleItem[] {
+// (never a fixed shared default), hashed before storage, and the plaintext
+// is logged once at seed time only — see getSettings() below. Change them
+// via Settings after first login.
+function buildDefaultUsersPlaintext(): UserRoleItem[] {
   return [
     { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'] },
     { id: '2', name: 'Sokha Manager', email: 'sokha.m@snrfarm.com', role: 'Admin', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Admin'] },
@@ -33,6 +35,26 @@ function buildDefaultUsers(): UserRoleItem[] {
     { id: '5', name: 'Dara Staff', email: 'dara.s@snrfarm.com', role: 'Farm Staff', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], farmLocation: 'រទាំង' },
     { id: '6', name: 'Dara Rath', email: 'rath@snrfarm.com', role: 'Veterinarian', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], farmLocation: 'ព្រៃវែង' }
   ];
+}
+
+// Never send password hashes to API callers — this is applied to every
+// settings.users array before it leaves the repository.
+function stripUserSecrets(users: UserRoleItem[] | undefined): UserRoleItem[] {
+  return (users || []).map(u => {
+    const { password, ...rest } = u;
+    return rest as UserRoleItem;
+  });
+}
+
+// Farms used to carry a plaintext `ownerPassword` field of their own,
+// duplicating (and leaking) the linked owner user's password. The owner's
+// real, hashed credential lives solely on their `users` row now — never
+// persist or return a plaintext password on the farm record itself.
+function stripFarmSecrets(farms: FarmItem[] | undefined): FarmItem[] {
+  return (farms || []).map(f => {
+    const { ownerPassword, ...rest } = f as FarmItem & { ownerPassword?: string };
+    return rest as FarmItem;
+  });
 }
 
 export class SettingsRepository {
@@ -63,7 +85,7 @@ export class SettingsRepository {
         weightUnits: ['kg', 'lbs'],
         revenueTypes: ['Livestock Sale', 'Manure Sale', 'Milk Sale', 'Partnership Share'],
         purchaseTypes: ['Purchase', 'Born in Farm', 'Transfer', 'Partnership'],
-        users: buildDefaultUsers(),
+        users: [],
         roles: DEFAULT_ROLES,
         farms: DEFAULT_FARMS
       };
@@ -79,13 +101,14 @@ export class SettingsRepository {
 
     const usersRes = await query('SELECT * FROM users ORDER BY created_at ASC');
     if (usersRes.rows.length === 0) {
-      const defaultUsers = buildDefaultUsers();
+      const defaultUsers = buildDefaultUsersPlaintext();
       for (const u of defaultUsers) {
+        const hashed = await hashPassword(u.password as string);
         await query(
           `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7, farm_location=$8`,
-          [u.id, u.name, u.email, u.role, u.status, u.password, JSON.stringify(u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || []), u.farmLocation || null]
+          [u.id, u.name, u.email, u.role, u.status, hashed, JSON.stringify(u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || []), u.farmLocation || null]
         );
       }
       console.log('[Settings] Seeded default user accounts with freshly generated temporary passwords:');
@@ -93,9 +116,9 @@ export class SettingsRepository {
         console.log(`  - ${u.email} (${u.role}): ${u.password}`);
       }
       console.log('[Settings] IMPORTANT: change these passwords via Settings after first login — they will not be shown again.');
-      settings.users = defaultUsers;
+      settings.users = stripUserSecrets(defaultUsers);
     } else {
-      settings.users = usersRes.rows.map(row => {
+      settings.users = stripUserSecrets(usersRes.rows.map(row => {
         let perms = row.permissions;
         if (typeof perms === 'string') {
           try { perms = JSON.parse(perms); } catch { perms = []; }
@@ -114,19 +137,53 @@ export class SettingsRepository {
           permissions: perms,
           farmLocation: row.farm_location || undefined
         };
-      });
+      }));
     }
+
+    settings.farms = stripFarmSecrets(settings.farms);
 
     return settings;
   }
 
+  // Internal-only lookup used by the auth service to verify a login. Unlike
+  // getSettings(), this DOES return the password hash — callers outside the
+  // auth service must never forward it anywhere.
+  async getUserWithPasswordHashByEmail(email: string): Promise<(UserRoleItem & { password: string }) | null> {
+    const res = await query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]);
+    if (res.rows.length === 0) return null;
+    const row = res.rows[0];
+    let perms = row.permissions;
+    if (typeof perms === 'string') {
+      try { perms = JSON.parse(perms); } catch { perms = []; }
+    }
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      role: row.role,
+      status: row.status,
+      password: row.password,
+      permissions: perms || DEFAULT_ROLE_PERMISSIONS[row.role] || [],
+      farmLocation: row.farm_location || undefined
+    };
+  }
+
   async updateSettings(settings: MasterSetup, client?: PoolClient): Promise<MasterSetup> {
+    // Never persist plaintext/hash secrets inside the master_settings JSON
+    // blob — the `users` table (password column) and per-user hashing below
+    // are the single source of truth for credentials.
+    const sanitizedForBlob: MasterSetup = {
+      ...settings,
+      users: stripUserSecrets(settings.users),
+      farms: stripFarmSecrets(settings.farms)
+    };
+
     const sql = `
       INSERT INTO master_settings (key, data, updated_at)
       VALUES ('master_setup', $1, CURRENT_TIMESTAMP)
       ON CONFLICT (key) DO UPDATE SET data = $1, updated_at = CURRENT_TIMESTAMP
     `;
-    await this.executeQuery(sql, [JSON.stringify(settings)], client);
+    await this.executeQuery(sql, [JSON.stringify(sanitizedForBlob)], client);
 
     if (settings.users) {
       if (settings.users.length > 0) {
@@ -142,11 +199,34 @@ export class SettingsRepository {
 
       for (const u of settings.users) {
         const permsToSave = u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || [];
+
+        // Password resolution rules:
+        //  - admin typed a new password (u.password non-empty) -> hash & store it
+        //  - editing an existing user, nothing typed -> KEEP their current hash
+        //    (never silently reset a password just because the client didn't
+        //    have it to send back — GET /settings no longer returns it)
+        //  - brand-new user, nothing typed -> generate + hash a temp password
+        let passwordToStore: string;
+        const typed = (u.password || '').trim();
+        if (typed) {
+          passwordToStore = await hashPassword(typed);
+        } else {
+          const existing = await this.executeQuery('SELECT password FROM users WHERE id = $1', [u.id], client);
+          if (existing.rows.length > 0 && existing.rows[0].password) {
+            passwordToStore = existing.rows[0].password;
+          } else {
+            const temp = generateTempPassword();
+            passwordToStore = await hashPassword(temp);
+            console.log(`[Settings] New user ${u.email} (${u.role}) assigned temporary password: ${temp}`);
+            console.log('[Settings] Share this with the user — it will not be shown again.');
+          }
+        }
+
         await this.executeQuery(
           `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7, farm_location=$8`,
-          [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || generateTempPassword(), JSON.stringify(permsToSave), u.farmLocation || null],
+          [u.id, u.name, u.email, u.role, u.status || 'Active', passwordToStore, JSON.stringify(permsToSave), u.farmLocation || null],
           client
         );
       }

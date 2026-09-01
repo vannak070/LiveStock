@@ -13,7 +13,8 @@
     "safe-migrate": "npx tsx src/db/migrations/safe-migrate.ts",
     "clear-db": "npx tsx src/db/migrations/clear-production-db.ts",
     "clear-stock": "npx tsx src/db/migrations/clear-stock-only.ts",
-    "deploy:setup": "bash scripts/deploy-production.sh"
+    "deploy:setup": "bash scripts/deploy-production.sh",
+    "hash-passwords": "npx tsx src/db/migrations/hash-existing-passwords.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -22,6 +23,7 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@tanstack/react-query": "^5.101.0",
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cors": "^2.8.6",
@@ -29,6 +31,7 @@
     "express": "^4.22.2",
     "express-async-errors": "^3.1.1",
     "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
     "pg": "^8.22.0",
@@ -43,8 +46,10 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/pg": "^8.11.10",
     "@types/react": "^19",

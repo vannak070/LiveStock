@@ -133,7 +133,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     setEditingUserId(user.id);
     setUserName(user.name);
     setUserEmail(user.email);
-    setUserPassword(user.password || '');
+    setUserPassword(''); // never prefill — the API no longer returns stored passwords
     setUserRole(user.role);
     const matchedRole = currentRoles.find(r => r.name === user.role);
     setUserPermissions(user.permissions && user.permissions.length > 0 ? user.permissions : (matchedRole ? matchedRole.permissions : (DEFAULT_ROLE_PERMISSIONS[user.role] || [])));
@@ -188,12 +188,17 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     if (editingUserId) {
       updatedUsers = updatedUsers.map(u => {
         if (u.id === editingUserId) {
+          const typedPassword = userPassword.trim();
           return {
             ...u,
             name: userName.trim(),
             email: userEmail.trim(),
             role: userRole,
-            password: userPassword.trim() || u.password || generateTempPassword(),
+            // Omit the field entirely when nothing was typed — the backend
+            // keeps the user's existing password hash in that case instead
+            // of resetting it (it can no longer see the old plaintext value
+            // to fall back on, by design).
+            ...(typedPassword ? { password: typedPassword } : {}),
             permissions: userPermissions,
             farmLocation: userFarmLocation.trim() || undefined
           };

@@ -95,7 +95,7 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
     const ownerUser = settings.users.find(u => u.farmLocation === farm.name && u.role === 'Farm Owner');
     setOwnerName(ownerUser ? ownerUser.name : farm.ownerName || '');
     setOwnerEmail(ownerUser ? ownerUser.email : farm.ownerEmail || '');
-    setOwnerPassword(ownerUser ? ownerUser.password || '' : farm.ownerPassword || '');
+    setOwnerPassword(''); // never prefill — the API no longer returns stored passwords
     
     setFarmNotes(farm.notes || '');
     setIsAddingFarm(true);
@@ -122,7 +122,6 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
         capacity: farmCapacity,
         ownerName: ownerName.trim(),
         ownerEmail: email,
-        ownerPassword: ownerPassword.trim(),
         notes: farmNotes.trim()
       } : f);
 
@@ -136,11 +135,14 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
       const existingOwnerIdx = updatedUsers.findIndex(u => u.farmLocation === oldName && u.role === 'Farm Owner');
       
       if (existingOwnerIdx !== -1) {
+        const typedPassword = ownerPassword.trim();
         updatedUsers[existingOwnerIdx] = {
           ...updatedUsers[existingOwnerIdx],
           name: ownerName.trim(),
           email: email,
-          password: ownerPassword.trim(),
+          // Omit when nothing typed — backend keeps the existing password
+          // hash instead of resetting it.
+          ...(typedPassword ? { password: typedPassword } : {}),
           farmLocation: newName,
           permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner']
         };
@@ -151,7 +153,7 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
           email: email,
           role: 'Farm Owner',
           status: 'Active',
-          password: ownerPassword.trim(),
+          password: ownerPassword.trim(), // if blank, backend assigns a temp password and logs it server-side
           farmLocation: newName,
           permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner']
         };
@@ -174,7 +176,6 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
         capacity: farmCapacity,
         ownerName: ownerName.trim(),
         ownerEmail: email,
-        ownerPassword: ownerPassword.trim(),
         notes: farmNotes.trim()
       };
 
@@ -367,7 +368,7 @@ export default function FarmsTab({ settings, currentUser, stock, batches }: Farm
                     <div className="flex items-center gap-1.5 text-slate-600 font-bold">
                       <Key className="h-3 w-3 text-emerald-600" />
                       <span>Password:</span>
-                      <span className="text-slate-800 select-all">{owner ? owner.password : farm.ownerPassword || '—'}</span>
+                      <span className="text-slate-400 italic font-normal">{owner ? 'Set via Edit Farm' : 'Not created'}</span>
                     </div>
                   </div>
                 </div>
