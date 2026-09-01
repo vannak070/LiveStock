@@ -7,7 +7,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-PROD_HOST="root@104.248.149.103"
+PROD_HOST="${PROD_HOST:-root@104.248.149.103}"  # override by exporting PROD_HOST before running
 BACKUP_FILE="${1:-}"
 
 if [ -z "$BACKUP_FILE" ]; then

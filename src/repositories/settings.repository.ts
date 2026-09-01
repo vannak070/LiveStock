@@ -1,4 +1,5 @@
 import { query } from '../config/database';
+import { generateTempPassword } from '../lib/generate-temp-password';
 import { MasterSetup, UserRoleItem, CustomRoleDefinition, DEFAULT_ROLE_PERMISSIONS, FarmItem } from '../lib/types';
 import { PoolClient } from 'pg';
 
@@ -19,14 +20,20 @@ const DEFAULT_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true }
 ];
 
-const DEFAULT_USERS: UserRoleItem[] = [
-  { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'] },
-  { id: '2', name: 'Sokha Manager', email: 'sokha.m@snrfarm.com', role: 'Admin', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Admin'] },
-  { id: '3', name: 'Chay Pang', email: 'pang@snrfarm.com', role: 'Company', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Company'] },
-  { id: '4', name: 'Bona Owner', email: 'bona.v@snrfarm.com', role: 'Farm Owner', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'], farmLocation: 'រទាំង' },
-  { id: '5', name: 'Dara Staff', email: 'dara.s@snrfarm.com', role: 'Farm Staff', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], farmLocation: 'រទាំង' },
-  { id: '6', name: 'Dara Rath', email: 'rath@snrfarm.com', role: 'Veterinarian', status: 'Active', password: 'password123', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], farmLocation: 'ព្រៃវែង' }
-];
+// NOTE: these seed the initial staff roster (names/emails/roles) the first
+// time the `users` table is empty. Passwords are generated fresh each time
+// (never a fixed shared default) and logged once at seed time — see the
+// console.log in getSettings() below. Change them via Settings after first login.
+function buildDefaultUsers(): UserRoleItem[] {
+  return [
+    { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'] },
+    { id: '2', name: 'Sokha Manager', email: 'sokha.m@snrfarm.com', role: 'Admin', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Admin'] },
+    { id: '3', name: 'Chay Pang', email: 'pang@snrfarm.com', role: 'Company', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Company'] },
+    { id: '4', name: 'Bona Owner', email: 'bona.v@snrfarm.com', role: 'Farm Owner', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'], farmLocation: 'រទាំង' },
+    { id: '5', name: 'Dara Staff', email: 'dara.s@snrfarm.com', role: 'Farm Staff', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], farmLocation: 'រទាំង' },
+    { id: '6', name: 'Dara Rath', email: 'rath@snrfarm.com', role: 'Veterinarian', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], farmLocation: 'ព្រៃវែង' }
+  ];
+}
 
 export class SettingsRepository {
   private async executeQuery(sql: string, params?: unknown[], client?: PoolClient) {
@@ -56,7 +63,7 @@ export class SettingsRepository {
         weightUnits: ['kg', 'lbs'],
         revenueTypes: ['Livestock Sale', 'Manure Sale', 'Milk Sale', 'Partnership Share'],
         purchaseTypes: ['Purchase', 'Born in Farm', 'Transfer', 'Partnership'],
-        users: DEFAULT_USERS,
+        users: buildDefaultUsers(),
         roles: DEFAULT_ROLES,
         farms: DEFAULT_FARMS
       };
@@ -72,7 +79,8 @@ export class SettingsRepository {
 
     const usersRes = await query('SELECT * FROM users ORDER BY created_at ASC');
     if (usersRes.rows.length === 0) {
-      for (const u of DEFAULT_USERS) {
+      const defaultUsers = buildDefaultUsers();
+      for (const u of defaultUsers) {
         await query(
           `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -80,7 +88,12 @@ export class SettingsRepository {
           [u.id, u.name, u.email, u.role, u.status, u.password, JSON.stringify(u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || []), u.farmLocation || null]
         );
       }
-      settings.users = DEFAULT_USERS;
+      console.log('[Settings] Seeded default user accounts with freshly generated temporary passwords:');
+      for (const u of defaultUsers) {
+        console.log(`  - ${u.email} (${u.role}): ${u.password}`);
+      }
+      console.log('[Settings] IMPORTANT: change these passwords via Settings after first login — they will not be shown again.');
+      settings.users = defaultUsers;
     } else {
       settings.users = usersRes.rows.map(row => {
         let perms = row.permissions;
@@ -133,7 +146,7 @@ export class SettingsRepository {
           `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7, farm_location=$8`,
-          [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || 'password123', JSON.stringify(permsToSave), u.farmLocation || null],
+          [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || generateTempPassword(), JSON.stringify(permsToSave), u.farmLocation || null],
           client
         );
       }

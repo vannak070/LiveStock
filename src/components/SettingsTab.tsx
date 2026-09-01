@@ -10,6 +10,7 @@ import { ConfirmModal } from './ui/confirm-modal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { useLanguage } from '@/context/LanguageContext';
 import { TablePagination } from './common/TablePagination';
+import { generateTempPassword } from '@/lib/generate-temp-password';
 
 interface SettingsTabProps {
   settings: MasterSetup;
@@ -192,7 +193,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
             name: userName.trim(),
             email: userEmail.trim(),
             role: userRole,
-            password: userPassword.trim() || u.password || 'password123',
+            password: userPassword.trim() || u.password || generateTempPassword(),
             permissions: userPermissions,
             farmLocation: userFarmLocation.trim() || undefined
           };
@@ -200,17 +201,25 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
         return u;
       });
     } else {
+      // No password typed -> generate a random one-time temporary password
+      // instead of a fixed shared default, and surface it so the admin can
+      // actually hand it to the new user (otherwise no one would know it).
+      const typedPassword = userPassword.trim();
+      const assignedPassword = typedPassword || generateTempPassword();
       const newUser: UserRoleItem = {
         id: `USR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
         name: userName.trim(),
         email: userEmail.trim(),
         role: userRole,
         status: 'Active',
-        password: userPassword.trim() || 'password123',
+        password: assignedPassword,
         permissions: userPermissions,
         farmLocation: userFarmLocation.trim() || undefined
       };
       updatedUsers.push(newUser);
+      if (!typedPassword) {
+        alert(`No password was entered, so a temporary one was generated for ${newUser.email}:\n\n${assignedPassword}\n\nShare this with the user and ask them to change it after logging in. It will not be shown again.`);
+      }
     }
 
     const updatedSettings: MasterSetup = {

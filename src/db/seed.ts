@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { pool, connectWithRetry } from '../config/database';
 import { getDbData } from '../lib/db';
+import { generateTempPassword } from '../lib/generate-temp-password';
 
 async function seedDatabase() {
   console.log('=== Livestock ERP Database Seeding Script ===');
@@ -40,7 +41,7 @@ async function seedDatabase() {
         `INSERT INTO users (id, name, email, role, status, password)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6`,
-        [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || 'password123']
+        [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || generateTempPassword()]
       );
     }
 

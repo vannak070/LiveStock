@@ -10,6 +10,7 @@ export const km: TranslationKeys = {
     healthVaccines: 'ព្យាបាល និង វ៉ាក់សាំង',
     financeLedger: 'ចំណាយចំណី និង ចំណូល',
     analytics: 'របាយការណ៍ និង វិភាគ',
+    proposalPlan: 'ឧបករណ៍ផែនការអាជីវកម្មបំប៉ន',
     farmsBranches: 'កសិដ្ឋាន និង ក្រោលគោ',
     masterSettings: 'ការកំណត់ប្រព័ន្ធ',
     systemTitle: 'ប្រព័ន្ធគ្រប់គ្រងកសិដ្ឋាន',

@@ -7,6 +7,13 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 const host = process.env.DB_HOST || 'localhost';
 const port = parseInt(process.env.DB_PORT || '5432', 10);
 const user = process.env.DB_USER || 'postgres';
+
+// 'postgres123' is a local-dev-only convenience default (matches
+// docker-compose.yml's own default). It must never silently apply in
+// production — fail loudly instead of connecting with a guessable password.
+if (!process.env.DB_PASSWORD && process.env.NODE_ENV === 'production') {
+  throw new Error('[Database] DB_PASSWORD environment variable is required when NODE_ENV=production.');
+}
 const password = process.env.DB_PASSWORD || 'postgres123';
 const database = process.env.DB_NAME || 'livestock_db';
 const ssl = process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false;

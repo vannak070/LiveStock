@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Beef,
   Syringe,
-  Package
+  Package,
+  Calculator
 } from 'lucide-react';
 import { StockItem } from '@/lib/xlsx-parser';
 import { UserRoleItem } from '@/lib/types';
@@ -36,6 +37,7 @@ export type ActiveTabType =
   | 'weight-tracking' 
   | 'sales-finance' 
   | 'analytics' 
+  | 'proposal-plan'
   | 'settings'
   | 'farms';
 
@@ -241,14 +243,20 @@ export default function SidebarLayout({
           </NavSection>
         )}
 
-        {/* Analytics */}
+        {/* Analytics & Business Planning */}
         {hasPermission(currentUser, 'analytics_view') && (
-          <NavSection label="Insights">
+          <NavSection label="Insights & Planning">
             <NavItem
               icon={<PieChart className="h-4 w-4" />}
               label={t('nav.analytics')}
               isActive={activeTab === 'analytics'}
               onClick={() => handleTabChange('analytics')}
+            />
+            <NavItem
+              icon={<Calculator className="h-4 w-4" />}
+              label={t('nav.proposalPlan')}
+              isActive={activeTab === 'proposal-plan'}
+              onClick={() => handleTabChange('proposal-plan')}
             />
           </NavSection>
         )}
@@ -329,86 +337,100 @@ export default function SidebarLayout({
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col bg-slate-50 min-w-0 overflow-y-auto">
 
-        {/* Top Header Bar */}
-        <header className="border-b border-slate-200/70 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-20">
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div className="flex items-center gap-3">
-              {/* Mobile Hamburger */}
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className="md:hidden p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
-                aria-label="Open Navigation Menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <div>
-                <h2 className="text-base sm:text-xl font-black tracking-tight text-slate-900 leading-tight">
-                  {t('nav.systemTitle')}
-                </h2>
-                <p className="text-[10px] sm:text-xs text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                  {t('nav.systemSubtitle')}
-                </p>
+        {/* Top Header Bar (Hidden when activeTab === 'proposal-plan') */}
+        {activeTab !== 'proposal-plan' ? (
+          <header className="border-b border-slate-200/70 bg-white/95 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-20">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                {/* Mobile Hamburger */}
+                <button
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="md:hidden p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                  aria-label="Open Navigation Menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div>
+                  <h2 className="text-base sm:text-xl font-black tracking-tight text-slate-900 leading-tight">
+                    {t('nav.systemTitle')}
+                  </h2>
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                    {t('nav.systemSubtitle')}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <LanguageSwitcher />
-              <div className="hidden lg:flex text-xs text-slate-500 font-semibold bg-slate-50 py-2 px-3.5 rounded-full border border-slate-200 items-center gap-2">
-                <Calendar className="h-3.5 w-3.5 text-emerald-600" />
-                {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </div>
-            </div>
-          </div>
-
-          {/* Responsive Stats Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.totalHerd')}</p>
-                <h3 className="text-xl font-black text-slate-900 mt-0.5 leading-none">{totalHead}<span className="text-[10px] text-emerald-600 font-bold ml-1">head</span></h3>
-              </div>
-              <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
-                <Database className="h-4 w-4" />
+              <div className="flex items-center gap-3">
+                <LanguageSwitcher />
+                <div className="hidden lg:flex text-xs text-slate-500 font-semibold bg-slate-50 py-2 px-3.5 rounded-full border border-slate-200 items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-emerald-600" />
+                  {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.avgWeight')}</p>
-                <h3 className="text-xl font-black text-slate-900 mt-0.5 leading-none">{averageWeight}<span className="text-[10px] text-blue-600 font-bold ml-1">kg</span></h3>
+            {/* Responsive Stats Strip */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.totalHerd')}</p>
+                  <h3 className="text-xl font-black text-slate-900 mt-0.5 leading-none">{totalHead}<span className="text-[10px] text-emerald-600 font-bold ml-1">head</span></h3>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                  <Database className="h-4 w-4" />
+                </div>
               </div>
-              <div className="h-9 w-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
-                <Scale className="h-4 w-4" />
-              </div>
-            </div>
 
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.assetValue')}</p>
-                <h3 className="text-sm font-black text-slate-900 mt-0.5 leading-none truncate">៛ {format2DecimalsWithCommas(inventoryValue)}</h3>
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.avgWeight')}</p>
+                  <h3 className="text-xl font-black text-slate-900 mt-0.5 leading-none">{averageWeight}<span className="text-[10px] text-blue-600 font-bold ml-1">kg</span></h3>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                  <Scale className="h-4 w-4" />
+                </div>
               </div>
-              <div className="h-9 w-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
-                <DollarSign className="h-4 w-4" />
-              </div>
-            </div>
 
-            <div className={`border rounded-xl p-3 flex items-center justify-between ${
-              healthAlertsCount > 0 ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-100'
-            }`}>
-              <div>
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Health Status</p>
-                <h3 className={`text-sm font-black mt-0.5 leading-none ${healthAlertsCount > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
-                  {healthAlertsCount > 0 ? `${healthAlertsCount} Alerts` : '✓ All Stable'}
-                </h3>
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{t('dashboard.assetValue')}</p>
+                  <h3 className="text-sm font-black text-slate-900 mt-0.5 leading-none truncate">៛ {format2DecimalsWithCommas(inventoryValue)}</h3>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
+                  <DollarSign className="h-4 w-4" />
+                </div>
               </div>
-              <div className={`h-9 w-9 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 text-white ${
-                healthAlertsCount > 0 ? 'bg-rose-500' : 'bg-emerald-600'
+
+              <div className={`border rounded-xl p-3 flex items-center justify-between ${
+                healthAlertsCount > 0 ? 'bg-rose-50 border-rose-200' : 'bg-emerald-50 border-emerald-100'
               }`}>
-                <Activity className="h-4 w-4" />
+                <div>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Health Status</p>
+                  <h3 className={`text-sm font-black mt-0.5 leading-none ${healthAlertsCount > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                    {healthAlertsCount > 0 ? `${healthAlertsCount} Alerts` : '✓ All Stable'}
+                  </h3>
+                </div>
+                <div className={`h-9 w-9 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0 text-white ${
+                  healthAlertsCount > 0 ? 'bg-rose-500' : 'bg-emerald-600'
+                }`}>
+                  <Activity className="h-4 w-4" />
+                </div>
               </div>
             </div>
+          </header>
+        ) : (
+          /* Sleek minimal header for mobile navigation when viewing Proposal Plan */
+          <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200 sticky top-0 z-20">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+              aria-label="Open Navigation Menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <LanguageSwitcher />
           </div>
-        </header>
+        )}
 
         {/* Page Content */}
         <div className="p-4 sm:p-6 flex-1 min-w-0">

@@ -1,3 +1,8 @@
+// This fallback intentionally matches ecosystem.config.js's production PORT
+// (3002), so production keeps working even if NEXT_PUBLIC_API_URL isn't set
+// there. Local dev's backend defaults to port 3001 instead (see src/server),
+// so local dev ALWAYS needs NEXT_PUBLIC_API_URL set explicitly (.env does
+// this) — otherwise the frontend silently calls the wrong port.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api/v1';
 
 export class ApiError extends Error {

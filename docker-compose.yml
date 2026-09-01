@@ -1,10 +1,25 @@
-version: '3.8'
+# Local/dev Docker Compose for the Livestock Management System.
+#
+# NOTE ON CONTAINER NAMES: earlier versions of this file pinned fixed global
+# container names (livestock_postgres_db / livestock_app_backend). Fixed
+# names collide across unrelated projects on the same machine (Docker
+# container names must be globally unique), which is exactly what happened
+# here — this machine already had another project's Postgres container using
+# that name. The names below are intentionally left unset so Compose falls
+# back to its default project-scoped naming
+# (<project>-db-1 / <project>-app-1, derived from this folder's name or
+# COMPOSE_PROJECT_NAME), which can never collide with another project.
+#
+# If you already have a database container running locally for this project
+# under the old fixed name, this file will no longer manage it — `docker
+# compose up -d db` will create a NEW, separate, empty Postgres container
+# instead of reusing it. Point DB_HOST/DB_PORT in .env at whichever instance
+# actually holds the data you want to use.
 
 services:
   # 1. PostgreSQL Relational Database Service
   db:
     image: postgres:16-alpine
-    container_name: livestock_postgres_db
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
@@ -29,11 +44,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: livestock_app_backend
     restart: always
     ports:
-      - "3000:3000"
-      - "3001:3001"
+      - "3002:3002"
     environment:
       NODE_ENV: production
       PORT: 3001

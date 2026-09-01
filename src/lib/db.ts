@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { ERPLivestockData, BatchItem, HealthLogItem, ExpenseItem, MasterSetup } from './types';
 import { StockItem, WeightRecord, SalesRecord } from './xlsx-parser';
+import { generateTempPassword } from './generate-temp-password';
 
 import { stockService } from '../services/stock.service';
 import { weightService } from '../services/weight.service';
@@ -42,9 +43,13 @@ function getJsonDbData(): ERPLivestockData {
   parsed.settings.weightUnits = parsed.settings.weightUnits || ['kg', 'lbs'];
   parsed.settings.revenueTypes = parsed.settings.revenueTypes || ['Livestock Sale', 'Manure Sale', 'Milk Sale', 'Partnership Share'];
   parsed.settings.purchaseTypes = parsed.settings.purchaseTypes || ['Purchase', 'Born in Farm', 'Transfer', 'Partnership'];
-  parsed.settings.users = parsed.settings.users || [
-    { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: 'password123' }
-  ];
+  if (!parsed.settings.users) {
+    const tempPassword = generateTempPassword();
+    console.warn(`[db.json fallback] No users found — created default admin with a fresh temporary password (change it after login): vannak@snrfarm.com / ${tempPassword}`);
+    parsed.settings.users = [
+      { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: tempPassword }
+    ];
+  }
 
   return parsed as ERPLivestockData;
 }

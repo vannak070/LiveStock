@@ -8,6 +8,7 @@ export const en = {
     healthVaccines: 'Medical & Vaccines',
     financeLedger: 'Feed Costs & Revenue',
     analytics: 'Growth & Profit Analytics',
+    proposalPlan: 'Fattening Proposal Tool',
     farmsBranches: 'Farms & Stall Branches',
     masterSettings: 'ERP Master Setup',
     systemTitle: 'LiveStock Fattening ERP',

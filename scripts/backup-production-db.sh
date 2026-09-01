@@ -9,7 +9,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-PROD_HOST="root@104.248.149.103"
+PROD_HOST="${PROD_HOST:-root@104.248.149.103}"  # override by exporting PROD_HOST before running
 BACKUP_DIR="$(dirname "$0")/../backups"
 TIMESTAMP=$(date "+%Y-%m-%d_%H-%M-%S")
 BACKUP_FILE="$BACKUP_DIR/prod_backup_$TIMESTAMP.json"

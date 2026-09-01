@@ -40,6 +40,7 @@ import HealthTab from './HealthTab';
 import WeightTab from './WeightTab';
 import FinanceTab from './FinanceTab';
 import AnalyticsTab from './AnalyticsTab';
+import ProposalPlanTab from './ProposalPlanTab';
 import SettingsTab from './SettingsTab';
 import FarmsTab from './FarmsTab';
 import CowDetails from './CowDetails';
@@ -767,6 +768,10 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
           currentUser={currentUser}
           farms={dbData.settings?.farms ?? []}
         />
+      )}
+
+      {activeTab === 'proposal-plan' && (
+        <ProposalPlanTab />
       )}
 
       {activeTab === 'settings' && (

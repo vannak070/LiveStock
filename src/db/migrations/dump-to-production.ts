@@ -19,11 +19,19 @@ const localPool = new Pool({
 });
 
 // ── Production DB (destination) ─────────────────────────────────────────────
+// No hardcoded password fallback here on purpose: guessing a weak default
+// (this used to fall back to the literal string 'postgres') against a real
+// production database is exactly the kind of hardcode that shouldn't exist.
+// Set PROD_DB_PASSWORD explicitly before running this script.
+if (!process.env.PROD_DB_PASSWORD) {
+  throw new Error('PROD_DB_PASSWORD environment variable is required to connect to production. Set it before running this script.');
+}
+
 const prodPool = new Pool({
   host:     process.env.PROD_DB_HOST     || '104.248.149.103',
   port:     Number(process.env.PROD_DB_PORT) || 5432,
   user:     process.env.PROD_DB_USER     || 'postgres',
-  password: process.env.PROD_DB_PASSWORD || 'postgres',
+  password: process.env.PROD_DB_PASSWORD,
   database: process.env.PROD_DB_NAME     || 'livestock_db',
   ssl: false,
 });

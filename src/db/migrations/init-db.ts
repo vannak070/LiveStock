@@ -3,8 +3,13 @@ import * as path from 'path';
 import { parseExcelDatabase } from '../../lib/xlsx-parser';
 import { pool, connectWithRetry } from '../../config/database';
 import { getDbData } from '../../lib/db';
+import { generateTempPassword } from '../../lib/generate-temp-password';
 
-const excelPath = "/Users/vannakath/Documents/Documents - Vannak’s MacBook Pro/Personal Info/SNR Farm/Sales Report/Update/Sale Tracking.xlsx";
+// Optional: set EXCEL_IMPORT_PATH in your local .env to auto-import cattle
+// data from a personal Excel workbook on first run. Not set by default —
+// this used to be a hardcoded path to one specific person's Mac, which broke
+// for everyone else and silently overwrote db.json when it happened to exist.
+const excelPath = process.env.EXCEL_IMPORT_PATH || '';
 const dbDir = path.join(__dirname, '../../data');
 const dbPath = path.join(dbDir, 'db.json');
 
@@ -18,8 +23,21 @@ async function initDatabase() {
       if (!fs.existsSync(dbDir)) {
         fs.mkdirSync(dbDir, { recursive: true });
       }
-      fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
-      console.log(`Database initialized from Excel and saved to ${dbPath}`);
+      // Merge onto the existing db.json instead of overwriting it outright —
+      // the Excel import only produces stock/weight/sales/common data, so a
+      // blind overwrite silently destroys fields that live only in db.json
+      // (e.g. `batches` / feeding programs), which have no Excel source.
+      let existing: Record<string, unknown> = {};
+      if (fs.existsSync(dbPath)) {
+        try {
+          existing = JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+        } catch {
+          existing = {};
+        }
+      }
+      const merged = { ...existing, ...data };
+      fs.writeFileSync(dbPath, JSON.stringify(merged, null, 2));
+      console.log(`Database initialized from Excel (merged with existing db.json) and saved to ${dbPath}`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.warn("Could not parse Excel database, falling back to existing db.json:", msg);
@@ -60,7 +78,7 @@ async function initDatabase() {
         `INSERT INTO users (id, name, email, role, status, password)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6`,
-        [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || 'password123']
+        [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || generateTempPassword()]
       );
     }
 
