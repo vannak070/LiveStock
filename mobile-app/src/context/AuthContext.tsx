@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { apiFetch, ApiError, getToken, setToken, clearToken } from '../api/client';
+import { apiFetch, ApiError, getToken, setToken, clearToken, loginWithPin as loginWithPinRequest } from '../api/client';
 import { UserRoleItem } from '../api/types';
 
 interface AuthContextValue {
   user: UserRoleItem | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithPin: (pin: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -43,13 +44,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(result.user);
   }, []);
 
+  const loginWithPin = useCallback(async (pin: string) => {
+    const result = await loginWithPinRequest<{ token: string; user: UserRoleItem }>(pin);
+    await setToken(result.token);
+    setUser(result.user);
+  }, []);
+
   const logout = useCallback(async () => {
     await clearToken();
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, loginWithPin, logout }}>
       {children}
     </AuthContext.Provider>
   );

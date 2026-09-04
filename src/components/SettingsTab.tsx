@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useLanguage } from '@/context/LanguageContext';
 import { TablePagination } from './common/TablePagination';
 import { generateTempPassword } from '@/lib/generate-temp-password';
+import { MIN_PIN_LENGTH } from '@/lib/pin';
 
 interface SettingsTabProps {
   settings: MasterSetup;
@@ -23,7 +24,8 @@ const DEFAULT_SYSTEM_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-03', name: 'Company', description: 'Manages user accounts, permissions, and multiple farms under them.', permissions: DEFAULT_ROLE_PERMISSIONS['Company'], isSystem: true },
   { id: 'ROLE-04', name: 'Farm Owner', description: 'Full operational control and lifecycle management of their specific farm.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'], isSystem: true },
   { id: 'ROLE-05', name: 'Farm Staff', description: 'Records weights, health logs, and tracks daily checklists based on custom permissions.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], isSystem: true },
-  { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true }
+  { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true },
+  { id: 'ROLE-07', name: 'Management', description: 'Read-only reporting access on the mobile app — no create, edit, or delete permissions. Signs in with a PIN.', permissions: DEFAULT_ROLE_PERMISSIONS['Management'], isSystem: true }
 ];
 
 export default function SettingsTab({ settings, currentUser }: SettingsTabProps) {
@@ -54,6 +56,8 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
+  const [userPin, setUserPin] = useState('');
+  const [clearPin, setClearPin] = useState(false);
   const [userRole, setUserRole] = useState<string>('Company');
   const [userPermissions, setUserPermissions] = useState<PermissionKey[]>(DEFAULT_ROLE_PERMISSIONS['Company'] || []);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -89,6 +93,13 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livestock'] });
+    },
+    onError: (err: Error) => {
+      // Surfaced here rather than silently swallowed — this mutation backs
+      // several forms (users, roles, master lists), several of which close
+      // their own dialog and reset their own fields the instant `.mutate()`
+      // is called, before this async result comes back either way.
+      alert(err.message || 'That change could not be saved. Please try again.');
     }
   });
 
@@ -134,6 +145,8 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     setUserName(user.name);
     setUserEmail(user.email);
     setUserPassword(''); // never prefill — the API no longer returns stored passwords
+    setUserPin(''); // never prefill — only `hasPin` (a boolean) ever comes back
+    setClearPin(false);
     setUserRole(user.role);
     const matchedRole = currentRoles.find(r => r.name === user.role);
     setUserPermissions(user.permissions && user.permissions.length > 0 ? user.permissions : (matchedRole ? matchedRole.permissions : (DEFAULT_ROLE_PERMISSIONS[user.role] || [])));
@@ -185,6 +198,8 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
 
     let updatedUsers = [...(settings.users || [])];
 
+    const typedPin = userPin.trim();
+
     if (editingUserId) {
       updatedUsers = updatedUsers.map(u => {
         if (u.id === editingUserId) {
@@ -197,8 +212,12 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
             // Omit the field entirely when nothing was typed — the backend
             // keeps the user's existing password hash in that case instead
             // of resetting it (it can no longer see the old plaintext value
-            // to fall back on, by design).
+            // to fall back on, by design). Same rule for the PIN, with an
+            // explicit "Remove PIN" checkbox for the one thing blank can't
+            // mean: clear it outright.
             ...(typedPassword ? { password: typedPassword } : {}),
+            ...(typedPin ? { pin: typedPin } : {}),
+            ...(clearPin ? { clearPin: true } : {}),
             permissions: userPermissions,
             farmLocation: userFarmLocation.trim() || undefined
           };
@@ -218,6 +237,7 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
         role: userRole,
         status: 'Active',
         password: assignedPassword,
+        ...(typedPin ? { pin: typedPin } : {}),
         permissions: userPermissions,
         farmLocation: userFarmLocation.trim() || undefined
       };
@@ -236,6 +256,8 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
     setUserName('');
     setUserEmail('');
     setUserPassword('');
+    setUserPin('');
+    setClearPin(false);
     setUserRole('Company');
     setUserPermissions(DEFAULT_ROLE_PERMISSIONS['Company']);
     setUserFarmLocation('');
@@ -919,6 +941,37 @@ export default function SettingsTab({ settings, currentUser }: SettingsTabProps)
                   onChange={e => setUserPassword(e.target.value)}
                   className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
                 />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <label className="text-[10px] font-bold uppercase text-slate-400">Mobile PIN Sign-in (optional)</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  placeholder={
+                    editingUserId && settings.users.find(u => u.id === editingUserId)?.hasPin
+                      ? 'PIN already set — leave blank to keep it'
+                      : `${MIN_PIN_LENGTH}+ digit PIN for signing in on the mobile app`
+                  }
+                  value={userPin}
+                  onChange={e => { setUserPin(e.target.value.replace(/[^0-9]/g, '')); setClearPin(false); }}
+                  disabled={clearPin}
+                  maxLength={12}
+                  className="w-full bg-white border border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-600"
+                />
+                <p className="text-[10px] text-slate-400">
+                  Lets this person sign in on the Cam Cow mobile app with just a PIN instead of email and password. Leave blank to {editingUserId ? 'keep the current PIN unchanged.' : 'skip PIN sign-in.'}
+                </p>
+                {editingUserId && settings.users.find(u => u.id === editingUserId)?.hasPin && (
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold text-red-600 pt-0.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={clearPin}
+                      onChange={e => { setClearPin(e.target.checked); if (e.target.checked) setUserPin(''); }}
+                    />
+                    Remove PIN sign-in for this account
+                  </label>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase text-slate-400">Role Selection</label>

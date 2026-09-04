@@ -96,6 +96,18 @@ export async function checkServer(candidate?: string): Promise<{ ok: boolean; me
   }
 }
 
+/**
+ * Signs in with a PIN only. The server decides which account the PIN belongs
+ * to, and locks out after repeated failures — this just carries the attempt.
+ */
+export async function loginWithPin<T>(pin: string): Promise<T> {
+  return apiFetch<T>('/auth/pin', {
+    method: 'POST',
+    auth: false,
+    body: JSON.stringify({ pin })
+  });
+}
+
 export async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync(TOKEN_KEY);
 }

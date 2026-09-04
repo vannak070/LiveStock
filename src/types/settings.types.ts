@@ -129,7 +129,12 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, PermissionKey[]> = {
   'Company': [...ALL_PERMISSIONS.filter(p => p !== 'settings_manage'), 'settings_manage'],
   'Farm Owner': ALL_PERMISSIONS.filter(p => p !== 'settings_manage' && p !== 'farms_manage' && p !== 'feed_manage'),
   'Farm Staff': ['dashboard_view', 'stock_view', 'batch_view', 'weight_view', 'weight_record', 'health_view', 'health_record', 'feed_view'],
-  'Veterinarian': ['dashboard_view', 'stock_view', 'stock_edit', 'weight_view', 'weight_record', 'health_view', 'health_record', 'health_delete', 'feed_view']
+  'Veterinarian': ['dashboard_view', 'stock_view', 'stock_edit', 'weight_view', 'weight_record', 'health_view', 'health_record', 'health_delete', 'feed_view'],
+  // Read-only oversight: sees every report, changes nothing. This is the
+  // role intended for PIN sign-in on the mobile app, so it deliberately
+  // holds no create/edit/delete permission at all — a shorter credential
+  // must not unlock a wider set of actions.
+  'Management': ['dashboard_view', 'stock_view', 'batch_view', 'weight_view', 'health_view', 'sales_view', 'expenses_view', 'analytics_view', 'feed_view']
 };
 
 export interface CustomRoleDefinition {
@@ -144,9 +149,19 @@ export interface UserRoleItem {
   id: string;
   name: string;
   email: string;
-  role: 'Super Admin' | 'Admin' | 'Company' | 'Farm Owner' | 'Farm Staff' | 'Veterinarian' | string;
+  role: 'Super Admin' | 'Admin' | 'Company' | 'Farm Owner' | 'Farm Staff' | 'Veterinarian' | 'Management' | string;
   status: 'Active' | 'Inactive';
   password?: string;
+  // Write-only: a plaintext PIN to validate and hash server-side (mobile
+  // app PIN sign-in). Never populated on read — see `hasPin` for whether
+  // this account already has one, without ever exposing it.
+  pin?: string;
+  // Write-only signal: explicitly remove PIN sign-in for this account,
+  // regardless of whether `pin` also carries a value.
+  clearPin?: boolean;
+  // Read-only: whether a PIN is currently set. Derived server-side from
+  // pin_hash being non-null — the hash itself is never sent to clients.
+  hasPin?: boolean;
   permissions?: PermissionKey[];
   farmLocation?: string;
 }

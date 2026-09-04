@@ -13,6 +13,15 @@ export class AuthController {
     });
   }
 
+  async loginWithPin(req: AuthedRequest, res: Response): Promise<void> {
+    const { pin } = req.body || {};
+    // Lockout is keyed on the caller so one device cannot grind through the
+    // PIN space, and cannot lock everyone else out either.
+    const clientKey = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const { token, user } = await authService.loginWithPin(pin, clientKey);
+    res.status(200).json({ success: true, message: 'Logged in successfully', data: { token, user } });
+  }
+
   async me(req: AuthedRequest, res: Response): Promise<void> {
     const userId = req.authUser?.sub;
     if (!userId) {

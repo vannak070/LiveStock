@@ -1,6 +1,7 @@
 import { query } from '../config/database';
 import { generateTempPassword } from '../lib/generate-temp-password';
-import { hashPassword } from '../lib/password';
+import { hashPassword, verifyPassword } from '../lib/password';
+import { validatePinStrength } from '../lib/pin';
 import { MasterSetup, UserRoleItem, CustomRoleDefinition, DEFAULT_ROLE_PERMISSIONS, FarmItem } from '../lib/types';
 import { PoolClient } from 'pg';
 
@@ -10,7 +11,8 @@ const DEFAULT_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-03', name: 'Company', description: 'Manages user accounts, permissions, and multiple farms under them.', permissions: DEFAULT_ROLE_PERMISSIONS['Company'], isSystem: true },
   { id: 'ROLE-04', name: 'Farm Owner', description: 'Full operational control and lifecycle management of their specific farm.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'], isSystem: true },
   { id: 'ROLE-05', name: 'Farm Staff', description: 'Records weights, health logs, and tracks daily checklists based on custom permissions.', permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], isSystem: true },
-  { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true }
+  { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true },
+  { id: 'ROLE-07', name: 'Management', description: 'Read-only reporting access — no create, edit, or delete permissions. Intended for PIN sign-in on the mobile app.', permissions: DEFAULT_ROLE_PERMISSIONS['Management'], isSystem: true }
 ];
 
 // Logged at most once per server process — without this guard the warning
@@ -21,7 +23,7 @@ let warnedNoUsers = false;
 // settings.users array before it leaves the repository.
 function stripUserSecrets(users: UserRoleItem[] | undefined): UserRoleItem[] {
   return (users || []).map(u => {
-    const { password, ...rest } = u;
+    const { password, pin, clearPin, ...rest } = u;
     return rest as UserRoleItem;
   });
 }
@@ -46,6 +48,7 @@ export class SettingsRepository {
   }
 
   async getSettings(): Promise<MasterSetup> {
+    await this.ensurePinColumn();
     const res = await query("SELECT data FROM master_settings WHERE key = 'master_setup'");
     let settings: MasterSetup;
 
@@ -77,6 +80,13 @@ export class SettingsRepository {
       if (!settings.farms) {
         settings.farms = [];
       }
+    }
+
+    // Self-heal: an installation whose `roles` were persisted before the
+    // Management role existed won't otherwise ever see it added, the same
+    // way an `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` self-heals schema.
+    if (!settings.roles!.some(r => r.name === 'Management')) {
+      settings.roles = [...settings.roles!, DEFAULT_ROLES[DEFAULT_ROLES.length - 1]];
     }
 
     const usersRes = await query('SELECT * FROM users ORDER BY created_at ASC');
@@ -115,7 +125,8 @@ export class SettingsRepository {
           status: row.status,
           password: row.password,
           permissions: perms,
-          farmLocation: row.farm_location || undefined
+          farmLocation: row.farm_location || undefined,
+          hasPin: !!row.pin_hash
         };
       }));
     }
@@ -128,6 +139,47 @@ export class SettingsRepository {
   // Internal-only lookup used by the auth service to verify a login. Unlike
   // getSettings(), this DOES return the password hash — callers outside the
   // auth service must never forward it anywhere.
+  // Users who may sign in with a PIN. A PIN identifies as well as
+  // authenticates, so every candidate has to be compared — bcrypt hashes are
+  // individually salted and cannot be looked up by value. That is fine at
+  // this scale (a handful of management accounts) and it keeps the PIN
+  // hashed at rest like any other credential.
+  async getPinEnabledUsers(): Promise<(UserRoleItem & { pinHash: string })[]> {
+    await this.ensurePinColumn();
+    const res = await query(
+      "SELECT * FROM users WHERE pin_hash IS NOT NULL AND pin_hash <> '' AND status = 'Active'"
+    );
+    return res.rows.map(row => {
+      let perms = row.permissions;
+      if (typeof perms === 'string') {
+        try { perms = JSON.parse(perms); } catch { perms = []; }
+      }
+      return {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        role: row.role,
+        status: row.status,
+        permissions: perms || DEFAULT_ROLE_PERMISSIONS[row.role] || [],
+        farmLocation: row.farm_location || undefined,
+        pinHash: row.pin_hash as string
+      };
+    });
+  }
+
+  async setUserPinHash(email: string, pinHash: string | null): Promise<boolean> {
+    await this.ensurePinColumn();
+    const res = await query('UPDATE users SET pin_hash = $1 WHERE LOWER(email) = LOWER($2)', [pinHash, email]);
+    return (res.rowCount ?? 0) > 0;
+  }
+
+  private pinColumnReady = false;
+  private async ensurePinColumn(): Promise<void> {
+    if (this.pinColumnReady) return;
+    this.pinColumnReady = true;
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(255)');
+  }
+
   async getUserWithPasswordHashByEmail(email: string): Promise<(UserRoleItem & { password: string }) | null> {
     const res = await query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]);
     if (res.rows.length === 0) return null;
@@ -149,6 +201,8 @@ export class SettingsRepository {
   }
 
   async updateSettings(settings: MasterSetup, client?: PoolClient): Promise<MasterSetup> {
+    await this.ensurePinColumn();
+
     // Never persist plaintext/hash secrets inside the master_settings JSON
     // blob — the `users` table (password column) and per-user hashing below
     // are the single source of truth for credentials.
@@ -202,11 +256,46 @@ export class SettingsRepository {
           }
         }
 
+        // PIN resolution rules mirror the password rules just above, with
+        // one addition: an admin can tick "Remove PIN sign-in" to clear an
+        // existing PIN outright (there's no way to type your way to "empty"
+        // when blank already means "leave unchanged").
+        //  - clearPin -> NULL, regardless of anything typed in `pin`
+        //  - u.pin typed -> validate strength + uniqueness, then hash & store
+        //  - nothing typed, not clearing -> KEEP the existing hash
+        let pinHashToStore: string | null;
+        const typedPin = (u.pin || '').trim();
+        if (u.clearPin) {
+          pinHashToStore = null;
+        } else if (typedPin) {
+          const problem = validatePinStrength(typedPin);
+          if (problem) throw new Error(`PIN for ${u.email}: ${problem}`);
+
+          // A PIN both identifies and authenticates on the mobile app's
+          // PIN sign-in, so two accounts sharing one would be ambiguous at
+          // login — refuse it the same way the CLI's set-pin script does.
+          const others = await this.executeQuery(
+            "SELECT id, email, pin_hash FROM users WHERE pin_hash IS NOT NULL AND pin_hash <> '' AND id <> $1",
+            [u.id],
+            client
+          );
+          for (const row of others.rows) {
+            if (await verifyPassword(typedPin, row.pin_hash)) {
+              throw new Error(`That PIN is already used by ${row.email}. Every PIN must be unique.`);
+            }
+          }
+
+          pinHashToStore = await hashPassword(typedPin);
+        } else {
+          const existingPin = await this.executeQuery('SELECT pin_hash FROM users WHERE id = $1', [u.id], client);
+          pinHashToStore = existingPin.rows.length > 0 ? existingPin.rows[0].pin_hash : null;
+        }
+
         await this.executeQuery(
-          `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7, farm_location=$8`,
-          [u.id, u.name, u.email, u.role, u.status || 'Active', passwordToStore, JSON.stringify(permsToSave), u.farmLocation || null],
+          `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location, pin_hash)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7, farm_location=$8, pin_hash=$9`,
+          [u.id, u.name, u.email, u.role, u.status || 'Active', passwordToStore, JSON.stringify(permsToSave), u.farmLocation || null, pinHashToStore],
           client
         );
       }
