@@ -186,3 +186,29 @@ const styles = StyleSheet.create({
     gap: 10
   }
 });
+
+// A labeled count-vs-total bar, for aggregate breakdowns (herd composition,
+// alert summaries, etc). Deliberately has no onPress — these reports are
+// aggregate-only by design, not a way to drill into individual records.
+export function BreakdownRow({
+  label,
+  count,
+  total,
+  color = colors.green
+}: {
+  label: string;
+  count: number;
+  total: number;
+  color?: string;
+}) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  return (
+    <View style={{ marginBottom: spacing.sm }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+        <Text style={{ fontSize: 12.5, fontWeight: '600', color: colors.textPrimary }}>{label}</Text>
+        <Text style={{ fontSize: 12.5, fontWeight: '700', color: colors.textSecondary }}>{count}</Text>
+      </View>
+      <ProgressBar pct={pct} color={color} />
+    </View>
+  );
+}

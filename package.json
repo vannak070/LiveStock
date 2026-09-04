@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "bash scripts/dev-all.sh",
     "server": "npx tsx src/server/index.ts",
     "seed": "npx tsx src/db/seed.ts",
     "build": "next build",
@@ -14,7 +15,11 @@
     "clear-db": "npx tsx src/db/migrations/clear-production-db.ts",
     "clear-stock": "npx tsx src/db/migrations/clear-stock-only.ts",
     "deploy:setup": "bash scripts/deploy-production.sh",
-    "hash-passwords": "npx tsx src/db/migrations/hash-existing-passwords.ts"
+    "hash-passwords": "npx tsx src/db/migrations/hash-existing-passwords.ts",
+    "create-admin": "npx tsx src/db/migrations/create-admin.ts",
+    "reset-password": "npx tsx src/db/migrations/reset-password.ts",
+    "db:check": "npx tsx src/db/migrations/check-data.ts",
+    "login-fix": "npx tsx src/db/migrations/login-fix.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -35,6 +40,7 @@
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
     "pg": "^8.22.0",
+    "pm2": "^7.0.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.77.0",

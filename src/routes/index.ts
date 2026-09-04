@@ -8,6 +8,7 @@ import expenseRoutes from './expense.routes';
 import settingsRoutes from './settings.routes';
 import authRoutes from './auth.routes';
 import feedRoutes from './feed.routes';
+import proposalPlanRoutes from './proposal-plan.routes';
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use('/expenses', expenseRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/auth', authRoutes);
 router.use('/feed', feedRoutes);
+router.use('/proposal-plan', proposalPlanRoutes);
 
 export default router;

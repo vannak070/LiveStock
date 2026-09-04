@@ -4,6 +4,7 @@ import { parseExcelDatabase } from '../../lib/xlsx-parser';
 import { pool, connectWithRetry } from '../../config/database';
 import { getDbData } from '../../lib/db';
 import { generateTempPassword } from '../../lib/generate-temp-password';
+import { hashPassword, isBcryptHash } from '../../lib/password';
 
 // Optional: set EXCEL_IMPORT_PATH in your local .env to auto-import cattle
 // data from a personal Excel workbook on first run. Not set by default —
@@ -74,11 +75,16 @@ async function initDatabase() {
     // 2. Users
     console.log('[Init DB] Populating users...');
     for (const u of data.settings.users || []) {
+      // Same rule as seed.ts: the password column holds bcrypt hashes only.
+      // Writing a raw string here would leave the account permanently
+      // unable to log in, since verifyPassword() is bcrypt-compare only.
+      const raw = u.password || generateTempPassword();
+      const stored = isBcryptHash(raw) ? raw : await hashPassword(raw);
       await client.query(
         `INSERT INTO users (id, name, email, role, status, password)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6`,
-        [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || generateTempPassword()]
+        [u.id, u.name, u.email, u.role, u.status || 'Active', stored]
       );
     }
 

@@ -20,6 +20,23 @@ export default function DashboardHome({ data, onNavigateToTab }: DashboardHomePr
   // Active fattening batches
   const activeBatches = data.batches.filter(b => b.status === 'Active');
 
+  // Selling Prep Alerts — active batches whose Selling Target Date (set at
+  // batch creation, auto-calculated as Start Date + 90 days) is within the
+  // next 10 days, so admins get advance notice to prepare for the sale.
+  // Overdue targets (negative days remaining) are included too, flagged
+  // distinctly, since a missed target date needs attention just as much.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sellingPrepAlerts = activeBatches
+    .filter(b => !!b.sellingTargetDate)
+    .map(b => {
+      const target = new Date(b.sellingTargetDate as string);
+      const daysRemaining = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return { ...b, daysRemaining };
+    })
+    .filter(b => b.daysRemaining <= 10)
+    .sort((a, b) => a.daysRemaining - b.daysRemaining);
+
   // Total revenue from fattening sales
   const totalRevenue = data.salesTracking.reduce((sum, s) => sum + (s.totalPrice || 0), 0);
   const totalExpenses = data.expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
@@ -68,7 +85,7 @@ export default function DashboardHome({ data, onNavigateToTab }: DashboardHomePr
     <div className="space-y-6">
 
       {/* KPI Summary Grid (3 Columns) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
 
         {/* Active Fattening Herd */}
         <Card className="bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => onNavigateToTab('cow-inventory')}>
@@ -119,7 +136,64 @@ export default function DashboardHome({ data, onNavigateToTab }: DashboardHomePr
             )}
           </CardContent>
         </Card>
+
+        {/* Selling Prep Alerts */}
+        <Card
+          className={`border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${sellingPrepAlerts.length > 0 ? 'bg-amber-50 border-amber-100' : 'bg-white border-slate-100'}`}
+          onClick={() => sellingPrepAlerts.length > 0 && onNavigateToTab('batch-management')}
+        >
+          <CardHeader className="pb-2">
+            <CardDescription className="text-xs uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-amber-500" /> Selling Prep Alerts
+            </CardDescription>
+            <CardTitle className={`text-2xl font-black mt-1 ${sellingPrepAlerts.length > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
+              {sellingPrepAlerts.length} Batch{sellingPrepAlerts.length === 1 ? '' : 'es'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sellingPrepAlerts.length > 0 ? (
+              <button onClick={() => onNavigateToTab('batch-management')} className="text-[10px] text-amber-600 hover:underline font-bold animate-pulse flex items-center gap-1">
+                Prepare Now <ArrowRight className="h-3 w-3" />
+              </button>
+            ) : (
+              <p className="text-[10px] text-slate-400 font-bold">No batches nearing target date.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Selling Prep Alerts — Detail List */}
+      {sellingPrepAlerts.length > 0 && (
+        <div className="bg-amber-50/60 border border-amber-100 p-5 rounded-2xl shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-extrabold text-amber-800 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-amber-600" />
+              Selling Prep Alerts — Target Date Within 10 Days
+            </h4>
+            <button onClick={() => onNavigateToTab('batch-management')} className="text-[10px] text-amber-700 hover:underline font-bold flex items-center gap-1">
+              Go to Batches <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          <div className="divide-y divide-amber-100">
+            {sellingPrepAlerts.map(b => (
+              <div key={b.id} className="py-2.5 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-slate-800">
+                    {b.name} <span className="text-slate-400 font-mono font-normal">({b.id})</span>
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-semibold">{b.farmLocation || 'Unassigned'} • {b.cowIds?.length || 0} head</p>
+                </div>
+                <div className="text-right">
+                  <p className={`text-xs font-black ${b.daysRemaining < 0 ? 'text-rose-600' : 'text-amber-600'}`}>
+                    {b.daysRemaining < 0 ? `Overdue ${Math.abs(b.daysRemaining)}d` : b.daysRemaining === 0 ? 'Due today' : `${b.daysRemaining}d left`}
+                  </p>
+                  <p className="text-[10px] text-slate-400">{b.sellingTargetDate}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Revenue & Profit Summary Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

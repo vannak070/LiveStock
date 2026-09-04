@@ -2,34 +2,59 @@ import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import Svg, { Polyline, Circle } from 'react-native-svg';
 import { useApiDataMulti } from '../hooks/useApiData';
-import { SalesRecord, ExpenseItem } from '../api/types';
+import { SalesRecord, ExpenseItem, StockItem } from '../api/types';
 import { ScreenScroll, ScreenTitle, SectionHeader, Card, LoadingView, ErrorView, EmptyRow } from '../components/ui';
+import FarmPicker from '../components/FarmPicker';
+import { useFarmFilter } from '../context/FarmFilterContext';
+import { applyFarmScope } from '../lib/farmScope';
 import { colors, spacing } from '../theme/colors';
 import { formatMoney, formatDate } from '../lib/format';
 
 const CATEGORY_COLORS = [colors.green, colors.amber, '#7A9AA8', colors.red, colors.muted];
 
 export default function FinanceScreen() {
-  const { data, loading, error, refresh, refreshing } = useApiDataMulti({ sales: '/sales', expenses: '/expenses' });
+  const { effectiveFarm } = useFarmFilter();
+  // Stock is fetched alongside sales/expenses purely to resolve each sale's
+  // farm via its cow — sales don't carry a farm of their own, same
+  // cross-reference DashboardContainer.tsx uses on the web. Expenses do
+  // carry their own farmLocation, so they're scoped directly.
+  const { data, loading, error, refresh, refreshing } = useApiDataMulti({ sales: '/sales', expenses: '/expenses', stock: '/stock' });
 
-  const sales = (data?.sales as SalesRecord[]) || [];
-  const expenses = (data?.expenses as ExpenseItem[]) || [];
+  const { sales, expenses } = applyFarmScope(
+    {
+      stock: (data?.stock as StockItem[]) || [],
+      sales: (data?.sales as SalesRecord[]) || [],
+      expenses: (data?.expenses as ExpenseItem[]) || []
+    },
+    effectiveFarm
+  );
 
+  // Grouped by YYYY-MM (not just month name) so, e.g., Jan 2025 and Jan 2026
+  // don't collide into the same bucket — matches AnalyticsTab.tsx's
+  // financialMonthly on the web side.
   const monthly = useMemo(() => {
     const map: Record<string, { revenue: number; expense: number }> = {};
+    const monthKey = (d: string) => d.length >= 7 ? d.substring(0, 7) : new Date(d).toISOString().substring(0, 7);
     sales.forEach(s => {
       if (!s.salesDate) return;
-      const key = new Date(s.salesDate).toLocaleDateString(undefined, { month: 'short' });
+      const key = monthKey(s.salesDate);
       map[key] = map[key] || { revenue: 0, expense: 0 };
       map[key].revenue += s.totalPrice || 0;
     });
     expenses.forEach(e => {
       if (!e.date) return;
-      const key = new Date(e.date).toLocaleDateString(undefined, { month: 'short' });
+      const key = monthKey(e.date);
       map[key] = map[key] || { revenue: 0, expense: 0 };
       map[key].expense += e.amount || 0;
     });
-    return Object.entries(map).slice(-6).map(([label, v]) => ({ label, ...v, net: v.revenue - v.expense }));
+    return Object.entries(map)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-6)
+      .map(([key, v]) => {
+        const [year, m] = key.split('-');
+        const label = new Date(parseInt(year), parseInt(m) - 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+        return { label, ...v, net: v.revenue - v.expense };
+      });
   }, [sales, expenses]);
 
   const byCategory = useMemo(() => {
@@ -60,14 +85,15 @@ export default function FinanceScreen() {
 
   return (
     <ScreenScroll refreshing={refreshing} onRefresh={refresh}>
-      <ScreenTitle title="Financial reports" subtitle="All farms" />
+      <ScreenTitle title="Financial reports" subtitle={effectiveFarm || 'All farms'} />
+
+      <FarmPicker />
 
       <Card style={{ marginBottom: spacing.md }}>
         <Text style={{ fontSize: 12.5, fontWeight: '700', marginBottom: 12 }}>Revenue vs expense by month</Text>
         {monthly.length === 0 ? <EmptyRow label="No sales or expense data yet." /> : (
           <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, height: 110 }}>
             {monthly.map((m, i) => {
-              const barMax = Math.max(m.revenue, m.expense, 1);
               const scale = 80 / Math.max(...monthly.map(mm => Math.max(mm.revenue, mm.expense, 1)));
               return (
                 <View key={i} style={{ flex: 1, alignItems: 'center' }}>
@@ -123,7 +149,8 @@ export default function FinanceScreen() {
         {ledger.length === 0 ? <EmptyRow label="No sales recorded yet." /> : ledger.map((l, idx) => (
           <View key={idx} style={{ padding: 13, borderBottomWidth: idx === ledger.length - 1 ? 0 : 1, borderBottomColor: colors.borderFaint, flexDirection: 'row', justifyContent: 'space-between' }}>
             <View>
-              <Text style={{ fontSize: 12.5, fontWeight: '600' }}>{l.cowId}</Text>
+              {/* Breed, not cowId — no per-animal identifiers in reports. */}
+              <Text style={{ fontSize: 12.5, fontWeight: '600' }}>{l.breed || 'Sale'}</Text>
               <Text style={{ fontSize: 10.5, color: colors.textSecondary, marginTop: 3 }}>{formatDate(l.salesDate)} · {l.weight} kg</Text>
             </View>
             <Text style={{ fontSize: 13, fontWeight: '700' }}>{formatMoney(l.totalPrice)}</Text>

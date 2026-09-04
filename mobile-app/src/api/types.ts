@@ -49,6 +49,24 @@ export interface SalesRecord {
   buyer?: string;
 }
 
+// A batch's optional feeding program — mirrors src/types/batch.types.ts in
+// the main app. `expectedSellingPrice` on BatchItem below is a price PER KG
+// (₹/kg), not a lump total — see BatchTab.tsx's " / kg" label web-side.
+export interface FeedIngredientConfig {
+  name: string;
+  portionPerHead: number; // kg/head/day
+  unitCost: number; // ₹/kg
+}
+
+export interface FeedingProgramConfig {
+  ingredients: FeedIngredientConfig[];
+  frequency: string;
+  startDate: string;
+  endDate?: string;
+  status: 'Active' | 'Paused' | 'Completed';
+  notes?: string;
+}
+
 export interface BatchItem {
   id: string;
   name: string;
@@ -58,7 +76,9 @@ export interface BatchItem {
   cowIds: string[];
   notes?: string;
   farmLocation?: string;
-  expectedSellingPrice?: number;
+  expectedSellingPrice?: number; // ₹ per kg (target price), not a total
+  sellingTargetDate?: string; // ISO date (YYYY-MM-DD) — planned sell/harvest date, set at batch creation
+  feedingProgram?: FeedingProgramConfig;
 }
 
 export interface HealthLogItem {
@@ -133,4 +153,31 @@ export interface FeedStockTransaction {
   quantityKg: number;
   unitCost: number;
   totalCost: number;
+}
+
+// Mirrors src/types/proposal.types.ts in the main app — the Fattening
+// Proposal/Plan tool's simulation inputs, last saved from the web app via
+// its "Save Plan" button. The mobile Proposal screen is read-only: it
+// re-derives the same annual summary figures from these inputs using the
+// exact same formula chain as ProposalPlanTab.tsx's `calculations` useMemo,
+// rather than fetching precomputed results.
+export interface ProposalPlanParams {
+  targetStockLevel: number;
+  numberOfBatches: number;
+  cattlePerBatch: number;
+  initialWeightKg: number;
+  dailyWeightGainKg: number;
+  fatteningPeriodDays: number;
+  purchasePricePerKgKhr: number;
+  sellingPricePerKgKhr: number;
+  bankInterestRateAnnual: number;
+  grassKgPerHeadDay: number;
+  grassCostPerKgKhr: number;
+  concentrateKgPerHeadDay: number;
+  concentrateCostPerKgKhr: number;
+}
+
+export interface ProposalPlanRecord {
+  params: ProposalPlanParams;
+  updatedAt: string; // ISO timestamp
 }

@@ -39,6 +39,7 @@ import {
 } from 'recharts';
 import { format2DecimalsWithCommas } from '@/lib/utils';
 import { useLanguage } from '@/context/LanguageContext';
+import { ProposalPlanParams } from '@/types';
 
 // Default Benchmark Proposal Assumptions (100% Dynamic Simulation Engine)
 const DEFAULT_PLAN = {
@@ -82,18 +83,43 @@ const parseNumberFromCommas = (str: string): number => {
   return isNaN(num) ? 0 : num;
 };
 
-export default function ProposalPlanTab() {
+interface ProposalPlanTabProps {
+  // The last-saved plan, if any (fetched from the DB) — pre-fills the
+  // simulation instead of always starting from the hardcoded benchmark.
+  initialPlan?: ProposalPlanParams;
+  // Persists the current simulation inputs so the mobile app's read-only
+  // Proposal summary can show real, saved figures instead of nothing.
+  onSavePlan?: (params: ProposalPlanParams) => Promise<void>;
+}
+
+export default function ProposalPlanTab({ initialPlan, onSavePlan }: ProposalPlanTabProps = {}) {
   const { t, language } = useLanguage();
   const [activeSubTab, setActiveSubTab] = useState<
     'dashboard' | 'projection' | 'purchasing_selling' | 'batches' | 'feed_plan' | 'financials'
   >('dashboard');
 
-  // Interactive Simulation State
-  const [params, setParams] = useState({ ...DEFAULT_PLAN });
+  // Interactive Simulation State — pre-filled from the last saved plan
+  // when one exists, else the hardcoded benchmark.
+  const [params, setParams] = useState({ ...DEFAULT_PLAN, ...(initialPlan || {}) });
+  const [isSavingPlan, setIsSavingPlan] = useState(false);
+  const [planSavedAt, setPlanSavedAt] = useState<string | null>(null);
 
   // Period Selector for Feed Calculator
   const [selectedFeedPeriodDays, setSelectedFeedPeriodDays] = useState<number>(30);
   const [selectedFeedHeadCount, setSelectedFeedHeadCount] = useState<number>(params.targetStockLevel);
+
+  // Save the current simulation inputs as the shared "current plan" —
+  // this is what the mobile app's read-only Proposal summary reads.
+  const handleSavePlan = async () => {
+    if (!onSavePlan) return;
+    setIsSavingPlan(true);
+    try {
+      await onSavePlan(params);
+      setPlanSavedAt(new Date().toLocaleTimeString());
+    } finally {
+      setIsSavingPlan(false);
+    }
+  };
 
   // Reset to default plan benchmark
   const handleResetDefaults = () => {
@@ -399,9 +425,25 @@ export default function ProposalPlanTab() {
                 ? `ទិញ +${calculations.monthlyBatchQty} ក្បាល/ខែ រហូតដល់ ${formatNumberWithCommas(params.targetStockLevel)} ក្បាល។ គណនាចំណូល លក់គោជំនួស ស្មៅ ចំណីសមាស ការប្រាក់ធនាគារ (${params.bankInterestRateAnnual}%/ឆ្នាំ) និង អត្រាចំណេញប្រចាំឆ្នាំ (${calculations.annualNetMarginPercent.toFixed(1)}%/ឆ្នាំ)។`
                 : `Purchases +${calculations.monthlyBatchQty} cattle monthly up to ${formatNumberWithCommas(params.targetStockLevel)} head. Computes sales, feed, bank interest, and annual margin (%/year).`}
             </p>
+            {planSavedAt && (
+              <p className="text-[10px] text-emerald-300 font-bold mt-1.5">
+                {language === 'km' ? `រក្សាទុកនៅ ${planSavedAt}` : `Saved to mobile app at ${planSavedAt}`}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-3">
+            {onSavePlan && (
+              <button
+                onClick={handleSavePlan}
+                disabled={isSavingPlan}
+                className="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-emerald-400/40 transition-all flex items-center gap-2 shadow-lg cursor-pointer disabled:opacity-60"
+                title="Save this plan — the mobile app's Proposal summary reads whatever was last saved here"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>{isSavingPlan ? (language === 'km' ? 'កំពុងរក្សាទុក...' : 'Saving...') : (language === 'km' ? 'រក្សាទុកគម្រោង (Save Plan)' : 'Save Plan')}</span>
+              </button>
+            )}
             <button
               onClick={handleResetDefaults}
               className="bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl border border-white/20 transition-all flex items-center gap-2 shadow-lg cursor-pointer"

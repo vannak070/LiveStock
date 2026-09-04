@@ -46,4 +46,8 @@ backups/*.json
 /kaksedthan/
 
 # Design mockup export (large embedded-asset HTML, not part of the app)
-/Cam Cow Reports.html
+/design/Cam Cow Reports.html
+
+# local dev server logs (scripts/dev-all.sh)
+.dev-logs/
+src/data/db.json

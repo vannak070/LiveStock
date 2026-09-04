@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BatchItem, StockItem } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,29 @@ interface BatchModalProps {
   initialBatch?: BatchItem | null;
   currentUser?: any;
   farms?: FarmItem[];
+}
+
+// Standard fattening cycle length used to auto-calculate the Selling Target
+// Date from the batch's Start Date — the field is never hand-picked, it
+// always tracks Start Date + 90 days (see the batch.service.ts fallback for
+// the same rule enforced server-side).
+const SELLING_CYCLE_DAYS = 90;
+
+function addDaysToDateStr(dateStr: string, days: number): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+// Small uppercase divider label used to group the form into clear sections.
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-1.5">
+      {children}
+    </p>
+  );
 }
 
 export const BatchModal: React.FC<BatchModalProps> = ({
@@ -41,6 +64,10 @@ export const BatchModal: React.FC<BatchModalProps> = ({
   const [expectedSellingPrice, setExpectedSellingPrice] = useState<string>('');
   const [selectedCowIds, setSelectedCowIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Selling Target Date is never entered by hand — it's always Start Date +
+  // 90 days, recalculated live as Start Date changes.
+  const sellingTargetDate = useMemo(() => addDaysToDateStr(startDate, SELLING_CYCLE_DAYS), [startDate]);
 
   // Unassigned Cows Filtering States
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,7 +145,8 @@ export const BatchModal: React.FC<BatchModalProps> = ({
         notes,
         farmLocation: farmLocation || initialBatch?.farmLocation || currentUser?.farmLocation || undefined,
         feedingProgram: initialBatch?.feedingProgram || (type === 'Fattening Program' ? defaultFeeding : undefined),
-        expectedSellingPrice: expectedSellingPrice ? Number(expectedSellingPrice) : undefined
+        expectedSellingPrice: expectedSellingPrice ? Number(expectedSellingPrice) : undefined,
+        sellingTargetDate: sellingTargetDate || undefined
       }, selectedCowIds);
 
       onClose();
@@ -159,113 +187,142 @@ export const BatchModal: React.FC<BatchModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 pt-4 text-left">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-4 text-left">
           {validationError && (
             <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold p-3 rounded-xl flex items-center gap-2">
               <span>⚠️ {validationError}</span>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="batch_id" className="text-xs font-bold text-slate-700 flex items-center justify-between">
-                <span>Batch Code</span>
-                <span className="text-[10px] text-slate-400 font-semibold">(Auto-generated)</span>
-              </Label>
-              <Input
-                id="batch_id"
-                value={id}
-                readOnly
-                disabled
-                placeholder="e.g. CCB-2026-891"
-                className="font-mono text-xs font-bold bg-slate-100/90 text-slate-600 border-slate-200 cursor-not-allowed select-none"
-              />
-            </div>
+          {/* Section 1: Identity */}
+          <div className="space-y-3">
+            <SectionLabel>Batch Identity</SectionLabel>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="batch_id" className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                  <span>Batch Code</span>
+                  <span className="text-[10px] text-slate-400 font-semibold">(Auto-generated)</span>
+                </Label>
+                <Input
+                  id="batch_id"
+                  value={id}
+                  readOnly
+                  disabled
+                  placeholder="e.g. CCB-2026-891"
+                  className="font-mono text-xs font-bold bg-slate-100/90 text-slate-600 border-slate-200 cursor-not-allowed select-none"
+                />
+              </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="batch_name" className="text-xs font-bold text-slate-700">Batch Name</Label>
-              <Input
-                id="batch_name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="e.g. Fattening Batch A"
-                required
-                className="text-xs font-bold"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="batch_farm" className="text-xs font-bold text-slate-700">Farm Location</Label>
-              <select
-                id="batch_farm"
-                value={farmLocation}
-                onChange={e => setFarmLocation(e.target.value)}
-                className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-                required
-              >
-                <option value="">-- Select Farm --</option>
-                {farms.map(f => (
-                  <option key={f.id} value={f.name}>{f.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="batch_type" className="text-xs font-bold text-slate-700">Program Type</Label>
-              <select
-                id="batch_type"
-                value={type}
-                onChange={e => setType(e.target.value)}
-                className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-              >
-                {batchTypes.map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="batch_start_date" className="text-xs font-bold text-slate-700">Start Date</Label>
-              <Input
-                type="date"
-                id="batch_start_date"
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                required
-                className="text-xs font-bold"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="batch_status" className="text-xs font-bold text-slate-700">Status</Label>
-              <select
-                id="batch_status"
-                value={status}
-                onChange={e => setStatus(e.target.value as 'Active' | 'Closed')}
-                className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
-              >
-                <option value="Active">Active</option>
-                <option value="Closed">Closed</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <Label htmlFor="batch_price" className="text-xs font-bold text-slate-700">Expected Selling Price (៛) / តម្លៃលក់រំពឹងទុក</Label>
-              <Input
-                type="number"
-                id="batch_price"
-                value={expectedSellingPrice}
-                onChange={e => setExpectedSellingPrice(e.target.value)}
-                placeholder="ឧទាហរណ៍៖ 25,000,000"
-                className="text-xs font-bold font-mono"
-              />
+              <div className="space-y-1">
+                <Label htmlFor="batch_name" className="text-xs font-bold text-slate-700">Batch Name</Label>
+                <Input
+                  id="batch_name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="e.g. Fattening Batch A"
+                  required
+                  className="text-xs font-bold"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="batch_notes" className="text-xs font-bold text-slate-700">Notes / Remark</Label>
+          {/* Section 2: Schedule & Location */}
+          <div className="space-y-3">
+            <SectionLabel>Schedule &amp; Location</SectionLabel>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="batch_farm" className="text-xs font-bold text-slate-700">Farm Location</Label>
+                <select
+                  id="batch_farm"
+                  value={farmLocation}
+                  onChange={e => setFarmLocation(e.target.value)}
+                  className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                  required
+                >
+                  <option value="">-- Select Farm --</option>
+                  {farms.map(f => (
+                    <option key={f.id} value={f.name}>{f.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="batch_type" className="text-xs font-bold text-slate-700">Program Type</Label>
+                <select
+                  id="batch_type"
+                  value={type}
+                  onChange={e => setType(e.target.value)}
+                  className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                >
+                  {batchTypes.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="batch_start_date" className="text-xs font-bold text-slate-700">Start Date</Label>
+                <Input
+                  type="date"
+                  id="batch_start_date"
+                  value={startDate}
+                  onChange={e => setStartDate(e.target.value)}
+                  required
+                  className="text-xs font-bold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="batch_status" className="text-xs font-bold text-slate-700">Status</Label>
+                <select
+                  id="batch_status"
+                  value={status}
+                  onChange={e => setStatus(e.target.value as 'Active' | 'Closed')}
+                  className="w-full h-9 rounded-md border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                >
+                  <option value="Active">Active</option>
+                  <option value="Closed">Closed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Selling Target */}
+          <div className="space-y-3">
+            <SectionLabel>Selling Target</SectionLabel>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="batch_price" className="text-xs font-bold text-slate-700">Expected Selling Price (៛) / តម្លៃលក់រំពឹងទុក</Label>
+                <Input
+                  type="number"
+                  id="batch_price"
+                  value={expectedSellingPrice}
+                  onChange={e => setExpectedSellingPrice(e.target.value)}
+                  placeholder="ឧទាហរណ៍៖ 18,000"
+                  className="text-xs font-bold font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="batch_target_date" className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                  <span>Selling Target Date</span>
+                  <span className="text-[10px] text-slate-400 font-semibold">(Auto: Start + 90d)</span>
+                </Label>
+                <Input
+                  id="batch_target_date"
+                  value={sellingTargetDate}
+                  readOnly
+                  disabled
+                  className="font-mono text-xs font-bold bg-slate-100/90 text-slate-600 border-slate-200 cursor-not-allowed select-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Notes */}
+          <div className="space-y-3">
+            <SectionLabel>Notes</SectionLabel>
             <Input
               id="batch_notes"
               value={notes}
@@ -275,9 +332,10 @@ export const BatchModal: React.FC<BatchModalProps> = ({
             />
           </div>
 
-          {/* Initial Cows Selection (Only in Create Mode) */}
+          {/* Section 5: Initial Cows Selection (Only in Create Mode) */}
           {!isEditMode && (
-            <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="space-y-3 pt-1">
+              <SectionLabel>Initial Cattle Selection</SectionLabel>
               <div className="flex items-center justify-between">
                 <Label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                   <UserPlus className="h-4 w-4 text-emerald-600" />

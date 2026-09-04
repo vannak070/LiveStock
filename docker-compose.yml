@@ -40,16 +40,19 @@ services:
       start_period: 5s
 
   # 2. Livestock Backend & Next.js Application Service
+  # Runs both processes via pm2-runtime (see Dockerfile + ecosystem.config.js):
+  # backend API on 3002, Next.js frontend on 3000. Ports are fixed by
+  # ecosystem.config.js, not by a PORT env var here, so none is set below.
   app:
     build:
       context: .
       dockerfile: Dockerfile
     restart: always
     ports:
+      - "3000:3000"
       - "3002:3002"
     environment:
       NODE_ENV: production
-      PORT: 3001
       CORS_ORIGIN: "*"
       # Use the Docker Compose service name 'db' as the database host
       DB_HOST: db
@@ -62,6 +65,10 @@ services:
       DB_POOL_MAX: 20
       DB_IDLE_TIMEOUT_MS: 30000
       DB_CONN_TIMEOUT_MS: 5000
+      # Required — no default on purpose. `docker compose up` fails fast
+      # here instead of the container silently booting without auth working.
+      # Set it in a .env file next to this compose file (already gitignored).
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env before running docker compose (see .env.example)}
     depends_on:
       db:
         condition: service_healthy

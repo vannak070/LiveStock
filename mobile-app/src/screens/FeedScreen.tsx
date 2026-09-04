@@ -10,6 +10,12 @@ import { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
+// Feed inventory has no farm dimension in this data model — it's one
+// shared product catalog, not split per farm — and the web app's own
+// FeedInventoryTab.tsx applies no farm scoping either (DashboardContainer's
+// farm-scoping useMemo passes feed products/transactions through
+// untouched). So this report intentionally stays global, unlike every
+// other report screen.
 export default function FeedScreen() {
   const navigation = useNavigation<Nav>();
   const { data, loading, error, refresh } = useApiDataMulti({ products: '/feed/products', transactions: '/feed/transactions' });

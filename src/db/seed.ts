@@ -3,6 +3,7 @@ import path from 'path';
 import { pool, connectWithRetry } from '../config/database';
 import { getDbData } from '../lib/db';
 import { generateTempPassword } from '../lib/generate-temp-password';
+import { hashPassword, isBcryptHash } from '../lib/password';
 
 async function seedDatabase() {
   console.log('=== Livestock ERP Database Seeding Script ===');
@@ -37,11 +38,17 @@ async function seedDatabase() {
     // 2. Users
     console.log('[Seed] Populating users...');
     for (const u of data.settings.users || []) {
+      // Passwords must be stored as bcrypt hashes: login verifies with
+      // bcrypt.compare() and has no plaintext path, so a raw string written
+      // here would lock that account out permanently. Values that are
+      // already hashed are passed through untouched.
+      const raw = u.password || generateTempPassword();
+      const stored = isBcryptHash(raw) ? raw : await hashPassword(raw);
       await client.query(
         `INSERT INTO users (id, name, email, role, status, password)
          VALUES ($1, $2, $3, $4, $5, $6)
          ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6`,
-        [u.id, u.name, u.email, u.role, u.status || 'Active', u.password || generateTempPassword()]
+        [u.id, u.name, u.email, u.role, u.status || 'Active', stored]
       );
     }
 

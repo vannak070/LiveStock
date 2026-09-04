@@ -1,10 +1,11 @@
-// Matches the "Cam Cow Reports" design mockup's palette.
+// Cam Cow brand palette. `green` and `red` are sampled straight from the
+// company logo (assets/logo.png) so the app matches it exactly.
 export const colors = {
-  green: '#0F8F49',
-  greenDark: '#0B6B37',
+  green: '#118F45',
+  greenDark: '#0C6B33',
   amber: '#B7791F',
-  red: '#C1272D',
-  redDark: '#8E241D',
+  red: '#B42B33',
+  redDark: '#8A2027',
   muted: '#9A968F',
   textPrimary: '#1A1917',
   textSecondary: '#6E6B66',

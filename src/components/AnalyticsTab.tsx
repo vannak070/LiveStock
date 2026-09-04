@@ -71,6 +71,28 @@ export default function AnalyticsTab({ data, currentUser, farms = [] }: Analytic
     setExpectedSellingPricePerKg(String(defaultSellingPrice));
   }, [defaultSellingPrice]);
 
+  // Compute default target harvest date: the selected batch's own Selling
+  // Target Date (set at batch creation) when it has one, else the existing
+  // "60 days from today" fallback — same precedence pattern as
+  // defaultSellingPrice above.
+  const defaultTargetHarvestDate = useMemo(() => {
+    const fallback = () => {
+      const future = new Date();
+      future.setDate(future.getDate() + 60);
+      return future.toISOString().split('T')[0];
+    };
+    if (predictionBatchId !== 'all') {
+      const selected = (farmScopedData.batches || []).find(b => b.id === predictionBatchId);
+      if (selected?.sellingTargetDate) return selected.sellingTargetDate;
+    }
+    return fallback();
+  }, [farmScopedData.batches, predictionBatchId]);
+
+  // Sync targetHarvestDate whenever defaultTargetHarvestDate changes (user can still freely override it)
+  React.useEffect(() => {
+    setTargetHarvestDate(defaultTargetHarvestDate);
+  }, [defaultTargetHarvestDate]);
+
   // Count cattle per farm for the filter bar
   const countByFarm = useMemo(() => {
     const map: Record<string, number> = {};

@@ -23,5 +23,6 @@ export interface BatchItem {
   notes?: string;
   feedingProgram?: FeedingProgramConfig;
   farmLocation?: string;
-  expectedSellingPrice?: number;
+  expectedSellingPrice?: number; // ៛ per kg (target price)
+  sellingTargetDate?: string; // ISO date (YYYY-MM-DD) — planned sell/harvest date for this batch
 }

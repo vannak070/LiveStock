@@ -29,10 +29,11 @@ import {
   updateStockLocation,
   saveFeedProduct,
   deleteFeedProduct,
-  addFeedTransaction
+  addFeedTransaction,
+  saveProposalPlan
 } from '@/lib/db';
 import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
-import { MasterSetup, BatchItem, HealthLogItem, ExpenseItem, FeedProductItem, FeedStockTransaction } from '@/lib/types';
+import { MasterSetup, BatchItem, HealthLogItem, ExpenseItem, FeedProductItem, FeedStockTransaction, ProposalPlanParams } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
 export async function getLivestockDataAction() {
@@ -321,5 +322,15 @@ export async function addFeedTransactionAction(tx: FeedStockTransaction) {
     return { success: true, data: res };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to add feed transaction' };
+  }
+}
+
+export async function saveProposalPlanAction(params: ProposalPlanParams) {
+  try {
+    const res = await saveProposalPlan(params);
+    revalidatePath('/');
+    return { success: true, data: res };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to save proposal plan' };
   }
 }

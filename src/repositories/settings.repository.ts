@@ -4,14 +4,6 @@ import { hashPassword } from '../lib/password';
 import { MasterSetup, UserRoleItem, CustomRoleDefinition, DEFAULT_ROLE_PERMISSIONS, FarmItem } from '../lib/types';
 import { PoolClient } from 'pg';
 
-const DEFAULT_FARMS: FarmItem[] = [
-  { id: 'FARM-01', name: 'រទាំង', ownerId: '4', address: 'រទាំង, ព្រែកព្នៅ, ភ្នំពេញ', capacity: 100, notes: 'ទីតាំងបំប៉នសាច់ និងផលិតចំណី' },
-  { id: 'FARM-02', name: 'ព្រៃវែង', ownerId: '6', address: 'ក្រុងព្រៃវែង, ខេត្តព្រៃវែង', capacity: 150, notes: 'ទីតាំងបង្កាត់ពូជ និងព្យាបាល' },
-  { id: 'FARM-03', name: 'បន្ទាយមានជ័យ', address: 'ក្រុងសិរីសោភ័ណ, ខេត្តបន្ទាយមានជ័យ', capacity: 80, notes: 'ក្រោលផ្ទេរ និងចែកចាយ' },
-  { id: 'FARM-04', name: 'ក្រោល A', capacity: 50, notes: 'ក្រោលបំប៉នពិសេស A' },
-  { id: 'FARM-05', name: 'ក្រោល B', capacity: 50, notes: 'ក្រោលបំប៉នពិសេស B' }
-];
-
 const DEFAULT_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-01', name: 'Super Admin', description: 'Full system management and security authority.', permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'], isSystem: true },
   { id: 'ROLE-02', name: 'Admin', description: 'Full business operations control and user creation privileges.', permissions: DEFAULT_ROLE_PERMISSIONS['Admin'], isSystem: true },
@@ -21,21 +13,9 @@ const DEFAULT_ROLES: CustomRoleDefinition[] = [
   { id: 'ROLE-06', name: 'Veterinarian', description: 'Responsible for health tracking, medical records, deworming, and diagnostics.', permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], isSystem: true }
 ];
 
-// NOTE: these seed the initial staff roster (names/emails/roles) the first
-// time the `users` table is empty. Passwords are generated fresh each time
-// (never a fixed shared default), hashed before storage, and the plaintext
-// is logged once at seed time only — see getSettings() below. Change them
-// via Settings after first login.
-function buildDefaultUsersPlaintext(): UserRoleItem[] {
-  return [
-    { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Super Admin'] },
-    { id: '2', name: 'Sokha Manager', email: 'sokha.m@snrfarm.com', role: 'Admin', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Admin'] },
-    { id: '3', name: 'Chay Pang', email: 'pang@snrfarm.com', role: 'Company', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Company'] },
-    { id: '4', name: 'Bona Owner', email: 'bona.v@snrfarm.com', role: 'Farm Owner', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Farm Owner'], farmLocation: 'រទាំង' },
-    { id: '5', name: 'Dara Staff', email: 'dara.s@snrfarm.com', role: 'Farm Staff', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Farm Staff'], farmLocation: 'រទាំង' },
-    { id: '6', name: 'Dara Rath', email: 'rath@snrfarm.com', role: 'Veterinarian', status: 'Active', password: generateTempPassword(), permissions: DEFAULT_ROLE_PERMISSIONS['Veterinarian'], farmLocation: 'ព្រៃវែង' }
-  ];
-}
+// Logged at most once per server process — without this guard the warning
+// below would repeat on every single settings read (i.e. every page load).
+let warnedNoUsers = false;
 
 // Never send password hashes to API callers — this is applied to every
 // settings.users array before it leaves the repository.
@@ -87,36 +67,36 @@ export class SettingsRepository {
         purchaseTypes: ['Purchase', 'Born in Farm', 'Transfer', 'Partnership'],
         users: [],
         roles: DEFAULT_ROLES,
-        farms: DEFAULT_FARMS
+        farms: []
       };
     } else {
       settings = res.rows[0].data;
       if (!settings.roles || settings.roles.length === 0) {
         settings.roles = DEFAULT_ROLES;
       }
-      if (!settings.farms || settings.farms.length === 0) {
-        settings.farms = DEFAULT_FARMS;
+      if (!settings.farms) {
+        settings.farms = [];
       }
     }
 
     const usersRes = await query('SELECT * FROM users ORDER BY created_at ASC');
     if (usersRes.rows.length === 0) {
-      const defaultUsers = buildDefaultUsersPlaintext();
-      for (const u of defaultUsers) {
-        const hashed = await hashPassword(u.password as string);
-        await query(
-          `INSERT INTO users (id, name, email, role, status, password, permissions, farm_location)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           ON CONFLICT (id) DO UPDATE SET name=$2, email=$3, role=$4, status=$5, password=$6, permissions=$7, farm_location=$8`,
-          [u.id, u.name, u.email, u.role, u.status, hashed, JSON.stringify(u.permissions || DEFAULT_ROLE_PERMISSIONS[u.role] || []), u.farmLocation || null]
-        );
+      // No accounts exist. Report that plainly instead of auto-creating
+      // placeholder staff with freshly generated passwords — that old
+      // behaviour re-ran on every settings read whenever this table was
+      // empty, so the "default" credentials silently changed each time and
+      // the only copy of them went to a console line nobody was watching.
+      // Every account in this system is now created deliberately and lives
+      // in the database: the first one via `npm run create-admin`, the rest
+      // through Settings once signed in.
+      if (!warnedNoUsers) {
+        warnedNoUsers = true;
+        console.warn('[Settings] The `users` table is empty — nobody can sign in yet.');
+        console.warn('[Settings] Create the first real account with:');
+        console.warn('[Settings]   npm run create-admin -- <email> <password> "Full Name"');
+        console.warn('[Settings] If you expected existing accounts here, this database is not the one holding your data — check DB_HOST/DB_PORT in .env.');
       }
-      console.log('[Settings] Seeded default user accounts with freshly generated temporary passwords:');
-      for (const u of defaultUsers) {
-        console.log(`  - ${u.email} (${u.role}): ${u.password}`);
-      }
-      console.log('[Settings] IMPORTANT: change these passwords via Settings after first login — they will not be shown again.');
-      settings.users = stripUserSecrets(defaultUsers);
+      settings.users = [];
     } else {
       settings.users = stripUserSecrets(usersRes.rows.map(row => {
         let perms = row.permissions;

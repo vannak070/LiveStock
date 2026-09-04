@@ -5,6 +5,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useApiDataMulti } from '../hooks/useApiData';
 import { StockItem, SalesRecord, ExpenseItem, MasterSetup } from '../api/types';
 import { ScreenScroll, BackRow, ScreenTitle, Card, LoadingView, ErrorView, EmptyRow } from '../components/ui';
+import FarmPicker from '../components/FarmPicker';
+import { useFarmFilter } from '../context/FarmFilterContext';
 import { colors, spacing } from '../theme/colors';
 import { formatMoney } from '../lib/format';
 import { RootStackParamList } from '../navigation/types';
@@ -13,6 +15,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export default function FarmsScreen() {
   const navigation = useNavigation<Nav>();
+  const { effectiveFarm } = useFarmFilter();
   const { data, loading, error, refresh } = useApiDataMulti({
     stock: '/stock',
     sales: '/sales',
@@ -27,7 +30,11 @@ export default function FarmsScreen() {
   const sales = (data?.sales as SalesRecord[]) || [];
   const expenses = (data?.expenses as ExpenseItem[]) || [];
   const settings = data?.settings as MasterSetup | undefined;
-  const farms = settings?.farms || [];
+  const allFarms = settings?.farms || [];
+  // This screen is a farm-by-farm comparison by nature, so a locked/picked
+  // farm just narrows the list to that one farm's card rather than hiding
+  // the comparison layout entirely.
+  const farms = effectiveFarm ? allFarms.filter(f => f.name === effectiveFarm) : allFarms;
 
   const ranked = farms
     .map(f => {
@@ -45,7 +52,9 @@ export default function FarmsScreen() {
   return (
     <ScreenScroll>
       <BackRow label="More" onPress={() => navigation.goBack()} />
-      <ScreenTitle title="Farm comparison" subtitle="Net profit ranked" />
+      <ScreenTitle title="Farm comparison" subtitle={effectiveFarm ? effectiveFarm : 'Net profit ranked'} />
+
+      <FarmPicker />
 
       {ranked.length === 0 ? <EmptyRow label="No farms configured yet." /> : ranked.map((f, idx) => {
         const total = f.revenue + f.expense;

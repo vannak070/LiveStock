@@ -19,6 +19,7 @@ export class BatchRepository {
         ALTER TABLE batches ADD COLUMN IF NOT EXISTS feeding_program JSONB;
         ALTER TABLE batches ADD COLUMN IF NOT EXISTS farm_location VARCHAR(100);
         ALTER TABLE batches ADD COLUMN IF NOT EXISTS expected_selling_price NUMERIC;
+        ALTER TABLE batches ADD COLUMN IF NOT EXISTS selling_target_date DATE;
       `, [], client);
       this.isTableInitialized = true;
     } catch (e) {
@@ -37,7 +38,8 @@ export class BatchRepository {
       notes: row.notes || '',
       feedingProgram: row.feeding_program || undefined,
       farmLocation: row.farm_location || undefined,
-      expectedSellingPrice: row.expected_selling_price ? Number(row.expected_selling_price) : undefined
+      expectedSellingPrice: row.expected_selling_price ? Number(row.expected_selling_price) : undefined,
+      sellingTargetDate: row.selling_target_date ? new Date(row.selling_target_date).toISOString().split('T')[0] : undefined
     };
   }
 
@@ -69,8 +71,8 @@ export class BatchRepository {
   async create(batch: Omit<BatchItem, 'cowIds'>, client?: PoolClient): Promise<BatchItem> {
     await this.ensureColumns(client);
     const sql = `
-      INSERT INTO batches (id, name, type, start_date, status, notes, feeding_program, farm_location, expected_selling_price)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      INSERT INTO batches (id, name, type, start_date, status, notes, feeding_program, farm_location, expected_selling_price, selling_target_date)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         type = EXCLUDED.type,
@@ -79,7 +81,8 @@ export class BatchRepository {
         notes = EXCLUDED.notes,
         feeding_program = COALESCE(EXCLUDED.feeding_program, batches.feeding_program),
         farm_location = COALESCE(EXCLUDED.farm_location, batches.farm_location),
-        expected_selling_price = COALESCE(EXCLUDED.expected_selling_price, batches.expected_selling_price)
+        expected_selling_price = COALESCE(EXCLUDED.expected_selling_price, batches.expected_selling_price),
+        selling_target_date = COALESCE(EXCLUDED.selling_target_date, batches.selling_target_date)
       RETURNING *
     `;
     const params = [
@@ -91,7 +94,8 @@ export class BatchRepository {
       batch.notes || '',
       batch.feedingProgram ? JSON.stringify(batch.feedingProgram) : null,
       batch.farmLocation || null,
-      batch.expectedSellingPrice !== undefined && batch.expectedSellingPrice !== null ? Number(batch.expectedSellingPrice) : null
+      batch.expectedSellingPrice !== undefined && batch.expectedSellingPrice !== null ? Number(batch.expectedSellingPrice) : null,
+      batch.sellingTargetDate ? new Date(batch.sellingTargetDate) : null
     ];
 
     const res = await this.executeQuery(sql, params, client);
@@ -114,6 +118,7 @@ export class BatchRepository {
     if (updates.feedingProgram !== undefined) { fields.push(`feeding_program = $${idx++}`); params.push(updates.feedingProgram ? JSON.stringify(updates.feedingProgram) : null); }
     if (updates.farmLocation !== undefined) { fields.push(`farm_location = $${idx++}`); params.push(updates.farmLocation || null); }
     if (updates.expectedSellingPrice !== undefined) { fields.push(`expected_selling_price = $${idx++}`); params.push(updates.expectedSellingPrice !== null ? Number(updates.expectedSellingPrice) : null); }
+    if (updates.sellingTargetDate !== undefined) { fields.push(`selling_target_date = $${idx++}`); params.push(updates.sellingTargetDate ? new Date(updates.sellingTargetDate) : null); }
 
     if (fields.length > 0) {
       params.push(id);

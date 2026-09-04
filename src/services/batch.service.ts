@@ -5,6 +5,19 @@ import { healthService } from './health.service';
 import { withTransaction } from '../config/database';
 import { BatchItem, HealthLogItem } from '../lib/types';
 
+// Standard fattening cycle used to derive Selling Target Date from Start
+// Date when a caller doesn't supply one — mirrors BatchModal.tsx's
+// client-side auto-calculation so the rule holds even for a batch created
+// directly through the API.
+const SELLING_CYCLE_DAYS = 90;
+
+function addDaysToDateStr(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
 export class BatchService {
   async getAllBatches(): Promise<BatchItem[]> {
     return batchRepository.findAll();
@@ -15,7 +28,8 @@ export class BatchService {
   }
 
   async createBatch(batch: Omit<BatchItem, 'cowIds'>): Promise<BatchItem> {
-    return batchRepository.create(batch);
+    const sellingTargetDate = batch.sellingTargetDate || addDaysToDateStr(batch.startDate, SELLING_CYCLE_DAYS);
+    return batchRepository.create({ ...batch, sellingTargetDate });
   }
 
   async updateBatch(id: string, updates: Partial<BatchItem>): Promise<BatchItem> {

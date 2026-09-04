@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { ERPLivestockData, BatchItem, HealthLogItem, ExpenseItem, MasterSetup } from './types';
 import { StockItem, WeightRecord, SalesRecord } from './xlsx-parser';
-import { generateTempPassword } from './generate-temp-password';
 
 import { stockService } from '../services/stock.service';
 import { weightService } from '../services/weight.service';
@@ -11,11 +10,22 @@ import { batchService } from '../services/batch.service';
 import { healthService } from '../services/health.service';
 import { expenseService } from '../services/expense.service';
 import { settingsService } from '../services/settings.service';
+import { feedRepository } from '../repositories/feed.repository';
+import { proposalPlanRepository } from '../repositories/proposal-plan.repository';
+import { FeedProductItem, FeedStockTransaction, ProposalPlanParams, ProposalPlanRecord } from './types';
+
+import { processDailyFeedStockOuts } from './daily-feed-cron';
 
 const dbPath = path.join(process.cwd(), 'src/data/db.json');
 
 /**
- * Reads data from db.json as instant fallback if PostgreSQL is offline
+ * PostgreSQL is the single source of truth for every record in this system.
+ *
+ * db.json is a READ-ONLY emergency snapshot: if the database is unreachable,
+ * the app can still *display* the last known data instead of showing nothing.
+ * Nothing is ever written back to it — a save that cannot reach the database
+ * fails loudly (see `requireDb` below) rather than quietly landing in a file
+ * that no one else, and no other machine, can see.
  */
 function getJsonDbData(): ERPLivestockData {
   if (!fs.existsSync(dbPath)) {
@@ -29,6 +39,8 @@ function getJsonDbData(): ERPLivestockData {
   if (!parsed.expenses) parsed.expenses = [];
   if (!parsed.settings) parsed.settings = {};
 
+  // Dropdown option lists only — these are UI choices, not business records,
+  // and they exist so an offline read doesn't render empty selects.
   parsed.settings.breeds = parsed.settings.breeds || parsed.common?.breeds || ['គោទន្លេ', 'កាត់ Brahman', 'កាត់ Wagyu'];
   parsed.settings.locations = parsed.settings.locations || ['រទាំង', 'ព្រៃវែង', 'បន្ទាយមានជ័យ', 'ក្រោល A', 'ក្រោល B'];
   parsed.settings.buyTypes = parsed.settings.buyTypes || parsed.common?.buyTypes || ['Lumsum', 'Weight', 'Born in Farm', 'Transfer', 'Partnership'];
@@ -43,36 +55,39 @@ function getJsonDbData(): ERPLivestockData {
   parsed.settings.weightUnits = parsed.settings.weightUnits || ['kg', 'lbs'];
   parsed.settings.revenueTypes = parsed.settings.revenueTypes || ['Livestock Sale', 'Manure Sale', 'Milk Sale', 'Partnership Share'];
   parsed.settings.purchaseTypes = parsed.settings.purchaseTypes || ['Purchase', 'Born in Farm', 'Transfer', 'Partnership'];
-  if (!parsed.settings.users) {
-    const tempPassword = generateTempPassword();
-    console.warn(`[db.json fallback] No users found — created default admin with a fresh temporary password (change it after login): vannak@snrfarm.com / ${tempPassword}`);
-    parsed.settings.users = [
-      { id: '1', name: 'Vannak Admin', email: 'vannak@snrfarm.com', role: 'Super Admin', status: 'Active', password: tempPassword }
-    ];
-  }
+
+  // Accounts are never invented. If this snapshot carries none, it carries
+  // none — the real roster lives in the database's `users` table, and the
+  // first account is created with `npm run create-admin`.
+  if (!parsed.settings.users) parsed.settings.users = [];
 
   return parsed as ERPLivestockData;
 }
 
-function writeJsonDbData(data: ERPLivestockData): void {
-  const dir = path.dirname(dbPath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+/**
+ * Runs a write against PostgreSQL and, if it cannot be completed, throws
+ * instead of diverting the record somewhere else. A failed save must be
+ * visible: the alternative — reporting success while the row exists only in
+ * a local file — silently splits the system's data across two places.
+ */
+async function requireDb<T>(operation: string, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error(`[db] ${operation} failed — nothing was saved:`, detail);
+    throw new Error(`Could not save to the database (${operation}). Nothing was written. Check that PostgreSQL is running and that DB_HOST/DB_PORT in .env point at it, then try again. Details: ${detail}`);
   }
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
 }
 
-import { feedRepository } from '../repositories/feed.repository';
-import { FeedProductItem, FeedStockTransaction } from './types';
-
-import { processDailyFeedStockOuts } from './daily-feed-cron';
-
 /**
- * Aggregates all ERP domain data from PostgreSQL (or instant JSON fallback if PostgreSQL is unreachable)
+ * Aggregates all ERP domain data from PostgreSQL. Falls back to the
+ * read-only db.json snapshot only when the database cannot be reached at
+ * all, and says so loudly when it does.
  */
 export async function getDbData(): Promise<ERPLivestockData> {
   try {
-    const [stock, weightTracking, salesTracking, batches, healthLogs, expenses, settings, feedProducts, feedTransactions] = await Promise.all([
+    const [stock, weightTracking, salesTracking, batches, healthLogs, expenses, settings, feedProducts, feedTransactions, proposalPlan] = await Promise.all([
       stockService.getAllStock(),
       weightService.getAllWeightRecords(),
       salesService.getAllSales(),
@@ -81,17 +96,9 @@ export async function getDbData(): Promise<ERPLivestockData> {
       expenseService.getAllExpenses(),
       settingsService.getSettings(),
       feedRepository.getProducts().catch(() => []),
-      feedRepository.getTransactions().catch(() => [])
+      feedRepository.getTransactions().catch(() => []),
+      proposalPlanRepository.get().catch(() => null)
     ]);
-
-    const jsonDb = getJsonDbData();
-    const batchMap = new Map<string, BatchItem>();
-    for (const b of jsonDb.batches || []) {
-      batchMap.set(b.id, b);
-    }
-    for (const b of batches || []) {
-      batchMap.set(b.id, b);
-    }
 
     const common = {
       breeds: settings.breeds || [],
@@ -101,6 +108,10 @@ export async function getDbData(): Promise<ERPLivestockData> {
       sexes: settings.sexes || []
     };
 
+    // Everything below comes from PostgreSQL and nowhere else. db.json is
+    // deliberately not merged in here: a record that is missing from the
+    // database should read as missing, not be quietly topped up from a file,
+    // which is what used to hide the difference between the two.
     const erpData: ERPLivestockData = {
       stock,
       weightTracking,
@@ -110,8 +121,9 @@ export async function getDbData(): Promise<ERPLivestockData> {
       healthLogs,
       expenses,
       settings,
-      feedProducts: feedProducts && feedProducts.length > 0 ? feedProducts : (jsonDb.feedProducts || []),
-      feedTransactions: feedTransactions && feedTransactions.length > 0 ? feedTransactions : (jsonDb.feedTransactions || [])
+      feedProducts: feedProducts || [],
+      feedTransactions: feedTransactions || [],
+      proposalPlan: proposalPlan || undefined
     };
 
     // Auto-calculate daily feed stock outs based on Daily Feed Ration
@@ -119,414 +131,135 @@ export async function getDbData(): Promise<ERPLivestockData> {
 
     return erpData;
   } catch (err) {
-    console.warn('[getDbData] PostgreSQL read error, falling back to db.json:', err);
+    console.error('[getDbData] PostgreSQL is unreachable:', err);
+    console.error('[getDbData] Serving the READ-ONLY db.json snapshot instead. This data may be out of date, and saving anything will fail until the database is back.');
     return getJsonDbData();
   }
 }
 
+// ─── Feed ───────────────────────────────────────────────────────────────────
 export async function saveFeedProduct(product: FeedProductItem): Promise<FeedProductItem> {
-  try {
-    await feedRepository.saveProduct(product);
-  } catch (err) {
-    console.warn('[saveFeedProduct] DB error, writing to JSON:', err);
-  }
-  const jsonDb = getJsonDbData();
-  if (!jsonDb.feedProducts) jsonDb.feedProducts = [];
-  const idx = jsonDb.feedProducts.findIndex(p => p.id === product.id);
-  if (idx >= 0) {
-    jsonDb.feedProducts[idx] = product;
-  } else {
-    jsonDb.feedProducts.push(product);
-  }
-  writeJsonDbData(jsonDb);
+  await requireDb('save feed product', () => feedRepository.saveProduct(product));
   return product;
 }
 
 export async function deleteFeedProduct(productId: string): Promise<void> {
-  try {
-    await feedRepository.deleteProduct(productId);
-  } catch (err) {
-    console.warn('[deleteFeedProduct] DB error, removing from JSON:', err);
-  }
-  const jsonDb = getJsonDbData();
-  if (jsonDb.feedProducts) {
-    jsonDb.feedProducts = jsonDb.feedProducts.filter(p => p.id !== productId);
-    writeJsonDbData(jsonDb);
-  }
+  await requireDb('delete feed product', () => feedRepository.deleteProduct(productId));
 }
 
 export async function addFeedTransaction(tx: FeedStockTransaction): Promise<FeedStockTransaction> {
-  try {
-    await feedRepository.addTransaction(tx);
-  } catch (err) {
-    console.warn('[addFeedTransaction] DB error, writing to JSON:', err);
-  }
-  const jsonDb = getJsonDbData();
-  if (!jsonDb.feedTransactions) jsonDb.feedTransactions = [];
-  jsonDb.feedTransactions.unshift(tx);
-  writeJsonDbData(jsonDb);
+  await requireDb('add feed transaction', () => feedRepository.addTransaction(tx));
   return tx;
 }
 
-// 1. Stock / Inventory Functions
+// ─── Proposal / Plan ────────────────────────────────────────────────────────
+export async function saveProposalPlan(params: ProposalPlanParams): Promise<ProposalPlanRecord> {
+  return requireDb('save proposal plan', () => proposalPlanRepository.save(params));
+}
+
+// ─── 1. Stock / Inventory ───────────────────────────────────────────────────
 export async function addStockItem(item: Omit<StockItem, 'no'>): Promise<StockItem> {
-  try {
-    return await stockService.createStock(item);
-  } catch (err) {
-    const data = getJsonDbData();
-    const maxNo = data.stock.reduce((max, c) => Math.max(max, parseInt(c.no, 10) || 0), 0);
-    const newItem: StockItem = { ...item, no: String(maxNo + 1).padStart(2, '0') };
-    data.stock.push(newItem);
-    writeJsonDbData(data);
-    return newItem;
-  }
+  return requireDb('add cattle record', () => stockService.createStock(item));
 }
 
 export async function updateStockItem(id: string, updates: Partial<StockItem>): Promise<StockItem> {
-  try {
-    return await stockService.updateStock(id, updates);
-  } catch (err) {
-    const data = getJsonDbData();
-    const idx = data.stock.findIndex(c => c.id === id);
-    if (idx !== -1) {
-      data.stock[idx] = { ...data.stock[idx], ...updates };
-      writeJsonDbData(data);
-      return data.stock[idx];
-    }
-    throw err;
-  }
+  return requireDb('update cattle record', () => stockService.updateStock(id, updates));
 }
 
 export async function deleteStockItem(cowId: string): Promise<void> {
-  try {
-    await stockService.deleteStock(cowId);
-  } catch (err) {
-    const data = getJsonDbData();
-    data.stock = data.stock.filter(c => c.id !== cowId);
-    writeJsonDbData(data);
-  }
+  await requireDb('delete cattle record', () => stockService.deleteStock(cowId));
 }
 
 export async function updateStockLocation(oldLocation: string, newLocation: string): Promise<void> {
-  try {
-    await stockService.updateStockLocation(oldLocation, newLocation);
-  } catch (err) {
-    const data = getJsonDbData();
-    data.stock.forEach(c => {
-      if (c.location === oldLocation) {
-        c.location = newLocation;
-      }
-    });
-    writeJsonDbData(data);
-  }
+  await requireDb('move cattle to another farm', () => stockService.updateStockLocation(oldLocation, newLocation));
 }
 
-// 2. Weight Tracking History
+// ─── 2. Weight Tracking ─────────────────────────────────────────────────────
 export async function addWeightRecord(cowId: string, currentWeight: number, healthStatus: string, trackingDate?: string): Promise<WeightRecord> {
-  try {
-    return await weightService.addWeightRecord(cowId, currentWeight, healthStatus, trackingDate);
-  } catch (err) {
-    const data = getJsonDbData();
-    const cow = data.stock.find(c => c.id === cowId);
-    const oldWeight = cow ? cow.weight : 0;
-    if (cow) { cow.weight = currentWeight; cow.healthStatus = healthStatus; }
-    const rec: WeightRecord = {
-      cowId,
-      breed: cow?.breed || '',
-      age: cow?.age || '',
-      oldWeight,
-      currentWeight,
-      gainLoss: oldWeight > 0 ? (currentWeight - oldWeight) / oldWeight : 0,
-      healthStatus,
-      status: cow?.status || 'Active',
-      trackingDate: trackingDate || new Date().toISOString()
-    };
-    data.weightTracking.push(rec);
-    writeJsonDbData(data);
-    return rec;
-  }
+  return requireDb('record weight', () => weightService.addWeightRecord(cowId, currentWeight, healthStatus, trackingDate));
 }
 
 export async function updateWeightRecord(cowId: string, trackingDate: string, currentWeight: number, healthStatus: string): Promise<void> {
-  try {
-    await weightService.updateWeightRecord(cowId, trackingDate, currentWeight, healthStatus);
-  } catch (err) {
-    const data = getJsonDbData();
-    const rec = data.weightTracking.find(w => w.cowId === cowId && w.trackingDate === trackingDate);
-    if (rec) {
-      rec.currentWeight = currentWeight;
-      rec.healthStatus = healthStatus;
-      writeJsonDbData(data);
-    }
-  }
+  await requireDb('update weight record', () => weightService.updateWeightRecord(cowId, trackingDate, currentWeight, healthStatus));
 }
 
 export async function deleteWeightRecord(cowId: string, trackingDate: string): Promise<void> {
-  try {
-    await weightService.deleteWeightRecord(cowId, trackingDate);
-  } catch (err) {
-    const data = getJsonDbData();
-    data.weightTracking = data.weightTracking.filter(w => !(w.cowId === cowId && w.trackingDate === trackingDate));
-    writeJsonDbData(data);
-  }
+  await requireDb('delete weight record', () => weightService.deleteWeightRecord(cowId, trackingDate));
 }
 
-// 3. Sales Tracking
+// ─── 3. Sales Tracking ──────────────────────────────────────────────────────
 export async function recordSale(cowId: string, unitPrice: number, saleType: 'Weight' | 'Lumpsum', salesDate?: string, buyer?: string): Promise<SalesRecord> {
-  try {
-    return await salesService.recordSale(cowId, unitPrice, saleType, salesDate, buyer);
-  } catch (err) {
-    const data = getJsonDbData();
-    const cow = data.stock.find(c => c.id === cowId);
-    if (cow) cow.status = 'Sold';
-    const totalPrice = saleType === 'Weight' && cow ? cow.weight * unitPrice : unitPrice;
-    const saleRecord: SalesRecord = {
-      cowId,
-      breed: cow?.breed || '',
-      age: cow?.age || '',
-      weight: cow?.weight || 0,
-      unitPrice,
-      totalPrice,
-      status: 'Sold',
-      salesDate: salesDate || new Date().toISOString(),
-      saleType: saleType === 'Weight' ? 'Scale' : 'Lumpsum',
-      buyer: buyer || 'Local Market'
-    };
-    data.salesTracking.push(saleRecord);
-    writeJsonDbData(data);
-    return saleRecord;
-  }
+  return requireDb('record sale', () => salesService.recordSale(cowId, unitPrice, saleType, salesDate, buyer));
 }
 
 export async function recordBatchSale(batchId: string, unitPrice: number, saleType: 'Weight' | 'Lumpsum', salesDate?: string): Promise<SalesRecord[]> {
-  try {
-    return await salesService.recordBatchSale(batchId, unitPrice, saleType, salesDate);
-  } catch (err) {
-    const data = getJsonDbData();
-    const batch = data.batches.find(b => b.id === batchId);
-    if (!batch) throw err;
-    const activeCows = data.stock.filter(c => batch.cowIds.includes(c.id) && c.status.toLowerCase() === 'active');
-    const records: SalesRecord[] = [];
-    activeCows.forEach(cow => {
-      cow.status = 'Sold';
-      const totalPrice = saleType === 'Weight' ? cow.weight * unitPrice : unitPrice;
-      const rec: SalesRecord = { cowId: cow.id, breed: cow.breed, age: cow.age, weight: cow.weight, unitPrice, totalPrice, status: 'Sold', salesDate: salesDate || new Date().toISOString() };
-      data.salesTracking.push(rec);
-      records.push(rec);
-    });
-    batch.status = 'Closed';
-    writeJsonDbData(data);
-    return records;
-  }
+  return requireDb('record batch sale', () => salesService.recordBatchSale(batchId, unitPrice, saleType, salesDate));
 }
 
 export async function updateSalesRecord(cowId: string, updates: Partial<SalesRecord>): Promise<SalesRecord> {
-  try {
-    return await salesService.updateSalesRecord(cowId, updates);
-  } catch (err) {
-    const data = getJsonDbData();
-    const idx = data.salesTracking.findIndex(s => s.cowId === cowId);
-    if (idx !== -1) {
-      data.salesTracking[idx] = { ...data.salesTracking[idx], ...updates };
-      writeJsonDbData(data);
-      return data.salesTracking[idx];
-    }
-    throw err;
-  }
+  return requireDb('update sales record', () => salesService.updateSalesRecord(cowId, updates));
 }
 
 export async function deleteSalesRecord(cowId: string): Promise<void> {
-  try {
-    await salesService.deleteSalesRecord(cowId);
-  } catch (err) {
-    const data = getJsonDbData();
-    data.salesTracking = data.salesTracking.filter(s => s.cowId !== cowId);
-    const cow = data.stock.find(c => c.id === cowId);
-    if (cow) cow.status = 'Active';
-    writeJsonDbData(data);
-  }
+  await requireDb('delete sales record', () => salesService.deleteSalesRecord(cowId));
 }
 
-// 4. Batch Management
+// ─── 4. Batch Management ────────────────────────────────────────────────────
 export async function createBatch(batch: Omit<BatchItem, 'cowIds'>): Promise<BatchItem> {
-  try {
-    return await batchService.createBatch(batch);
-  } catch (err) {
-    const data = getJsonDbData();
-    const newBatch: BatchItem = { ...batch, cowIds: [] };
-    data.batches.push(newBatch);
-    writeJsonDbData(data);
-    return newBatch;
-  }
+  return requireDb('create batch', () => batchService.createBatch(batch));
 }
 
 export async function updateBatch(batchId: string, updates: Partial<BatchItem>): Promise<BatchItem> {
-  try {
-    return await batchService.updateBatch(batchId, updates);
-  } catch (err) {
-    const data = getJsonDbData();
-    const idx = data.batches.findIndex(b => b.id === batchId);
-    if (idx !== -1) {
-      data.batches[idx] = { ...data.batches[idx], ...updates };
-      writeJsonDbData(data);
-      return data.batches[idx];
-    }
-    throw err;
-  }
+  return requireDb('update batch', () => batchService.updateBatch(batchId, updates));
 }
 
 export async function assignCowsToBatch(batchId: string, cowIds: string[]): Promise<BatchItem> {
-  try {
-    return await batchService.assignCowsToBatch(batchId, cowIds);
-  } catch (err) {
-    const data = getJsonDbData();
-    const batch = data.batches.find(b => b.id === batchId);
-    if (!batch) throw err;
-    data.batches.forEach(b => { b.cowIds = b.cowIds.filter(id => !cowIds.includes(id)); });
-    batch.cowIds = [...new Set([...batch.cowIds, ...cowIds])];
-    writeJsonDbData(data);
-    return batch;
-  }
+  return requireDb('assign cattle to batch', () => batchService.assignCowsToBatch(batchId, cowIds));
 }
 
 export async function removeCowFromBatch(batchId: string, cowId: string): Promise<BatchItem> {
-  try {
-    return await batchService.removeCowFromBatch(batchId, cowId);
-  } catch (err) {
-    const data = getJsonDbData();
-    const batch = data.batches.find(b => b.id === batchId);
-    if (batch) {
-      batch.cowIds = batch.cowIds.filter(id => id !== cowId);
-      writeJsonDbData(data);
-      return batch;
-    }
-    throw err;
-  }
+  return requireDb('remove cattle from batch', () => batchService.removeCowFromBatch(batchId, cowId));
 }
 
 export async function recordBatchWeights(records: { cowId: string; currentWeight: number; healthStatus: string; trackingDate?: string }[]): Promise<void> {
-  try {
-    await batchService.recordBatchWeights(records);
-  } catch (err) {
-    for (const rec of records) {
-      await addWeightRecord(rec.cowId, rec.currentWeight, rec.healthStatus, rec.trackingDate);
-    }
-  }
+  await requireDb('record batch weights', () => batchService.recordBatchWeights(records));
 }
 
 export async function recordBatchHealthLog(batchId: string, log: Omit<HealthLogItem, 'id' | 'cowId'>): Promise<HealthLogItem[]> {
-  try {
-    return await batchService.recordBatchHealthLog(batchId, log);
-  } catch (err) {
-    const data = getJsonDbData();
-    const batch = data.batches.find(b => b.id === batchId);
-    if (!batch) throw err;
-    const activeCows = data.stock.filter(c => batch.cowIds.includes(c.id) && c.status.toLowerCase() === 'active');
-    const logs: HealthLogItem[] = [];
-    activeCows.forEach(cow => {
-      const newLog: HealthLogItem = { id: `HL-${Math.random().toString(36).substr(2, 9).toUpperCase()}`, cowId: cow.id, ...log };
-      data.healthLogs.push(newLog);
-      logs.push(newLog);
-    });
-    writeJsonDbData(data);
-    return logs;
-  }
+  return requireDb('record batch health log', () => batchService.recordBatchHealthLog(batchId, log));
 }
 
 export async function deleteBatch(batchId: string): Promise<void> {
-  try {
-    await batchService.deleteBatch(batchId);
-  } catch (err) {
-    const data = getJsonDbData();
-    data.batches = data.batches.filter(b => b.id !== batchId);
-    writeJsonDbData(data);
-  }
+  await requireDb('delete batch', () => batchService.deleteBatch(batchId));
 }
 
-// 5. Health Logs
+// ─── 5. Health Logs ─────────────────────────────────────────────────────────
 export async function addHealthLog(log: Omit<HealthLogItem, 'id'>): Promise<HealthLogItem> {
-  try {
-    return await healthService.addHealthLog(log);
-  } catch (err) {
-    const data = getJsonDbData();
-    const newLog: HealthLogItem = { ...log, id: `HL-${Math.random().toString(36).substr(2, 9).toUpperCase()}` };
-    data.healthLogs.push(newLog);
-    writeJsonDbData(data);
-    return newLog;
-  }
+  return requireDb('add health log', () => healthService.addHealthLog(log));
 }
 
 export async function updateHealthLog(logId: string, updates: Partial<HealthLogItem>): Promise<HealthLogItem> {
-  try {
-    return await healthService.updateHealthLog(logId, updates);
-  } catch (err) {
-    const data = getJsonDbData();
-    const idx = data.healthLogs.findIndex(h => h.id === logId);
-    if (idx !== -1) {
-      data.healthLogs[idx] = { ...data.healthLogs[idx], ...updates };
-      writeJsonDbData(data);
-      return data.healthLogs[idx];
-    }
-    throw err;
-  }
+  return requireDb('update health log', () => healthService.updateHealthLog(logId, updates));
 }
 
 export async function deleteHealthLog(logId: string): Promise<void> {
-  try {
-    await healthService.deleteHealthLog(logId);
-  } catch (err) {
-    const data = getJsonDbData();
-    data.healthLogs = data.healthLogs.filter(h => h.id !== logId);
-    writeJsonDbData(data);
-  }
+  await requireDb('delete health log', () => healthService.deleteHealthLog(logId));
 }
 
-// 6. Expenses
+// ─── 6. Expenses ────────────────────────────────────────────────────────────
 export async function addExpense(expense: Omit<ExpenseItem, 'id'>): Promise<ExpenseItem> {
-  try {
-    return await expenseService.addExpense(expense);
-  } catch (err) {
-    const data = getJsonDbData();
-    const newExpense: ExpenseItem = { ...expense, id: `EXP-${Math.random().toString(36).substr(2, 9).toUpperCase()}` };
-    data.expenses.push(newExpense);
-    writeJsonDbData(data);
-    return newExpense;
-  }
+  return requireDb('add expense', () => expenseService.addExpense(expense));
 }
 
 export async function updateExpense(id: string, updates: Partial<ExpenseItem>): Promise<ExpenseItem> {
-  try {
-    return await expenseService.updateExpense(id, updates);
-  } catch (err) {
-    const data = getJsonDbData();
-    const idx = data.expenses.findIndex(e => e.id === id);
-    if (idx !== -1) {
-      data.expenses[idx] = { ...data.expenses[idx], ...updates };
-      writeJsonDbData(data);
-      return data.expenses[idx];
-    }
-    throw err;
-  }
+  return requireDb('update expense', () => expenseService.updateExpense(id, updates));
 }
 
 export async function deleteExpense(id: string): Promise<void> {
-  try {
-    await expenseService.deleteExpense(id);
-  } catch (err) {
-    const data = getJsonDbData();
-    data.expenses = data.expenses.filter(e => e.id !== id);
-    writeJsonDbData(data);
-  }
+  await requireDb('delete expense', () => expenseService.deleteExpense(id));
 }
 
-// 7. Master Setup / Settings
+// ─── 7. Master Setup / Settings ─────────────────────────────────────────────
 export async function updateSettings(settings: MasterSetup): Promise<MasterSetup> {
-  try {
-    return await settingsService.updateSettings(settings);
-  } catch (err) {
-    const data = getJsonDbData();
-    data.settings = settings;
-    writeJsonDbData(data);
-    return data.settings;
-  }
+  return requireDb('save settings', () => settingsService.updateSettings(settings));
 }

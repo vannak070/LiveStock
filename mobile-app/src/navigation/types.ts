@@ -1,12 +1,14 @@
 export type RootStackParamList = {
   Tabs: undefined;
-  AnimalDetail: { cowId: string };
+  // Kept registered (not deleted) even though nothing in the nav UI links
+  // to it anymore — see MoreScreen.tsx / DashboardScreen.tsx / AlertsScreen.tsx.
   Batches: undefined;
   Farms: undefined;
   Growth: undefined;
   Sales: undefined;
   Health: undefined;
   Feed: undefined;
+  Proposal: undefined;
   Settings: undefined;
 };
 

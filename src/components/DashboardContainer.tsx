@@ -29,7 +29,8 @@ import {
   updateSalesRecordAction,
   saveFeedProductAction,
   deleteFeedProductAction,
-  addFeedTransactionAction
+  addFeedTransactionAction,
+  saveProposalPlanAction
 } from '@/app/actions';
 import SidebarLayout, { ActiveTabType } from './layout/SidebarLayout';
 import DashboardHome from './DashboardHome';
@@ -46,6 +47,7 @@ import FarmsTab from './FarmsTab';
 import CowDetails from './CowDetails';
 import QuickEntryModal from './QuickEntryModal';
 import { ERPLivestockData, FeedProductItem, FeedStockTransaction } from '@/lib/types';
+import { ProposalPlanParams } from '@/types';
 import { SalesRecord } from '@/lib/xlsx-parser';
 import { hasPermission } from '@/lib/utils';
 import { PermissionKey } from '@/types/settings.types';
@@ -393,6 +395,17 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       const res = await deleteFeedProductAction(productId);
       if (!res.success) throw new Error(res.error);
       return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['livestock'] });
+    }
+  });
+
+  const saveProposalPlanMutation = useMutation({
+    mutationFn: async (params: ProposalPlanParams) => {
+      const res = await saveProposalPlanAction(params);
+      if (!res.success) throw new Error(res.error);
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['livestock'] });
@@ -757,7 +770,12 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       )}
 
       {activeTab === 'proposal-plan' && (
-        <ProposalPlanTab />
+        <ProposalPlanTab
+          initialPlan={dbData.proposalPlan?.params}
+          onSavePlan={async (params) => {
+            await saveProposalPlanMutation.mutateAsync(params);
+          }}
+        />
       )}
 
       {activeTab === 'settings' && (

@@ -1,25 +1,59 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useApiDataMulti } from '../hooks/useApiData';
 import { StockItem, HealthLogItem } from '../api/types';
-import { ScreenScroll, BackRow, ScreenTitle, SectionHeader, Card, LoadingView, ErrorView, EmptyRow } from '../components/ui';
+import { ScreenScroll, BackRow, ScreenTitle, SectionHeader, Card, BreakdownRow, LoadingView, ErrorView, EmptyRow } from '../components/ui';
+import FarmPicker from '../components/FarmPicker';
+import { useFarmFilter } from '../context/FarmFilterContext';
+import { applyFarmScope } from '../lib/farmScope';
 import { colors, spacing } from '../theme/colors';
-import { formatMoney, formatDate } from '../lib/format';
+import { formatMoney } from '../lib/format';
 import { RootStackParamList } from '../navigation/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
+function withinDays(dateStr: string | null | undefined, n: number): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - n);
+  return d >= cutoff;
+}
+
+// Health & veterinary report — aggregate only. The treatment/vaccination
+// log used to list individual animals by ID; that's per-record detail this
+// app doesn't surface, so it's now a breakdown by activity type instead.
 export default function HealthScreen() {
   const navigation = useNavigation<Nav>();
+  const { effectiveFarm } = useFarmFilter();
   const { data, loading, error, refresh } = useApiDataMulti({ stock: '/stock', health: '/health' });
+
+  // Hooks must run in the same order every render — data extraction and
+  // useMemo run unconditionally; only the JSX return is gated below.
+  const { stock, healthLogs } = applyFarmScope(
+    { stock: (data?.stock as StockItem[]) || [], healthLogs: (data?.health as HealthLogItem[]) || [] },
+    effectiveFarm
+  );
+  const health = healthLogs || [];
+
+  const activity = useMemo(() => {
+    const last30 = health.filter(h => withinDays(h.date, 30));
+    const byType: Record<string, number> = {};
+    last30.forEach(h => {
+      byType[h.type] = (byType[h.type] || 0) + 1;
+    });
+    return {
+      loggedThisWeek: health.filter(h => withinDays(h.date, 7)).length,
+      byType: Object.entries(byType).sort((a, b) => b[1] - a[1]),
+      total30: last30.length
+    };
+  }, [health]);
 
   if (loading) return <LoadingView label="Loading health report…" />;
   if (error) return <ErrorView message={error} onRetry={refresh} />;
-
-  const stock = (data?.stock as StockItem[]) || [];
-  const health = (data?.health as HealthLogItem[]) || [];
 
   const active = stock.filter(s => s.status?.toLowerCase() === 'active');
   const sick = active.filter(s => ['sick', 'critical'].includes((s.healthStatus || '').toLowerCase()));
@@ -28,12 +62,12 @@ export default function HealthScreen() {
   const medicalSpend = health.reduce((s, h) => s + (h.cost || 0), 0);
   const mortalityRate = stock.length > 0 ? (dead.length / stock.length) * 100 : 0;
 
-  const recentLogs = [...health].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()).slice(0, 10);
-
   return (
     <ScreenScroll>
       <BackRow label="More" onPress={() => navigation.goBack()} />
-      <ScreenTitle title="Health & veterinary" subtitle="All farms" />
+      <ScreenTitle title="Health & veterinary" subtitle={effectiveFarm || 'All farms'} />
+
+      <FarmPicker />
 
       <Card style={{ backgroundColor: colors.tintRed, borderColor: colors.tintRedBorder, marginBottom: spacing.md, flexDirection: 'row', gap: 14 }}>
         <View style={{ alignItems: 'center', paddingRight: 14, borderRightWidth: 1, borderRightColor: colors.tintRedBorder }}>
@@ -62,20 +96,18 @@ export default function HealthScreen() {
         </Card>
       </View>
 
-      <SectionHeader title="Treatment & vaccination log" accent={colors.red} />
-      <Card style={{ padding: 0 }}>
-        {recentLogs.length === 0 ? <EmptyRow label="No medical records yet." /> : recentLogs.map((h, idx) => (
-          <View key={h.id} style={{ padding: 12, borderBottomWidth: idx === recentLogs.length - 1 ? 0 : 1, borderBottomColor: colors.borderFaint }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ backgroundColor: colors.tintGrey, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                <Text style={{ fontSize: 9, fontWeight: '700', textTransform: 'uppercase' }}>{h.type}</Text>
-              </View>
-              <Text style={{ fontSize: 12, fontWeight: '600', flex: 1 }}>{h.cowId}</Text>
-              <Text style={{ fontSize: 11, fontWeight: '600' }}>{formatMoney(h.cost || 0)}</Text>
-            </View>
-            <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 5 }}>{h.name} · {formatDate(h.date)} · {h.administeredBy}</Text>
-          </View>
-        ))}
+      <SectionHeader title="Care activity" accent={colors.red} />
+      <Card>
+        <Text style={{ fontSize: 12.5, color: colors.textSecondary, marginBottom: 10 }}>
+          {activity.loggedThisWeek} log{activity.loggedThisWeek === 1 ? '' : 's'} this week · {activity.total30} in the last 30 days
+        </Text>
+        {activity.byType.length === 0 ? (
+          <EmptyRow label="No medical records in the last 30 days." />
+        ) : (
+          activity.byType.map(([label, count]) => (
+            <BreakdownRow key={label} label={label} count={count} total={activity.total30} color={colors.red} />
+          ))
+        )}
       </Card>
     </ScreenScroll>
   );
