@@ -44,3 +44,8 @@ build.log
 # API URL config — points at your machine's LAN IP, not a secret but no
 # reason to commit a machine-specific value
 .env
+
+# Release signing keystore + credentials — durable secret, never commit.
+# Regenerating it means every future app update needs a fresh app
+# identity (existing installs can't be updated in place).
+/keystore

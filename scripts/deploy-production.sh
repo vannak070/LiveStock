@@ -44,8 +44,10 @@ mkdir -p "$BACKUP_DIR"
 
 node << 'JSEOF'
 const fs = require("fs");
+require("/root/LiveStock/node_modules/dotenv").config({ path: "/root/LiveStock/.env" });
 const { Pool } = require("/root/LiveStock/node_modules/pg");
-const pool = new Pool({ host:"localhost", port:5432, user:"postgres", password:"postgres123", database:"livestock_db" });
+if (!process.env.DB_PASSWORD) { console.error("   ⚠️  DB_PASSWORD not found in /root/LiveStock/.env — skipping backup."); process.exit(0); }
+const pool = new Pool({ host:"localhost", port:5432, user:"postgres", password:process.env.DB_PASSWORD, database:"livestock_db" });
 const BACKUP_FILE = process.env.BACKUP_FILE;
 async function dump() {
   const c = await pool.connect();

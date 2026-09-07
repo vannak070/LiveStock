@@ -18,7 +18,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.camcowreports.app"
+      "package": "com.camcowreports.app",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -28,7 +29,7 @@
         "projectId": "a5c8b8d3-2f62-4f33-a531-f37d80315d58"
       }
     },
-    "owner": "livestockmgts-team",
+    "owner": "cc_livestock",
     "plugins": [
       [
         "expo-build-properties",
@@ -37,7 +38,8 @@
             "usesCleartextTraffic": true
           }
         }
-      ]
+      ],
+      "./plugins/withReleaseSigning.js"
     ]
   }
 }

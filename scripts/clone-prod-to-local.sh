@@ -24,8 +24,10 @@ echo ""
 # Step 1: Dump from production
 echo "[1/3] Dumping data from production..."
 ssh -o StrictHostKeyChecking=no "$PROD_HOST" 'node << '"'"'EOF'"'"'
+require("/root/LiveStock/node_modules/dotenv").config({ path: "/root/LiveStock/.env" });
 const { Pool } = require("/root/LiveStock/node_modules/pg");
-const pool = new Pool({ host:"localhost", port:5432, user:"postgres", password:"postgres123", database:"livestock_db" });
+if (!process.env.DB_PASSWORD) { process.stderr.write("ERROR: DB_PASSWORD not found in /root/LiveStock/.env on the server.\n"); process.exit(1); }
+const pool = new Pool({ host:"localhost", port:5432, user:"postgres", password:process.env.DB_PASSWORD, database:"livestock_db" });
 async function dump() {
   const c = await pool.connect();
   try {
