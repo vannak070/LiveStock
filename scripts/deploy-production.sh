@@ -30,6 +30,7 @@ APP_DIR="/root/LiveStock"
 BACKUP_DIR="$APP_DIR/backups"
 TIMESTAMP=$(date "+%Y-%m-%d_%H-%M-%S")
 BACKUP_FILE="$BACKUP_DIR/pre_deploy_$TIMESTAMP.json"
+export BACKUP_FILE  # must be exported: the node backup step below reads it via process.env
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════════╗"
