@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   getLivestockDataAction, 
@@ -30,8 +30,10 @@ import {
   saveFeedProductAction,
   deleteFeedProductAction,
   addFeedTransactionAction,
-  saveProposalPlanAction
+  saveProposalPlanAction,
+  logoutAction
 } from '@/app/actions';
+import { useRouter } from 'next/navigation';
 import SidebarLayout, { ActiveTabType } from './layout/SidebarLayout';
 import DashboardHome from './DashboardHome';
 import InventoryTable from './InventoryTable';
@@ -46,24 +48,22 @@ import SettingsTab from './SettingsTab';
 import FarmsTab from './FarmsTab';
 import CowDetails from './CowDetails';
 import QuickEntryModal from './QuickEntryModal';
-import { ERPLivestockData, FeedProductItem, FeedStockTransaction } from '@/lib/types';
+import { ERPLivestockData, FeedProductItem, FeedStockTransaction, UserRoleItem } from '@/lib/types';
 import { ProposalPlanParams } from '@/types';
 import { SalesRecord } from '@/lib/xlsx-parser';
 import { hasPermission } from '@/lib/utils';
 import { PermissionKey } from '@/types/settings.types';
-import { apiFetch, ApiError } from '@/lib/api/api-client';
 
 interface DashboardContainerProps {
   initialData: ERPLivestockData;
+  // Verified server-side from the session cookie (see src/app/page.tsx).
+  currentUser: UserRoleItem;
 }
 
-export default function DashboardContainer({ initialData }: DashboardContainerProps) {
+export default function DashboardContainer({ initialData, currentUser }: DashboardContainerProps) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<ActiveTabType>('dashboard');
-
-  // Authentication Management
-  const [currentUser, setCurrentUser] = React.useState<any | null>(null);
-  const [isAuthLoaded, setIsAuthLoaded] = React.useState(false);
 
   // Modal States
   const [isQuickEntryOpen, setIsQuickEntryOpen] = useState(false);
@@ -81,60 +81,17 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       if (res.success && res.data) {
         return res.data;
       }
+      // Session expired or revoked: re-render on the server, which shows
+      // the login screen.
+      if (res.status === 401) router.refresh();
       throw new Error(res.error || 'Failed to fetch data');
     },
     initialData: initialData,
     refetchOnWindowFocus: true,
   });
 
-  // Scoped Data based on Current User's farmLocation (farm-level users only)
-  const dbData = useMemo(() => {
-    if (!rawDbData) return rawDbData;
-    if (!currentUser?.farmLocation) return rawDbData; // admins see all raw data
-
-    const farmLoc = currentUser.farmLocation;
-
-    const matchesFarm = (loc?: string) => {
-      if (!loc) return false;
-      const l = loc.trim().toLowerCase();
-      const f = farmLoc.trim().toLowerCase();
-      if (l === f) return true;
-      if ((f === 'រទាំង' || f.includes('snr')) && (l === 'រទាំង' || l.includes('snr'))) return true;
-      return false;
-    };
-
-    const scopedStock = rawDbData.stock.filter(item => matchesFarm(item.location));
-    const scopedStockIds = scopedStock.map(c => c.id);
-
-    const scopedBatches = rawDbData.batches.map(batch => ({
-      ...batch,
-      cowIds: batch.cowIds.filter(id => scopedStockIds.includes(id))
-    })).filter(batch =>
-      matchesFarm(batch.farmLocation) ||
-      !batch.farmLocation ||
-      batch.cowIds.length > 0
-    );
-
-    const scopedWeightTracking = rawDbData.weightTracking.filter(item => scopedStockIds.includes(item.cowId));
-    const scopedHealthLogs = rawDbData.healthLogs.filter(item => scopedStockIds.includes(item.cowId));
-    const scopedSalesTracking = rawDbData.salesTracking.filter(item => scopedStockIds.includes(item.cowId));
-    const scopedExpenses = rawDbData.expenses.filter(item => item.farmLocation === farmLoc);
-    const scopedCommon = {
-      ...rawDbData.common,
-      locations: [farmLoc]
-    };
-
-    return {
-      ...rawDbData,
-      stock: scopedStock,
-      batches: scopedBatches,
-      weightTracking: scopedWeightTracking,
-      healthLogs: scopedHealthLogs,
-      salesTracking: scopedSalesTracking,
-      expenses: scopedExpenses,
-      common: scopedCommon
-    };
-  }, [rawDbData, currentUser]);
+  // Already scoped to this user's farm on the server (src/lib/data-scope.ts).
+  const dbData = rawDbData;
 
   // Mutations
   const addCowMutation = useMutation({
@@ -454,50 +411,10 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
     setIsDetailsOpen(true);
   };
 
-  const [emailInput, setEmailInput] = React.useState('');
-  const [passwordInput, setPasswordInput] = React.useState('');
-  const [loginError, setLoginError] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  // Session is a signed token now, not the cached user record — restoring
-  // it means asking the server who it belongs to via /auth/me, never
-  // trusting whatever was cached client-side.
-  React.useEffect(() => {
-    const token = localStorage.getItem('snr_farm_token');
-    if (!token) {
-      setIsAuthLoaded(true);
-      return;
-    }
-    apiFetch<typeof dbData.settings.users[number]>('/auth/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(user => setCurrentUser(user))
-      .catch(() => localStorage.removeItem('snr_farm_token'))
-      .finally(() => setIsAuthLoaded(true));
-  }, []);
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginError('');
-    setIsSubmitting(true);
-
-    try {
-      const { token, user } = await apiFetch<{ token: string; user: typeof dbData.settings.users[number] }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: emailInput.trim(), password: passwordInput })
-      });
-      localStorage.setItem('snr_farm_token', token);
-      setCurrentUser(user);
-    } catch (err) {
-      setLoginError(err instanceof ApiError ? err.message : 'Invalid corporate email or password.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('snr_farm_token');
+  const handleLogout = async () => {
+    await logoutAction();
+    queryClient.clear();
+    router.refresh();
   };
 
   React.useEffect(() => {
@@ -518,92 +435,6 @@ export default function DashboardContainer({ initialData }: DashboardContainerPr
       setActiveTab('dashboard');
     }
   }, [activeTab, currentUser]);
-
-  // If authorization status is not loaded yet, display loading layout
-  if (!isAuthLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Initializing Portal...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If no user is authenticated, render the login card layout
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 font-sans p-4 relative overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-50/60 blur-3xl -z-10" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-50/60 blur-3xl -z-10" />
-
-        <div className="w-full max-w-md bg-white border border-slate-100/80 rounded-3xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-2xl">
-          <div className="bg-[#002D26] p-8 text-center relative">
-            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/20 to-teal-500/10 opacity-70" />
-            <div className="relative z-10 flex flex-col items-center">
-              <div className="mb-4 transform hover:scale-105 transition-transform duration-250 flex items-center justify-center">
-                <img src="/logo.png" alt="LiveStock Fattening ERP Logo" className="h-20 w-auto object-contain filter drop-shadow-lg" />
-              </div>
-              <h1 className="font-black text-lg leading-tight tracking-wider uppercase text-white">LiveStock Fattening ERP</h1>
-              <p className="text-[10px] text-emerald-400 font-extrabold tracking-widest uppercase mt-1">Fattening Livestock Management System</p>
-            </div>
-          </div>
-
-          <div className="p-8">
-            <form onSubmit={handleLoginSubmit} className="space-y-5">
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Email</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. name@snrfarm.com"
-                  value={emailInput}
-                  onChange={e => setEmailInput(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition-all placeholder:text-slate-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Password</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={passwordInput}
-                  onChange={e => setPasswordInput(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-600 transition-all placeholder:text-slate-400"
-                />
-              </div>
-
-              {loginError && (
-                <div className="p-3.5 bg-red-50 border border-red-100 rounded-xl text-xs font-semibold text-red-600">
-                  {loginError}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/10 hover:shadow-emerald-600/20 active:scale-[0.98] transition-all duration-150 flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isSubmitting ? (
-                  <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  'Authenticate Access'
-                )}
-              </button>
-            </form>
-
-            <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-              <p className="text-[10px] font-bold text-slate-400/80 uppercase tracking-wider">LiveStock Fattening ERP Enterprise Systems</p>
-              <p className="text-[9px] text-slate-400 mt-1">Authorized personnel only. Sessions are monitored and logged.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <SidebarLayout

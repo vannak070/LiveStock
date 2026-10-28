@@ -35,18 +35,42 @@ import {
 import { StockItem, WeightRecord, SalesRecord } from '@/lib/xlsx-parser';
 import { MasterSetup, BatchItem, HealthLogItem, ExpenseItem, FeedProductItem, FeedStockTransaction, ProposalPlanParams } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
+import { authService } from '@/services/auth.service';
+import { requireSessionActor, startSession, endSession } from '@/lib/session';
+import { scopeDataForActor } from '@/lib/data-scope';
+
+// Every action below is a public endpoint as far as the network is
+// concerned, so each one checks the caller's session and permissions itself
+// before touching the database.
+
+export async function loginAction(email: string, password: string) {
+  try {
+    const { user } = await authService.login(email, password);
+    await startSession(user);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Invalid email or password.' };
+  }
+}
+
+export async function logoutAction() {
+  await endSession();
+  return { success: true };
+}
 
 export async function getLivestockDataAction() {
   try {
-    const data = await getDbData();
+    const actor = await requireSessionActor();
+    const data = scopeDataForActor(await getDbData(), actor);
     return { success: true, data };
   } catch (error: any) {
-    return { success: false, error: error.message || 'Failed to fetch livestock data' };
+    return { success: false, status: error.statusCode as number | undefined, error: error.message || 'Failed to fetch livestock data' };
   }
 }
 
 export async function addStockItemAction(item: Omit<StockItem, 'no'>) {
   try {
+    await requireSessionActor('stock_create');
     const newItem = await addStockItem(item);
     revalidatePath('/');
     return { success: true, data: newItem };
@@ -57,6 +81,7 @@ export async function addStockItemAction(item: Omit<StockItem, 'no'>) {
 
 export async function updateStockItemAction(id: string, updates: Partial<StockItem>) {
   try {
+    await requireSessionActor('stock_edit');
     const updated = await updateStockItem(id, updates);
     revalidatePath('/');
     return { success: true, data: updated };
@@ -67,6 +92,7 @@ export async function updateStockItemAction(id: string, updates: Partial<StockIt
 
 export async function updateStockLocationAction(oldLocation: string, newLocation: string) {
   try {
+    await requireSessionActor('farms_manage', 'settings_manage');
     await updateStockLocation(oldLocation, newLocation);
     revalidatePath('/');
     return { success: true };
@@ -77,6 +103,7 @@ export async function updateStockLocationAction(oldLocation: string, newLocation
 
 export async function addWeightRecordAction(cowId: string, currentWeight: number, healthStatus: string, trackingDate?: string) {
   try {
+    await requireSessionActor('weight_record');
     const record = await addWeightRecord(cowId, currentWeight, healthStatus, trackingDate);
     revalidatePath('/');
     return { success: true, data: record };
@@ -87,6 +114,7 @@ export async function addWeightRecordAction(cowId: string, currentWeight: number
 
 export async function recordSaleAction(cowId: string, unitPrice: number, saleType: 'Weight' | 'Lumpsum', salesDate?: string, buyer?: string) {
   try {
+    await requireSessionActor('sales_record');
     const record = await recordSale(cowId, unitPrice, saleType, salesDate, buyer);
     revalidatePath('/');
     return { success: true, data: record };
@@ -97,6 +125,7 @@ export async function recordSaleAction(cowId: string, unitPrice: number, saleTyp
 
 export async function recordBatchSaleAction(batchId: string, unitPrice: number, saleType: 'Weight' | 'Lumpsum', salesDate?: string) {
   try {
+    await requireSessionActor('sales_record');
     const records = await recordBatchSale(batchId, unitPrice, saleType, salesDate);
     revalidatePath('/');
     return { success: true, data: records };
@@ -107,7 +136,10 @@ export async function recordBatchSaleAction(batchId: string, unitPrice: number, 
 
 export async function updateSettingsAction(settings: MasterSetup) {
   try {
-    const res = await updateSettings(settings);
+    // Which parts of settings this user may change is checked section by
+    // section inside the settings service.
+    const actor = await requireSessionActor();
+    const res = await updateSettings(settings, actor);
     revalidatePath('/');
     return { success: true, data: res };
   } catch (error: any) {
@@ -117,6 +149,7 @@ export async function updateSettingsAction(settings: MasterSetup) {
 
 export async function createBatchAction(batch: Omit<BatchItem, 'cowIds'>) {
   try {
+    await requireSessionActor('batch_create');
     const res = await createBatch(batch);
     revalidatePath('/');
     return { success: true, data: res };
@@ -127,6 +160,7 @@ export async function createBatchAction(batch: Omit<BatchItem, 'cowIds'>) {
 
 export async function assignCowsToBatchAction(batchId: string, cowIds: string[]) {
   try {
+    await requireSessionActor('batch_edit');
     const res = await assignCowsToBatch(batchId, cowIds);
     revalidatePath('/');
     return { success: true, data: res };
@@ -137,6 +171,7 @@ export async function assignCowsToBatchAction(batchId: string, cowIds: string[])
 
 export async function addHealthLogAction(log: Omit<HealthLogItem, 'id'>) {
   try {
+    await requireSessionActor('health_record');
     const res = await addHealthLog(log);
     revalidatePath('/');
     return { success: true, data: res };
@@ -145,8 +180,10 @@ export async function addHealthLogAction(log: Omit<HealthLogItem, 'id'>) {
   }
 }
 
+// feed_manage too: the feed screen can post a feed purchase straight to expenses.
 export async function addExpenseAction(expense: Omit<ExpenseItem, 'id'>) {
   try {
+    await requireSessionActor('expenses_record', 'feed_manage');
     const res = await addExpense(expense);
     revalidatePath('/');
     return { success: true, data: res };
@@ -157,6 +194,7 @@ export async function addExpenseAction(expense: Omit<ExpenseItem, 'id'>) {
 
 export async function updateExpenseAction(expenseId: string, updates: Partial<ExpenseItem>) {
   try {
+    await requireSessionActor('expenses_record');
     const res = await updateExpense(expenseId, updates);
     revalidatePath('/');
     return { success: true, data: res };
@@ -167,6 +205,7 @@ export async function updateExpenseAction(expenseId: string, updates: Partial<Ex
 
 export async function deleteExpenseAction(expenseId: string) {
   try {
+    await requireSessionActor('expenses_delete');
     await deleteExpense(expenseId);
     revalidatePath('/');
     return { success: true };
@@ -177,6 +216,7 @@ export async function deleteExpenseAction(expenseId: string) {
 
 export async function removeCowFromBatchAction(batchId: string, cowId: string) {
   try {
+    await requireSessionActor('batch_edit');
     const res = await removeCowFromBatch(batchId, cowId);
     revalidatePath('/');
     return { success: true, data: res };
@@ -187,6 +227,7 @@ export async function removeCowFromBatchAction(batchId: string, cowId: string) {
 
 export async function updateBatchAction(batchId: string, updates: Partial<BatchItem>) {
   try {
+    await requireSessionActor('batch_edit');
     const res = await updateBatch(batchId, updates);
     revalidatePath('/');
     return { success: true, data: res };
@@ -197,6 +238,7 @@ export async function updateBatchAction(batchId: string, updates: Partial<BatchI
 
 export async function recordBatchWeightsAction(records: { cowId: string; currentWeight: number; healthStatus: string; trackingDate?: string }[]) {
   try {
+    await requireSessionActor('weight_record');
     await recordBatchWeights(records);
     revalidatePath('/');
     return { success: true };
@@ -207,6 +249,7 @@ export async function recordBatchWeightsAction(records: { cowId: string; current
 
 export async function recordBatchHealthLogAction(batchId: string, log: Omit<HealthLogItem, 'id' | 'cowId'>) {
   try {
+    await requireSessionActor('health_record');
     const records = await recordBatchHealthLog(batchId, log);
     revalidatePath('/');
     return { success: true, data: records };
@@ -217,6 +260,7 @@ export async function recordBatchHealthLogAction(batchId: string, log: Omit<Heal
 
 export async function deleteStockItemAction(cowId: string) {
   try {
+    await requireSessionActor('stock_delete');
     await deleteStockItem(cowId);
     revalidatePath('/');
     return { success: true };
@@ -227,6 +271,7 @@ export async function deleteStockItemAction(cowId: string) {
 
 export async function deleteBatchAction(batchId: string) {
   try {
+    await requireSessionActor('batch_delete');
     await deleteBatch(batchId);
     revalidatePath('/');
     return { success: true };
@@ -237,6 +282,7 @@ export async function deleteBatchAction(batchId: string) {
 
 export async function deleteHealthLogAction(logId: string) {
   try {
+    await requireSessionActor('health_delete');
     await deleteHealthLog(logId);
     revalidatePath('/');
     return { success: true };
@@ -247,6 +293,7 @@ export async function deleteHealthLogAction(logId: string) {
 
 export async function updateHealthLogAction(logId: string, updates: Partial<HealthLogItem>) {
   try {
+    await requireSessionActor('health_record');
     const res = await updateHealthLog(logId, updates);
     revalidatePath('/');
     return { success: true, data: res };
@@ -257,6 +304,7 @@ export async function updateHealthLogAction(logId: string, updates: Partial<Heal
 
 export async function deleteWeightRecordAction(cowId: string, trackingDate: string) {
   try {
+    await requireSessionActor('weight_delete');
     await deleteWeightRecord(cowId, trackingDate);
     revalidatePath('/');
     return { success: true };
@@ -267,6 +315,7 @@ export async function deleteWeightRecordAction(cowId: string, trackingDate: stri
 
 export async function updateWeightRecordAction(cowId: string, trackingDate: string, currentWeight: number, healthStatus: string) {
   try {
+    await requireSessionActor('weight_record');
     await updateWeightRecord(cowId, trackingDate, currentWeight, healthStatus);
     revalidatePath('/');
     return { success: true };
@@ -277,6 +326,7 @@ export async function updateWeightRecordAction(cowId: string, trackingDate: stri
 
 export async function deleteSalesRecordAction(cowId: string) {
   try {
+    await requireSessionActor('sales_delete');
     await deleteSalesRecord(cowId);
     revalidatePath('/');
     return { success: true };
@@ -287,6 +337,7 @@ export async function deleteSalesRecordAction(cowId: string) {
 
 export async function updateSalesRecordAction(cowId: string, updates: Partial<SalesRecord>) {
   try {
+    await requireSessionActor('sales_record');
     const res = await updateSalesRecord(cowId, updates);
     revalidatePath('/');
     return { success: true, data: res };
@@ -297,6 +348,7 @@ export async function updateSalesRecordAction(cowId: string, updates: Partial<Sa
 
 export async function saveFeedProductAction(product: FeedProductItem) {
   try {
+    await requireSessionActor('feed_manage');
     const res = await saveFeedProduct(product);
     revalidatePath('/');
     return { success: true, data: res };
@@ -307,6 +359,7 @@ export async function saveFeedProductAction(product: FeedProductItem) {
 
 export async function deleteFeedProductAction(productId: string) {
   try {
+    await requireSessionActor('feed_manage');
     await deleteFeedProduct(productId);
     revalidatePath('/');
     return { success: true };
@@ -317,6 +370,7 @@ export async function deleteFeedProductAction(productId: string) {
 
 export async function addFeedTransactionAction(tx: FeedStockTransaction) {
   try {
+    await requireSessionActor('feed_manage');
     const res = await addFeedTransaction(tx);
     revalidatePath('/');
     return { success: true, data: res };
@@ -327,6 +381,7 @@ export async function addFeedTransactionAction(tx: FeedStockTransaction) {
 
 export async function saveProposalPlanAction(params: ProposalPlanParams) {
   try {
+    await requireSessionActor('analytics_view');
     const res = await saveProposalPlan(params);
     revalidatePath('/');
     return { success: true, data: res };

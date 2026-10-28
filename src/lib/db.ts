@@ -15,6 +15,7 @@ import { proposalPlanRepository } from '../repositories/proposal-plan.repository
 import { FeedProductItem, FeedStockTransaction, ProposalPlanParams, ProposalPlanRecord } from './types';
 
 import { processDailyFeedStockOuts } from './daily-feed-cron';
+import { Actor, AuthzError } from './authz';
 
 const dbPath = path.join(process.cwd(), 'src/data/db.json');
 
@@ -74,6 +75,7 @@ async function requireDb<T>(operation: string, run: () => Promise<T>): Promise<T
   try {
     return await run();
   } catch (err) {
+    if (err instanceof AuthzError) throw err;
     const detail = err instanceof Error ? err.message : String(err);
     console.error(`[db] ${operation} failed — nothing was saved:`, detail);
     throw new Error(`Could not save to the database (${operation}). Nothing was written. Check that PostgreSQL is running and that DB_HOST/DB_PORT in .env point at it, then try again. Details: ${detail}`);
@@ -260,6 +262,6 @@ export async function deleteExpense(id: string): Promise<void> {
 }
 
 // ─── 7. Master Setup / Settings ─────────────────────────────────────────────
-export async function updateSettings(settings: MasterSetup): Promise<MasterSetup> {
-  return requireDb('save settings', () => settingsService.updateSettings(settings));
+export async function updateSettings(settings: MasterSetup, actor: Actor): Promise<MasterSetup> {
+  return requireDb('save settings', () => settingsService.updateSettings(settings, actor));
 }

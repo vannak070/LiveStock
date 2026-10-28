@@ -180,6 +180,32 @@ export class SettingsRepository {
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(255)');
   }
 
+  // The account behind a session token, re-read on every request so that a
+  // deactivated, deleted or re-permissioned user loses access immediately
+  // instead of keeping whatever their token said when it was issued.
+  async getActiveUserById(id: string): Promise<UserRoleItem | null> {
+    const res = await query("SELECT * FROM users WHERE id = $1 AND status = 'Active' LIMIT 1", [id]);
+    if (res.rows.length === 0) return null;
+    const row = res.rows[0];
+    let perms = row.permissions;
+    if (typeof perms === 'string') {
+      try { perms = JSON.parse(perms); } catch { perms = []; }
+    }
+    if (!perms || (Array.isArray(perms) && perms.length === 0)) {
+      perms = DEFAULT_ROLE_PERMISSIONS[row.role] || [];
+    }
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      role: row.role,
+      status: row.status,
+      permissions: perms,
+      farmLocation: row.farm_location || undefined,
+      hasPin: !!row.pin_hash
+    };
+  }
+
   async getUserWithPasswordHashByEmail(email: string): Promise<(UserRoleItem & { password: string }) | null> {
     const res = await query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) LIMIT 1', [email]);
     if (res.rows.length === 0) return null;
